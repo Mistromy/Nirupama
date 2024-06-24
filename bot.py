@@ -214,8 +214,47 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
 
     # Save avatars
     await save_avatars(user1, user2)
+    
+    pfp_1 = Image.open('pfp_1.png')
+    pfp_2 = Image.open('pfp_2.png')
+    bg = Image.open('bg.png')
 
-    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!")
+
+    bg = bg.convert("RGBA")
+    pfp_1 = pfp_1.convert("RGBA")
+    pfp_2 = pfp_2.convert("RGBA")
+
+    size = 200
+
+    pfp_1 = pfp_1.resize((size, size))
+    pfp_2 = pfp_2.resize((size, size))
+
+
+    pos1 = (150, 100)
+    pos2 = (600, 100)
+
+
+    bg.paste(pfp_1, pos1, pfp_1)
+    bg.paste(pfp_2, pos2, pfp_2)
+
+
+    bg.save('result_image.png')
+
+    image = Image.open("result_image.png")
+    draw = ImageDraw.Draw(image)
+    text = str(shippercent) + "%"
+    font_size = 100 
+    font = ImageFont.load_default()  # Default font
+    # If you have a TrueType font file (.ttf), you can load it like this:
+    # font = ImageFont.truetype("arial.ttf", size=36)
+    position = (350, 100)  # Top-left corner
+    draw.text(position, text, fill="white", font=font, font_size=font_size)
+    image.save('image_with_text.png')
+
+    discord_image = discord.File("image_with_text.png", filename="ship_result.png")
+
+    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!", file=discord_image)
+
 
 
 @bot.command(description="check leaderboard")
