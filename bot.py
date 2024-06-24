@@ -230,8 +230,8 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     pfp_2 = pfp_2.resize((size, size))
 
 
-    pos1 = (150, 100)
-    pos2 = (600, 100)
+    pos1 = (175, 100)
+    pos2 = (660, 100)
 
 
     bg.paste(pfp_1, pos1, pfp_1)
@@ -243,12 +243,12 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     image = Image.open("result_image.png")
     draw = ImageDraw.Draw(image)
     text = str(shippercent) + "%"
-    font_size = 100 
-    font = ImageFont.load_default()  # Default font
+    font_size = 100
+    font = ImageFont.truetype("DancingScript-Bold.ttf", size=font_size) 
     # If you have a TrueType font file (.ttf), you can load it like this:
     # font = ImageFont.truetype("arial.ttf", size=36)
-    position = (350, 100)  # Top-left corner
-    draw.text(position, text, fill="white", font=font, font_size=font_size)
+    position = (410, 150)  # Top-left corner
+    draw.text(position, text, fill="white", font=font)
     image.save('image_with_text.png')
 
     discord_image = discord.File("image_with_text.png", filename="ship_result.png")
