@@ -8,6 +8,8 @@ import threading
 from discord import AllowedMentions
 import random as rand
 import json
+from PIL import Image, ImageDraw, ImageFont
+import aiohttp
 
 def listen_for_console_input():
     while True:
@@ -25,10 +27,32 @@ def read_ship_data():
             return json.load(file)
     except FileNotFoundError:
         return {}
+    except json.JSONDecodeError:
+        # Handle corrupted JSON file
+        print("Corrupted JSON file. Initializing a new one.")
+        return {}
 
 def write_ship_data(data):
     with open('ship_data.json', 'w') as file:
         json.dump(data, file, indent=4)
+
+# Function to fetch and save avatars using requests
+async def save_avatars(user1: discord.Member, user2: discord.Member):
+    async with aiohttp.ClientSession() as session:
+        # Fetch and save avatar for user1
+        avatar_url1 = user1.avatar.url if user1.avatar else user1.default_avatar.url
+        async with session.get(str(avatar_url1)) as response1:
+            if response1.status == 200:
+                with open('pfp_1.png', 'wb') as f1:
+                    f1.write(await response1.read())
+
+        # Fetch and save avatar for user2
+        avatar_url2 = user2.avatar.url if user2.avatar else user2.default_avatar.url
+        async with session.get(str(avatar_url2)) as response2:
+            if response2.status == 200:
+                with open('pfp_2.png', 'wb') as f2:
+                    f2.write(await response2.read())
+
 ###--- END SHIP COMMANDS ---###
 
 user_message_counts = {}
@@ -175,7 +199,7 @@ async def levels(ctx):
 async def deport(ctx, arg):
     await ctx.respond(f'Omw, {arg} will be deported in 2-3 business days.')
 
-@bot.command(description="check how good of a pair 2 people here make!")
+@bot.command(description="Check how good of a pair 2 people here make!")
 async def ship(ctx, user1: discord.Member, user2: discord.Member):
     ship_data = read_ship_data()
     user_pair = tuple(sorted([user1.id, user2.id]))  # Use a tuple with sorted user IDs to ensure consistency
@@ -188,7 +212,50 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
         ship_data[user_pair_str] = shippercent
         write_ship_data(ship_data)
 
-    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!")
+    # Save avatars
+    await save_avatars(user1, user2)
+    
+    pfp_1 = Image.open('pfp_1.png')
+    pfp_2 = Image.open('pfp_2.png')
+    bg = Image.open('bg.png')
+
+
+    bg = bg.convert("RGBA")
+    pfp_1 = pfp_1.convert("RGBA")
+    pfp_2 = pfp_2.convert("RGBA")
+
+    size = 200
+
+    pfp_1 = pfp_1.resize((size, size))
+    pfp_2 = pfp_2.resize((size, size))
+
+
+    pos1 = (175, 100)
+    pos2 = (660, 100)
+
+
+    bg.paste(pfp_1, pos1, pfp_1)
+    bg.paste(pfp_2, pos2, pfp_2)
+
+
+    bg.save('result_image.png')
+
+    image = Image.open("result_image.png")
+    draw = ImageDraw.Draw(image)
+    text = str(shippercent) + "%"
+    font_size = 100
+    font = ImageFont.truetype("DancingScript-Bold.ttf", size=font_size) 
+    # If you have a TrueType font file (.ttf), you can load it like this:
+    # font = ImageFont.truetype("arial.ttf", size=36)
+    position = (410, 150)  # Top-left corner
+    draw.text(position, text, fill="white", font=font)
+    image.save('image_with_text.png')
+
+    discord_image = discord.File("image_with_text.png", filename="ship_result.png")
+
+    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!", file=discord_image)
+
+
 
 @bot.command(description="check leaderboard")
 async def top(ctx):
