@@ -10,6 +10,7 @@ import random as rand
 import json
 from PIL import Image, ImageDraw, ImageFont
 import aiohttp
+import requests
 
 def listen_for_console_input():
     while True:
@@ -58,6 +59,7 @@ async def save_avatars(user1: discord.Member, user2: discord.Member):
 user_message_counts = {}
 bot = discord.Bot()
 
+###--- XP management ---###
 def save_xp_to_file(user_message_counts):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(script_dir, 'xp_values.txt')
@@ -77,9 +79,23 @@ def load_xp_from_file():
     except FileNotFoundError:
         pass  # File doesn't exist yet, which is fine
     return user_message_counts
+###--- END XP management ---###
 
-user_message_counts = load_xp_from_file()  # Initialize with values from file
-bot = discord.Bot()
+###--- 8Ball ---###
+import requests
+
+def get_8ball_answer(question, lucky=False):
+    base_url = "https://www.eightballapi.com/api/biased"
+    params = {
+        "question": question,
+        "lucky": str(lucky).lower()
+    }
+    response = requests.get(base_url, params=params)
+    if response.status_code == 200:
+        return response.json().get('reading', 'No answer found')
+    else:
+        return "Error: Unable to get answer"
+###--- END 8Ball ---###
 
 @bot.event
 async def on_ready():
@@ -198,6 +214,12 @@ async def levels(ctx):
 @bot.command(description="Throw those gypsies back to mexico!")
 async def deport(ctx, arg):
     await ctx.respond(f'Omw, {arg} will be deported in 2-3 business days.')
+
+@bot.command(description="Ask the Magic 8Ball a Question!")
+async def eightball(ctx, question):
+
+    answer = get_8ball_answer(question, lucky=False)
+    await ctx.respond(f"{answer}")
 
 @bot.command(description="Check how good of a pair 2 people here make!")
 async def ship(ctx, user1: discord.Member, user2: discord.Member):
