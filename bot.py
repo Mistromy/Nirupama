@@ -1,5 +1,5 @@
 import discord
-from config import PHOTOBOT_KEY
+from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
 import asyncio
 import random as rand
@@ -7,6 +7,10 @@ import json
 from PIL import Image, ImageDraw, ImageFont
 import aiohttp
 import requests
+from discord.ext import tasks
+import datetime
+
+# https://api.nasa.gov/planetary/apod?api_key=
 
 
 ###--- SHIP COMMANDS ---###
@@ -145,6 +149,45 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     discord_image = discord.File("image_with_text.png", filename="ship_result.png")
 
     await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!", file=discord_image)
+
+
+###--- Astronomy Picture Of The Day ---###
+
+
+async def fetch_and_send_apod(channel):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}') as response:
+            if response.status == 200:
+                apod_data = await response.json()
+                image_url = apod_data.get('url')
+                explanation = apod_data.get('explanation')
+                title = apod_data.get('title')
+                if image_url:
+                    embed = discord.Embed(title=title, description=explanation)
+                    embed.set_image(url=image_url)
+                    await channel.send(embed=embed)
+            else:
+                print(f"Failed to fetch APOD: {response.status}")
+
+@bot.command(description="Send the NASA Astronomy Picture of the Day.")
+async def apod(ctx):
+    await fetch_and_send_apod(ctx.channel)
+
+@tasks.loop(hours=24)
+async def send_daily_apod():
+    await bot.wait_until_ready()
+    channel = bot.get_channel(1252034373746819207)
+    if channel:
+        await fetch_and_send_apod(channel)
+
+@send_daily_apod.before_loop
+async def before_send_daily_apod():
+    # Calculate the time remaining until 12:00 GMT and sleep until then
+    now = datetime.datetime.utcnow()
+    target_time = datetime.datetime.combine(now.date(), datetime.time(hour=12))
+    if now.time() > target_time.time():
+        target_time += datetime.timedelta(days=1)
+    await asyncio.sleep((target_time - now).total_seconds())
 
 
 bot.run(PHOTOBOT_KEY)
