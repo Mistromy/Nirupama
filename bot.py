@@ -56,7 +56,7 @@ bot = discord.Bot()
 import requests
 
 def get_8ball_answer(question, lucky=False):
-    base_url = "https://www.eightballapi.com/api/biased"
+    base_url = "https://www.eightballapi.com/api"
     params = {
         "question": question,
         "lucky": str(lucky).lower()
