@@ -12,6 +12,10 @@ import datetime
 
 # https://api.nasa.gov/planetary/apod?api_key=
 
+intents = discord.Intents.all()
+intents.message_content = True  # Required to read message content
+
+bot = discord.Bot(intents=intents)
 
 ###--- SHIP COMMANDS ---###
 def read_ship_data():
@@ -48,10 +52,6 @@ async def save_avatars(user1: discord.Member, user2: discord.Member):
 
 ###--- END SHIP COMMANDS ---###
 
-user_message_counts = {}
-bot = discord.Bot()
-
-
 ###--- 8Ball ---###
 import requests
 
@@ -72,17 +72,6 @@ def get_8ball_answer(question, lucky=False):
 async def on_ready():
     print(f"Logged in as {bot.user}")
     await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Photography Simulator"))
-
-
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-#   --- NOT WORKING ---
-    if message.content == "test":
-        await message.respond("dawihkjs")
-
 
 @bot.command(description="Throw those gypsies back to mexico!")
 async def deport(ctx, arg):
@@ -189,6 +178,11 @@ async def before_send_daily_apod():
         target_time += datetime.timedelta(days=1)
     await asyncio.sleep((target_time - now).total_seconds())
 
+@bot.event
+async def on_message(message):
+    # if message.content.startswith("@Polish Ayumr"):
+    if bot.user in message.mentions:
+        await message.reply("Stfu, use commands bitch")
 
 bot.run(PHOTOBOT_KEY)
 
