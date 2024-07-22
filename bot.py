@@ -2,13 +2,15 @@ import discord
 from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
 import asyncio
-import random as rand
+import random
 import json
 from PIL import Image, ImageDraw, ImageFont
 import aiohttp
 import requests
 from discord.ext import tasks
 import datetime
+import re
+import time
 
 # https://api.nasa.gov/planetary/apod?api_key=
 
@@ -180,9 +182,24 @@ async def before_send_daily_apod():
 
 @bot.event
 async def on_message(message):
-    # if message.content.startswith("@Polish Ayumr"):
     if bot.user in message.mentions:
         await message.reply("Stfu, use commands bitch")
+    async def send_message(input_str, *output_strs):
+        if re.search(rf'\b{input_str}\b', message.content, re.IGNORECASE):
+            time.sleep(0.15)
+            for output_str in output_strs:
+                await message.channel.send(output_str)
+                time.sleep(0.2)
+
+    async def send_response(input_str, output_str):
+        if re.search(rf'\b{input_str}\b', message.content, re.IGNORECASE):
+            time.sleep(0.15)
+            await message.reply(output_str)
+
+    await send_message("test", "testing", "testing1")
+    await send_message("mom", "that's me")
+    await send_message("hi", "Hemlo")
+    await send_message("hello", "Hallor", "How u doing?")
 
 bot.run(PHOTOBOT_KEY)
 
