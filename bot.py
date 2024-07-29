@@ -182,6 +182,8 @@ async def before_send_daily_apod():
 
 @bot.event
 async def on_message(message):
+    if message.author == bot.user:
+        return
     if bot.user in message.mentions:
         await message.reply("Stfu, use commands bitch")
     async def send_message(input_str, *output_strs):
