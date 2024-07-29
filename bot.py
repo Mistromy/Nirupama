@@ -193,7 +193,7 @@ def ai_message(input):
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, use text emojis. talk like a discord user. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes."},
+            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, use text emojis. talk like a discord user. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes. here is the link https://ko-fi.com/lilavati. dont say it every message, but only every now and then"},
             {"role": "user", "content": input}
         ]
     )
@@ -207,11 +207,12 @@ async def on_message(message):
         return
 
     most_recent_message = message.content
-    print(most_recent_message)
+    
 
     if bot.user in message.mentions:
         reply = ai_message(most_recent_message)
         await message.reply(reply)
+        print(most_recent_message)
 
 
 bot.run(PHOTOBOT_KEY)
