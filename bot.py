@@ -12,8 +12,14 @@ import datetime
 import re
 import time
 from openai import OpenAI
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 client = OpenAI()
 
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # https://api.nasa.gov/planetary/apod?api_key=
 
