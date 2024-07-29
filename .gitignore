@@ -2,3 +2,4 @@ xp_values.txt
 config.py
 \__pycache__
 ship_data.json
+.env

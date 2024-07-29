@@ -11,6 +11,9 @@ from discord.ext import tasks
 import datetime
 import re
 import time
+from openai import OpenAI
+client = OpenAI()
+
 
 # https://api.nasa.gov/planetary/apod?api_key=
 
@@ -180,28 +183,30 @@ async def before_send_daily_apod():
         target_time += datetime.timedelta(days=1)
     await asyncio.sleep((target_time - now).total_seconds())
 
+def ai_message(input):
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, use text emojis. talk like a discord user. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes."},
+            {"role": "user", "content": input}
+        ]
+    )
+    return completion.choices[0].message.content
+
 @bot.event
 async def on_message(message):
+    global most_recent_message  # Use the global variable
+    
     if message.author == bot.user:
         return
+
+    most_recent_message = message.content
+    print(most_recent_message)
+
     if bot.user in message.mentions:
-        await message.reply("Stfu, use commands bitch")
-    async def send_message(input_str, *output_strs):
-        if re.search(rf'\b{input_str}\b', message.content, re.IGNORECASE):
-            time.sleep(0.15)
-            for output_str in output_strs:
-                await message.channel.send(output_str)
-                time.sleep(0.2)
+        reply = ai_message(most_recent_message)
+        await message.reply(reply)
 
-    async def send_response(input_str, output_str):
-        if re.search(rf'\b{input_str}\b', message.content, re.IGNORECASE):
-            time.sleep(0.15)
-            await message.reply(output_str)
-
-    await send_message("test", "testing", "testing1")
-    await send_message("mom", "that's me")
-    await send_message("hi", "Hemlo")
-    await send_message("hello", "Hallor", "How u doing?")
 
 bot.run(PHOTOBOT_KEY)
 
