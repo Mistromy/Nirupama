@@ -221,14 +221,14 @@ async def on_message(message):
 
     if bot.user in message.mentions:
         async with message.channel.typing():
-            reply = await ai_message(message.author.id, message.content)
+            reply = ai_message(message.author.id, message.content)
             await message.reply(reply)
 
             # Print message content and author details
             author = message.author
             author_info = f"{author.name}#{author.discriminator}"  # This will give you the username and discriminator
-            print(f"Message from {author_info}: {message.content}")
-            print(f"Reply sent: {reply}")
+            print(f"{author_info}: {message.content}")
+            print(f"{reply}")
 
 
 
