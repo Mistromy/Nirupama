@@ -212,7 +212,9 @@ async def on_message(message):
     if bot.user in message.mentions:
         reply = ai_message(most_recent_message)
         await message.reply(reply)
+        await print(reply)
         print(most_recent_message)
+        
 
 
 bot.run(PHOTOBOT_KEY)
