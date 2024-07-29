@@ -189,32 +189,43 @@ async def before_send_daily_apod():
         target_time += datetime.timedelta(days=1)
     await asyncio.sleep((target_time - now).total_seconds())
 
-def ai_message(input):
+# Initialize conversation history
+conversation_history = {}
+
+def ai_message(user_id, input):
+    # Initialize the conversation history for the user if it doesn't exist
+    if user_id not in conversation_history:
+        conversation_history[user_id] = [
+            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, use text emojis. talk like a discord user. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes. here is the link https://ko-fi.com/lilavati. dont say it every message, but only every now and then. respond in a slightly teasing and offensive manner"}
+        ]
+
+    # Append the new user message to the conversation history
+    conversation_history[user_id].append({"role": "user", "content": input})
+
+    # Call the OpenAI API with the conversation history
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, use text emojis. talk like a discord user. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes. here is the link https://ko-fi.com/lilavati. dont say it every message, but only every now and then"},
-            {"role": "user", "content": input}
-        ]
+        messages=conversation_history[user_id]
     )
-    return completion.choices[0].message.content
+
+    # Get the response and append it to the conversation history
+    response = completion.choices[0].message.content
+    conversation_history[user_id].append({"role": "assistant", "content": response})
+
+    return response
 
 @bot.event
 async def on_message(message):
-    global most_recent_message  # Use the global variable
-    
     if message.author == bot.user:
         return
 
-    most_recent_message = message.content
-    
-
     if bot.user in message.mentions:
-        reply = ai_message(most_recent_message)
+        reply = ai_message(message.author.id, message.content)
         await message.reply(reply)
-        await print(reply)
-        print(most_recent_message)
-        
+        print("\n")
+        print(message.content)
+        print(reply)
+
 
 
 bot.run(PHOTOBOT_KEY)
