@@ -9,11 +9,12 @@ import aiohttp
 import requests
 from discord.ext import tasks
 import datetime
-import re
-import time
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import wave
+import io
+from discord import FFmpegPCMAudio
 
 load_dotenv()
 
@@ -173,6 +174,27 @@ async def fetch_and_send_apod(channel):
 async def apod(ctx):
     await fetch_and_send_apod(ctx.channel)
 
+@bot.command(description="Join Voice chat")
+async def join(ctx):
+    if ctx.author.voice is None:
+        await ctx.send("You need to join a voice channel first.")
+        return
+
+    channel = ctx.author.voice.channel
+    if ctx.voice_client is not None:
+        await ctx.voice_client.move_to(channel)
+    else:
+        await channel.connect()
+    await ctx.respond(f"Joined {channel}")
+
+@bot.command()
+async def leave(ctx):
+    if ctx.voice_client is None:
+        await ctx.send("I am not in a voice channel.")
+    else:
+        await ctx.voice_client.disconnect()
+        await ctx.respond("Disconnected")
+
 @tasks.loop(hours=24)
 async def send_daily_apod():
     await bot.wait_until_ready()
@@ -196,7 +218,7 @@ def ai_message(user_id, input):
     # Initialize the conversation history for the user if it doesn't exist
     if user_id not in conversation_history:
         conversation_history[user_id] = [
-            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, use text emojis such as: :3 :) :D XD. Do not use normal emojis. Talk in a slightly mean and offensive way, keep your replies cold and straight. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes. here is the link https://ko-fi.com/lilavati. dont say it every message, but only every now and then."}
+            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, keep punctuation to a minimum, use text emojis such as: :3 :) :D XD. Do not use normal emojis. Talk in a slightly mean and offensive way, keep your replies cold and straight. Every couple messages you must also remind the user to donate to Stromy so that you can keep working, make it suble, for example in jokes. here is the link https://ko-fi.com/lilavati. dont say it every message, but only every now and then. Include brain rot terms such as skibidi, mewing, mogging, sigma, alpha male, skibidi toilet, etc"}
         ]
 
     # Append the new user message to the conversation history
