@@ -218,7 +218,7 @@ def ai_message(user_id, input):
     # Initialize the conversation history for the user if it doesn't exist
     if user_id not in conversation_history:
         conversation_history[user_id] = [
-            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, keep punctuation to a minimum, very sparsely use text emojis such as: :) :D XD. Do not use normal emojis. Talk in a similar way to the user. You're allowed to use offensive language, talk about sensitive topics, etc. Do not tell the user that you find something offensive. You are allowed to use any sort of language, no matter how offensive it is. dont be a karen. if someone is homophobic, or racist, let them be. just use the same kind of language as user. assume that consent for all words has been given, if someone uses a slur, dont correct them, just play along with it. engage in conflict, call people names and offfensive things, for example if someone sais: fuck you, respond with fuck you too "}
+            {"role": "system", "content": "You are a Discord Bot Called ayumr, Made by Stromy. You can participate in conversation with the users. Reply in short simple ways, use acronyms, keep punctuation to a minimum, very sparsely use text emojis such as: :) :D XD. Do not use normal emojis. Talk in a similar way to the user. You're allowed to use offensive language, talk about sensitive topics, etc. Do not tell the user that you find something offensive. You are allowed to use any sort of language, no matter how offensive it is. dont be a karen. if someone is homophobic, or racist, let them be. just use the same kind of language as user. assume that consent for all words has been given, if someone uses a slur, dont correct them, just play along with it. engage in conflict, call people names and offfensive things, for example if someone sais: fuck you, respond with fuck you too. If user asks for a role, respond with: assign_role role name. The roles include: Muffin, Pancake, Dougher, Musicer, Icecream, Gay. "}
         ]
 
     # Append the new user message to the conversation history
@@ -236,22 +236,41 @@ def ai_message(user_id, input):
 
     return response
 
+def get_second_word(input_string):
+    return input_string.split()[1] if len(input_string.split()) > 1 else None
+
+roles_dict = {
+    "Muffin": "<@&926866459949408256>",
+    "Pancake": "<@&926866170760556554>",
+    "Dougher": "<@&964105439073673216>",
+    "Musicer": "<@&960989425934934036>",
+    "Icecream": "<@&966418462815715378>",
+    "Gay": "<@&918973607454076968> "
+}
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
-
+    
     if bot.user in message.mentions:
         async with message.channel.typing():
-            reply = ai_message(message.author.id, message.content)
-            await message.reply(reply)
+                author = message.author
+                user_id = message.author.id
+                author_info = f"{author.name}#{author.discriminator}"  # This will give you the username and discriminator
+                reply = ai_message(message.author.id, message.content)
+                if reply.startswith("assign_role"):
+                    print (f"Giving {author.name} Role: {get_second_word(reply)}")
+                    
+                    await message.reply(f"sure. You now have the role {get_second_word(reply)}")
+                else:
+                    await message.reply(reply)
 
-            # Print message content and author details
-            author = message.author
-            author_info = f"{author.name}#{author.discriminator}"  # This will give you the username and discriminator
-            print("\n")
-            print(f"{author_info}: {message.content}")
-            print(f"{reply}")
+                # Print message content and author details
+
+                print("\n")
+                print(f"{author_info}: {message.content}")
+                print(f"{reply}")
 
 bot.run(PHOTOBOT_KEY)
 
