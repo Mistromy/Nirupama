@@ -148,30 +148,33 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
 
     discord_image = discord.File("image_with_text.png", filename="ship_result.png")
 
-    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!", file=discord_image)
+    shiptexts = {
+        100: "Match made in heaven",
+        95: "Perfect pair",
+        90: "Soulmate level",
+        85: "Dynamic duo",
+        80: "Electric chemistry",
+        75: "Kindred spirits",
+        70: "Harmonious bond",
+        65: "Good fit",
+        60: "Strong potential",
+        55: "On the same wavelength",
+        50: "A solid start",
+        45: "It could work",
+        40: "Opposites attract",
+        35: "A bit rocky",
+        30: "Mixed signals",
+        25: "Unlikely match",
+        20: "Rough waters",
+        15: "Clashing vibes",
+        10: "Stormy skies",
+        5: "Ships passing in the night",
+        0: "Oil and water"
+    }
 
+    shipcomment = shiptexts.get((round(shippercent / 5) * 5), "Too good to be true!")
+    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility! \n**{shipcomment}**", file=discord_image)
 
-
-@bot.command(description="Join Voice chat")
-async def join(ctx):
-    if ctx.author.voice is None:
-        await ctx.send("You need to join a voice channel first.")
-        return
-
-    channel = ctx.author.voice.channel
-    if ctx.voice_client is not None:
-        await ctx.voice_client.move_to(channel)
-    else:
-        await channel.connect()
-    await ctx.respond(f"Joined {channel}")
-
-@bot.command()
-async def leave(ctx):
-    if ctx.voice_client is None:
-        await ctx.send("I am not in a voice channel.")
-    else:
-        await ctx.voice_client.disconnect()
-        await ctx.respond("Disconnected")
 
 # Initialize conversation history
 conversation_history = {}
