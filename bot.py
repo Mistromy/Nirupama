@@ -100,8 +100,8 @@ def is_user(ctx):
 @bot.command(description="Reboots the bot.")
 @commands.check(is_user)
 async def reboot(ctx):
-    await ctx.respond("Running reboot script.")
-    subprocess.run(["python", "PhotoAyumi\\reboot.py"])
+    await ctx.respond("Rebooting. <a:typing:1330966203602305035>")
+    subprocess.run(["python3", "reboot.py"])
     exit()
 
 @bot.command(description="Check how good of a pair 2 people here make!")

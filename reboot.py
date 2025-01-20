@@ -1,5 +1,5 @@
 import subprocess, time 
 
-time.sleep(5)
-subprocess.run(["python", "PhotoAyumi\\bot.py"])
+time.sleep(1)
+subprocess.run(["python3", "bot.py"])
 exit()
