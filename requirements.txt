@@ -1,0 +1,6 @@
+py-cord
+aiohttp
+Pillow
+openai
+python-dotenv
+requests

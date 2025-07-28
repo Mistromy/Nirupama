@@ -1,5 +1,5 @@
 import subprocess, time 
 
 time.sleep(1)
-subprocess.run(["python3", "bot.py"])
+subprocess.run(["Nirupama\\bot.py"])
 exit()

@@ -92,7 +92,7 @@ async def deport(ctx, arg):
 async def eightball(ctx, question):
 
     answer = get_8ball_answer(question, lucky=False)
-    await ctx.respond(f"{answer}")
+    await ctx.respond(f"-# \"{question}\"\n**{answer}**")
 
 def is_user(ctx):
     return ctx.author.id == 859371145076932619
@@ -101,7 +101,7 @@ def is_user(ctx):
 @commands.check(is_user)
 async def reboot(ctx):
     await ctx.respond("Rebooting. <a:typing:1330966203602305035>")
-    subprocess.run(["python3", "reboot.py"])
+    subprocess.run(["Nirupama\\reboot.py"])
     exit()
 
 @bot.command(description="Check how good of a pair 2 people here make!")
