@@ -3,3 +3,9 @@ config.py
 \__pycache__
 ship_data.json
 .env
+sheepit.txt
+pfp_1.png
+pfp_2.png
+image_with_text.png
+result_image.png
+sheepit_data.json

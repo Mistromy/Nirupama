@@ -15,6 +15,8 @@ import wave
 import io
 from discord import FFmpegPCMAudio
 import subprocess
+from cryptography.fernet import Fernet
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -28,7 +30,51 @@ intents.message_content = True  # Required to read message content
 
 bot = discord.Bot(intents=intents)
 
-###--- SHIP COMMANDS ---###
+### --- SHEEPIT --- ###
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+SHEEPIT_DATA_FILE = "sheepit_data.json"
+
+fernet = Fernet(ENCRYPTION_KEY) if ENCRYPTION_KEY else None
+
+def encrypt_password(password: str) -> str:
+    return fernet.encrypt(password.encode()).decode()
+
+def decrypt_password(encrypted_password: str) -> str:
+    return fernet.decrypt(encrypted_password.encode()).decode()
+
+def read_sheepit_data():
+    try:
+        with open(SHEEPIT_DATA_FILE, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+def write_sheepit_data(data):
+    with open(SHEEPIT_DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+async def sheepit_login_and_get_projects(username: str, password: str):
+    login_url = "https://www.sheepit-renderfarm.com/user/signin/%25252Fuser%25252FMistromy%25252Fprofile"
+    projects_url = "https://www.sheepit-renderfarm.com/user/Mistromy/profile"
+    async with aiohttp.ClientSession() as session:
+        payload = {"username": username, "password": password}
+        async with session.post(login_url, data=payload) as response:
+            if response.status == 200:
+                # Login successful, now fetch projects
+                async with session.get(projects_url) as projects_response:
+                    if projects_response.status == 200:
+                        html = await projects_response.text()
+                        soup = BeautifulSoup(html, 'html.parser')
+                        projects = soup.find_all('div', class_='project-name')
+                        return [project.text.strip() for project in projects]
+                    else:
+                        print(f"Failed to fetch projects: {projects_response.status}")
+            else:
+                print(f"Login failed: {response.status}")
+
+### --- END SHEEPIT --- ###
+
+### --- SHIP COMMANDS --- ###
 def read_ship_data():
     try:
         with open('ship_data.json', 'r') as file:
@@ -61,11 +107,9 @@ async def save_avatars(user1: discord.Member, user2: discord.Member):
                 with open('pfp_2.png', 'wb') as f2:
                     f2.write(await response2.read())
 
-###--- END SHIP COMMANDS ---###
+### --- END SHIP COMMANDS --- ###
 
-###--- 8Ball ---###
-import requests
-
+### --- 8Ball --- ###
 def get_8ball_answer(question, lucky=False):
     base_url = "https://www.eightballapi.com/api"
     params = {
@@ -84,9 +128,25 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Blender"))
 
-@bot.command(description="Throw those gypsies back to mexico!")
-async def deport(ctx, arg):
-    await ctx.respond(f'Omw, {arg} will be deported in 2-3 business days.')
+### SHEEPIT COMMANDS ###
+@bot.command(description="Setup sheepit")
+async def sheepit(ctx, username: str, password: str):
+    if not fernet:
+        await ctx.respond("Encryption key is not set. Please contact Mist about this issue.", ephermal=True)
+        return
+
+    data = read_sheepit_data()
+    data[str(ctx.author.id)] = {
+        "username": username,
+        "password": encrypt_password(password),
+        "channel_id": ctx.channel.id,
+        "last_projects": {}
+    }
+
+    with open('sheepit_data.json', 'w') as file:
+        json.dump(SHEEPIT_DATA_FILE, file, indent=4)
+
+    await ctx.respond("Sheepit credentials saved successfully. Notifications will be sent in this channel.", ephermal=True)
 
 @bot.command(description="Ask the Magic 8Ball a Question!")
 async def eightball(ctx, question):
