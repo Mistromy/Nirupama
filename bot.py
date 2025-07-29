@@ -82,7 +82,7 @@ def get_8ball_answer(question, lucky=False):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Photography Simulator"))
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Blender"))
 
 @bot.command(description="Throw those gypsies back to mexico!")
 async def deport(ctx, arg):
@@ -103,6 +103,13 @@ async def reboot(ctx):
     await ctx.respond("Rebooting. <a:typing:1330966203602305035>")
     subprocess.run(["Nirupama\\reboot.py"])
     exit()
+
+@bot.command(description="View what servers the bot is in")
+async def serverlist(ctx):
+    serverlisttext = ""
+    for guild in bot.guilds:
+        serverlisttext = serverlisttext + guild.name + "\n"
+    await ctx.respond(f"{serverlisttext}")
 
 @bot.command(description="Check how good of a pair 2 people here make!")
 async def ship(ctx, user1: discord.Member, user2: discord.Member):
