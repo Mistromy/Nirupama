@@ -105,6 +105,7 @@ async def reboot(ctx):
     exit()
 
 @bot.command(description="View what servers the bot is in")
+@commands.check(is_user)
 async def serverlist(ctx):
     serverlisttext = ""
     for guild in bot.guilds:

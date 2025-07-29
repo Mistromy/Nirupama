@@ -1,15 +1,12 @@
-# PhotoAyumi
+# Nirupama
 ## About:
-This is a discord bot made for levels but soon for more
-Inspired by Chiru-san's Ayumi bot
+Bot originally inspired by Ayumi, a bot on Chiru-san's Discord server.
+Later repurposed for a general use, chatbot bot.
 
-It also has many more features such as:
+Features include:
 - /eightball
 - /ship
-- /deport
 
-and more coming soon
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O5O6ZUUL0)
 
-<img src="images/image.png">
