@@ -1,15 +1,6 @@
-# PhotoAyumi
-## About:
-This is a discord bot made for levels but soon for more
-Inspired by Chiru-san's Ayumi bot
+# 
 
-It also has many more features such as:
-- /eightball
-- /ship
-- /deport
 
-and more coming soon
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O5O6ZUUL0)
-
-<img src="images/image.png">
+# Roadmap
+- Add Server Moderation Features, such as report button on messages that send report to mod channel and allows to easily perform moderation tasks, or automate them based on report amount or frequencey
