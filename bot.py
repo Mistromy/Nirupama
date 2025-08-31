@@ -102,6 +102,14 @@ async def reboot(ctx):
     subprocess.run(["Nirupama\\reboot.py"])
     exit()
 
+@bot.command(description="View what servers the bot is in")
+@commands.check(is_user)
+async def serverlist(ctx):
+    serverlisttext = ""
+    for guild in bot.guilds:
+        serverlisttext = serverlisttext + guild.name + "\n"
+    await ctx.respond(f"{serverlisttext}")
+
 @bot.command(description="Check how good of a pair 2 people here make!")
 async def ship(ctx, user1: discord.Member, user2: discord.Member):
     ship_data = read_ship_data()

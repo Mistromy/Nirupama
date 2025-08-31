@@ -4,3 +4,4 @@ Pillow
 openai
 python-dotenv
 requests
+-q -U google-genai
