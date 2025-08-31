@@ -15,9 +15,11 @@ import wave
 import io
 from discord import FFmpegPCMAudio
 import subprocess
+from google import genai
+from google.genai import types
+load_dotenv()
 
-# load_dotenv()
-
+client = genai.Client()
 
 intents = discord.Intents.all()
 intents.message_content = True  # Required to read message content
@@ -80,6 +82,9 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Photography Simulator"))
 
+@bot.command(description="Throw those gypsies back to mexico!")
+async def deport(ctx, arg):
+    await ctx.respond(f'Omw, {arg} will be deported in 2-3 business days.')
 
 @bot.command(description="Ask the Magic 8Ball a Question!")
 async def eightball(ctx, question):
@@ -178,12 +183,51 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     shipcomment = shiptexts.get((round(shippercent / 5) * 5), "Too good to be true!")
     await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility! \n**{shipcomment}**", file=discord_image)
 
+#AI Settings
+temperature = 1
+DebugMode = False
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
     
+    if bot.user in message.mentions:
+        user_message = message.content
+        print(f"{user_message} \n \n")
+        image_bytes = None
+        image_part = None
+
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith('image'):
+                    image_bytes = await attachment.read()
+                    image_part = types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type=attachment.content_type,
+                    )
+                    break
+                    
+        async with message.channel.typing():
+            if image_part:
+                contents = [image_part, user_message]
+            else:
+                contents = [user_message]
+
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                config=types.GenerateContentConfig(
+                    system_instruction="You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. ",
+                ),
+                contents=contents, 
+            )
+            print(response)
+            if DebugMode == False:
+                text = response.candidates[0].content.parts[0].text
+                await message.reply(text)
+            else:
+                await message.reply(str(response))
+
 
 bot.run(PHOTOBOT_KEY)
 
