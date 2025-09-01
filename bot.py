@@ -1,4 +1,4 @@
-import discord
+import discord # For Py-cord
 from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
 import asyncio
@@ -194,6 +194,47 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
 #AI Settings
 temperature = 1
 DebugMode = False
+AllowThinking = True
+
+ThinkingModes = {
+    "Off": 0,
+    "Dynamic": -1,
+    "Fast": 1000,
+    "Balanced": 3000,
+    "Deep": 6000,
+}
+CurrentThinkingMode = ThinkingModes["Dynamic"]
+
+ModelOptions = {
+    "Pro": "gemini-2.5-pro",
+    "Flash": "gemini-2.5-flash",
+    "Flash Lite": "gemini-2.5-flash-lite",
+}       # List of models: https://ai.google.dev/gemini-api/docs/models?hl=en
+currentModel = ModelOptions["Flash"] # Default model
+
+
+@bot.command(description="Sets the temperature of the AI responses. Higher values make output more random. (0-2)")
+@commands.check(is_user)
+async def temperature(ctx, new_temp: float):
+    global temperature 
+    temperature = max(0, min(2, new_temp))  # Clamp value between 0 and 2
+    print (f"Temperature set to {temperature}")
+    await ctx.respond(f"AI temperature set to {temperature}")
+
+@bot.command(description="Toggles debug mode for AI responses.")
+@commands.check(is_user)
+async def debugmode(ctx):
+    global DebugMode
+    DebugMode = not DebugMode
+    status = "ON" if DebugMode else "OFF"
+    await ctx.respond(f"Debug mode is now {status}")
+
+@bot.slash_command(description="Sets the thinking mode for AI responses.")
+@commands.check(is_user)
+async def thinkmode(ctx, mode = discord.Option("Dynamic", "Choose Thinking Mode", choices=list(ThinkingModes.keys()))):
+    global CurrentThinkingMode
+    CurrentThinkingMode = ThinkingModes[mode]
+    await ctx.respond(f"Thinking mode set to {mode}")
 
 @bot.event
 async def on_message(message):
@@ -223,16 +264,19 @@ async def on_message(message):
                 contents = [user_message]
 
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=currentModel,
                 config=types.GenerateContentConfig(
-                    system_instruction="You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes and emojis to a minimum",
+                    temperature=temperature,
+                    thinking_config=types.ThinkingConfig(thinking_budget=CurrentThinkingMode),
+                    system_instruction="You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
                 ),
                 contents=contents, 
             )
-            print(response)
+            
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
                 await message.reply(text)
+                print(text)
             else:
                 await message.reply(str(response))
 
