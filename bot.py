@@ -194,7 +194,6 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
 #AI Settings
 temperature = 1
 DebugMode = False
-AllowThinking = True
 
 ThinkingModes = {
     "Off": 0,
@@ -215,7 +214,7 @@ currentModel = ModelOptions["Flash"] # Default model
 
 @bot.command(description="Sets the temperature of the AI responses. Higher values make output more random. (0-2)")
 @commands.check(is_user)
-async def temperature(ctx, new_temp: float):
+async def temperaturevalue(ctx, new_temp: float):
     global temperature 
     temperature = max(0, min(2, new_temp))  # Clamp value between 0 and 2
     print (f"Temperature set to {temperature}")
@@ -231,10 +230,17 @@ async def debugmode(ctx):
 
 @bot.slash_command(description="Sets the thinking mode for AI responses.")
 @commands.check(is_user)
-async def thinkmode(ctx, mode = discord.Option("Dynamic", "Choose Thinking Mode", choices=list(ThinkingModes.keys()))):
+async def thinkmode(ctx, mode: str = discord.Option(description = "Choose Thinking Mode", choices=list(ThinkingModes.keys()), deafult="Dynamic")):
     global CurrentThinkingMode
     CurrentThinkingMode = ThinkingModes[mode]
     await ctx.respond(f"Thinking mode set to {mode}")
+    
+@bot.slash_command(description="Sets the AI model.")
+@commands.check(is_user)
+async def model(ctx, model: str =  discord.Option(description = "Choose AI Model", choices=list(ModelOptions.keys()), deafault="Flash")):
+    global currentModel
+    currentModel = ModelOptions[model]
+    await ctx.respond(f"AI model set to {model}")
 
 @bot.event
 async def on_message(message):
@@ -278,7 +284,13 @@ async def on_message(message):
                 await message.reply(text)
                 print(text)
             else:
-                await message.reply(str(response))
+                text = response.candidates[0].content.parts[0].text
+                # Find the thinking mode name corresponding to the number
+                mode_name = next((name for name, value in ThinkingModes.items() if value == CurrentThinkingMode), str(CurrentThinkingMode))
+                await message.reply(
+                    f"{text} \n\n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n Model: {currentModel}"
+                )
+                print(response)
 
 
 bot.run(PHOTOBOT_KEY)
