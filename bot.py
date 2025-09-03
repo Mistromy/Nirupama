@@ -17,6 +17,7 @@ from discord import FFmpegPCMAudio
 import subprocess
 from google import genai
 from google.genai import types
+import sys
 load_dotenv()
 
 client = genai.Client()
@@ -105,15 +106,49 @@ def is_user(ctx):
 @commands.check(is_user)
 async def reboot(ctx):
     await ctx.respond("Rebooting. <a:typing:1330966203602305035>")
-    subprocess.run(["Nirupama\\reboot.py"])
+    python_cmd = sys.executable
+    script_path = os.path.join(os.path.dirname(__file__), "reboot.py")
+    subprocess.Popen([python_cmd, script_path])
     exit()
 
-@bot.command(description="Gets latest update from github")
+def format_git_output(raw_output):
+    lines = raw_output.splitlines()
+    summary = []
+    files = []
+    changes = []
+    for line in lines:
+        if line.startswith("Fast-forward") or line.startswith("Updating") or line.startswith("main"):
+            summary.append(line)
+        elif "|" in line:
+            files.append(line)
+        elif "+" in line or "-" in line:
+            changes.append(line)
+        else:
+            summary.append(line)
+
+    # Format summary as shell
+    summary_block = "```shell\n" + "\n".join(summary) + "\n```" if summary else ""
+    # Format file changes as diff
+    files_block = "```diff\n" + "\n".join(files) + "\n```" if files else ""
+    # Format insertions/deletions as diff
+    changes_block = "```diff\n" + "\n".join(changes) + "\n```" if changes else ""
+
+    return summary_block + files_block + changes_block
+
+@bot.command(description="Gets latest update from github with colored output")
 @commands.check(is_user)
 async def gitpull(ctx):
     result = subprocess.run(["git", "pull"], capture_output=True, text=True)
-    output = f"```shell\n{result.stdout}\n{result.stderr}\n```"
-    await ctx.respond(output)
+    formatted = format_git_output(result.stdout + result.stderr)
+    await ctx.respond(formatted)
+
+
+# @bot.command(description="Gets latest update from github")
+# @commands.check(is_user)
+# async def gitpull(ctx):
+#     result = subprocess.run(["git", "pull"], capture_output=True, text=True)
+#     output = f"```shell\n{result.stdout}\n{result.stderr}\n```"
+#     await ctx.respond(output)
 
 @bot.command(description="View what servers the bot is in")
 @commands.check(is_user)
@@ -240,7 +275,6 @@ ModelOptions = {
 }       # List of models: https://ai.google.dev/gemini-api/docs/models?hl=en
 currentModel = ModelOptions["Flash"] # Default model
 
-#test change
 
 @bot.command(description="Sets the temperature of the AI responses. Higher values make output more random. (0-2)")
 @commands.check(is_user)
