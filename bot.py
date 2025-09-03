@@ -109,7 +109,7 @@ async def reboot(ctx):
     python_cmd = sys.executable
     script_path = os.path.join(os.path.dirname(__file__), "reboot.py")
     subprocess.Popen([python_cmd, script_path])
-    exit()
+    os._exit(0)
 
 def format_git_output(raw_output):
     lines = raw_output.splitlines()
@@ -117,11 +117,24 @@ def format_git_output(raw_output):
     files = []
     changes = []
     for line in lines:
-        if line.startswith("Fast-forward") or line.startswith("Updating") or line.startswith("main"):
+        # Summary lines
+        if line.startswith("Fast-forward") or line.startswith("Updating") or line.startswith("From "):
             summary.append(line)
+        # File change lines (e.g., "bot.py | 1 +")
         elif "|" in line:
-            files.append(line)
-        elif "+" in line or "-" in line:
+            # Parse filename and changes
+            parts = line.split("|")
+            filename = parts[0].strip()
+            stats = parts[1].strip()
+            plus_count = stats.count("+")
+            minus_count = stats.count("-")
+            # Extract numbers if present
+            numbers = [int(s) for s in stats.split() if s.isdigit()]
+            num_changes = numbers[0] if numbers else plus_count + minus_count
+            # Format for diff coloring
+            files.append(f"{filename}\n+ {plus_count}\n- {minus_count}")
+        # Other change summary lines
+        elif "changed" in line and ("insertion" in line or "deletion" in line):
             changes.append(line)
         else:
             summary.append(line)
