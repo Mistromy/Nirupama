@@ -108,6 +108,13 @@ async def reboot(ctx):
     subprocess.run(["Nirupama\\reboot.py"])
     exit()
 
+@bot.command(description="Gets latest update from github")
+@commands.check(is_user)
+async def gitpull(ctx):
+    result = subprocess.run(["git", "pull"], capture_output=True, text=True)
+    output = f"```shell\n{result.stdout}\n{result.stderr}\n```"
+    await ctx.respond(output)
+
 @bot.command(description="View what servers the bot is in")
 @commands.check(is_user)
 async def serverlist(ctx):
@@ -213,6 +220,7 @@ DebugMode = False
 Personalities = {
     "Discord":"You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
     "Helper": "You're a helpful assistant discord bot. Your job is to provide accurate and concise answers to user questions. Keep them short and to the point, without sugarcoating or praising the user if unnecessary. You May ask the user to elaborate on their question or ask them if they need further info on related topics. DO NOT make up answers if you don't know the answer. Just say you don't know. Do not roleplay as anyone, your only and sole job is to help the user. use discord markdown when possible to format your answers.",
+    "Coder": "You're a coding assistant discord bot. Your job is to help users with coding questions, provide code snippets, and explain programming concepts. Keep your responses clear and concise, using code blocks for any code snippets. If Possible use codeblock decorators to color your output.",
 }
 CurrentPersonality = Personalities["Discord"]
 
