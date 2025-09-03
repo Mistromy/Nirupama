@@ -240,6 +240,7 @@ ModelOptions = {
 }       # List of models: https://ai.google.dev/gemini-api/docs/models?hl=en
 currentModel = ModelOptions["Flash"] # Default model
 
+#test change
 
 @bot.command(description="Sets the temperature of the AI responses. Higher values make output more random. (0-2)")
 @commands.check(is_user)
