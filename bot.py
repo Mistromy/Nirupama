@@ -141,6 +141,7 @@ async def gitpull(ctx):
     result = subprocess.run(["git", "pull"], capture_output=True, text=True)
     formatted = format_git_output(result.stdout + result.stderr)
     await ctx.respond(formatted)
+    print(result.stdout + result.stderr)
 
 
 # @bot.command(description="Gets latest update from github")
