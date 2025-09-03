@@ -117,33 +117,24 @@ def format_git_output(raw_output):
     files = []
     changes = []
     for line in lines:
-        # Summary lines
         if line.startswith("Fast-forward") or line.startswith("Updating") or line.startswith("From "):
             summary.append(line)
-        # File change lines (e.g., "bot.py | 1 +")
         elif "|" in line:
-            # Parse filename and changes
             parts = line.split("|")
             filename = parts[0].strip()
             stats = parts[1].strip()
             plus_count = stats.count("+")
             minus_count = stats.count("-")
-            # Extract numbers if present
             numbers = [int(s) for s in stats.split() if s.isdigit()]
             num_changes = numbers[0] if numbers else plus_count + minus_count
-            # Format for diff coloring
             files.append(f"{filename}\n+ {plus_count}\n- {minus_count}")
-        # Other change summary lines
         elif "changed" in line and ("insertion" in line or "deletion" in line):
             changes.append(line)
         else:
             summary.append(line)
 
-    # Format summary as shell
     summary_block = "```shell\n" + "\n".join(summary) + "\n```" if summary else ""
-    # Format file changes as diff
     files_block = "```diff\n" + "\n".join(files) + "\n```" if files else ""
-    # Format insertions/deletions as diff
     changes_block = "```diff\n" + "\n".join(changes) + "\n```" if changes else ""
 
     return summary_block + files_block + changes_block
