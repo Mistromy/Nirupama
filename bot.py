@@ -109,6 +109,7 @@ async def reboot(ctx):
     python_cmd = sys.executable
     script_path = os.path.join(os.path.dirname(__file__), "reboot.py")
     subprocess.Popen([python_cmd, script_path])
+    print("\n\nRebooting\n")
     os._exit(0)
 
 def format_git_output(raw_output):
