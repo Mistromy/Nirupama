@@ -80,11 +80,17 @@ def get_8ball_answer(question, lucky=False):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    await bot.change_presence(status=discord.Status.idle, activity=discord.Game("Photography Simulator"))
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
 
-@bot.command(description="Throw those gypsies back to mexico!")
-async def deport(ctx, arg):
-    await ctx.respond(f'Omw, {arg} will be deported in 2-3 business days.')
+# Status settings
+# Playing, Watching, Listening, Competing, Streaming
+# Online, Idle, Do Not Disturb, Invisible
+
+# (activity=discord.Game("Photography Simulator"))
+# (activity=discord.Streaming(name="Live Coding", url="https://twitch.tv/yourchannel"))
+# (activity=discord.Activity(type=discord.ActivityType.listening, name="music"))
+# (activity=discord.Activity(type=discord.ActivityType.watching, name="the sunset"))
+# (activity=discord.Activity(type=discord.ActivityType.competing, name="a tournament"))
 
 @bot.command(description="Ask the Magic 8Ball a Question!")
 async def eightball(ctx, question):
