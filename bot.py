@@ -110,6 +110,10 @@ async def serverlist(ctx):
         serverlisttext = serverlisttext + guild.name + "\n"
     await ctx.respond(f"{serverlisttext}")
 
+
+#### --- SHIP COMMAND --- ###
+
+
 @bot.command(description="Check how good of a pair 2 people here make!")
 async def ship(ctx, user1: discord.Member, user2: discord.Member):
     ship_data = read_ship_data()
@@ -130,7 +134,6 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     pfp_2 = Image.open('pfp_2.png')
     bg = Image.open('bg.png')
 
-
     bg = bg.convert("RGBA")
     pfp_1 = pfp_1.convert("RGBA")
     pfp_2 = pfp_2.convert("RGBA")
@@ -140,14 +143,11 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     pfp_1 = pfp_1.resize((size, size))
     pfp_2 = pfp_2.resize((size, size))
 
-
     pos1 = (175, 100)
     pos2 = (660, 100)
 
-
     bg.paste(pfp_1, pos1, pfp_1)
     bg.paste(pfp_2, pos2, pfp_2)
-
 
     bg.save('result_image.png')
 
@@ -187,9 +187,12 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
         5: "Ships passing in the night",
         0: "Oil and water"
     }
-
     shipcomment = shiptexts.get((round(shippercent / 5) * 5), "Too good to be true!")
     await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility! \n**{shipcomment}**", file=discord_image)
+
+### --- END SHIP COMMAND --- ###
+
+### --- AI COMMANDS ---###
 
 #AI Settings
 # temperature
