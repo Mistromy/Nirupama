@@ -18,6 +18,7 @@ import subprocess
 from google import genai
 from google.genai import types
 import sys
+import time
 load_dotenv()
 
 client = genai.Client()
@@ -250,6 +251,10 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
 
 ### --- END SHIP COMMAND --- ###
 
+@bot.slash_command(description="Analyze the tone of a message")
+async def tone(ctx, *, message: str):
+    await ctx.respond(f"### **Tone Analysis Results:** for \"{message}\"\n 98% Passive Aggressive")
+    
 ### --- AI COMMANDS ---###
 
 #AI Settings
