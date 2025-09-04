@@ -334,6 +334,67 @@ async def settings(ctx):
         f"## Settings: \n Debug Mode: {DebugMode} \n Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n Model: {currentModel} \n Personality: {personality_name}"
     )
 
+# CORRECTED: Helper function to send long messages, splitting them while preserving code blocks
+async def send_split_message(message, text):
+    """Splits a message into chunks of 2000 characters and sends them, preserving code blocks."""
+    if len(text) <= 2000:
+        await message.reply(text)
+        return
+
+    chunks = []
+    current_chunk = ""
+    in_code_block = False
+    code_block_language = ""
+    lines = text.split('\n')
+
+    for line in lines:
+        # Check for code block start/end
+        if line.strip().startswith("```"):
+            if not in_code_block:
+                in_code_block = True
+                code_block_language = line.strip()[3:]
+            else:
+                # This line is the end of a code block
+                if line.strip() == '```':
+                    in_code_block = False
+        
+        # If adding the new line exceeds the character limit
+        if len(current_chunk) + len(line) + 1 > 2000:
+            # If we are inside a code block, we must close it
+            if in_code_block:
+                current_chunk += "\n```"
+            
+            # --- THIS IS THE FIX ---
+            # Only append the chunk if it's not empty
+            if current_chunk:
+                chunks.append(current_chunk)
+            
+            # Start the new chunk. If we were in a code block, re-open it.
+            if in_code_block:
+                current_chunk = f"```{code_block_language}\n{line}"
+            else:
+                current_chunk = line
+        else:
+            if current_chunk: # If the chunk already has content, add a newline first
+                current_chunk += "\n" + line
+            else: # Otherwise, this is the first line of the chunk
+                current_chunk = line
+
+    # Add the final chunk to the list
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    # Send the messages
+    is_first_message = True
+    for chunk in chunks:
+        # Final safety check in case an empty chunk still gets through
+        if chunk:
+            if is_first_message:
+                await message.reply(chunk)
+                is_first_message = False
+            else:
+                await message.channel.send(chunk)
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -373,7 +434,7 @@ async def on_message(message):
             
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
-                await message.reply(text)
+                await send_split_message(message, text) # EDITED: Using the new split function
                 print(text)
             else:
                 text = response.candidates[0].content.parts[0].text
@@ -381,11 +442,16 @@ async def on_message(message):
                 mode_name = next((name for name, value in ThinkingModes.items() if value == CurrentThinkingMode), str(CurrentThinkingMode))
                 personality_name = next((name for name, value in Personalities.items() if value == CurrentPersonality), str(CurrentPersonality))
                 print(response)
-                await message.reply(
-                    f"{text} \n\n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n Model: {currentModel} \n Personality: {personality_name}"
-                )
-                
 
+                # EDITED: Building the full response string first
+                full_response = (
+                    f"{text} \n\n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n "
+                    f"Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n "
+                    f"Model: {currentModel} \n Personality: {personality_name}"
+                )
+                # EDITED: Using the new split function
+                await send_split_message(message, full_response)
+                
 
 bot.run(PHOTOBOT_KEY)
 
