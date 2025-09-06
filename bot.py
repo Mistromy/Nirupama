@@ -117,6 +117,12 @@ async def reboot(ctx):
     print("\n\nRebooting\n")
     os._exit(0)
 
+@bot.command(description="kills the process.")
+@commands.check(is_user)
+async def kill(ctx):
+    await ctx.respond("Killing process. <a:typing:1330966203602305035>")
+    exit()
+
 def format_git_output(raw_output):
     lines = raw_output.splitlines()
     summary = []
