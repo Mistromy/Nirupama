@@ -346,10 +346,15 @@ async def settings(ctx):
     )
 
 # CORRECTED: Helper function to send long messages, splitting them while preserving code blocks
-async def send_split_message(message, text):
-    """Splits a message into chunks of 2000 characters and sends them, preserving code blocks."""
-    if len(text) <= 2000:
-        await message.reply(text)
+async def send_split_message(target, text, isreply):
+    channel = target.channel if isinstance(target, discord.Message) else target
+
+
+    if len(text) <= 2000 & isreply == True:
+        await target.reply(text)
+        return
+    elif len(text) <= 2000 & isreply == False:
+        await channel.send(text)
         return
 
     chunks = []
@@ -395,25 +400,55 @@ async def send_split_message(message, text):
     if current_chunk:
         chunks.append(current_chunk)
 
-    # Send the messages
-    is_first_message = True
-    for chunk in chunks:
-        # Final safety check in case an empty chunk still gets through
-        if chunk:
-            if is_first_message:
-                await message.reply(chunk)
-                is_first_message = False
-            else:
-                await message.channel.send(chunk)
+    if isreply == True:
+        is_first_message = True
+        for chunk in chunks:
+            # Final safety check in case an empty chunk still gets through
+            if chunk:
+                if is_first_message:
+                    await target.reply(chunk)
+                    await logtodscshort(chunk)
+                    is_first_message = False
+                else:
+                    await channel.send(chunk)
+                    await logtodscshort(chunk)
+    elif isreply == False:
+        is_first_message = True
+        for chunk in chunks:
+            # Final safety check in case an empty chunk still gets through
+            if chunk:
+                if is_first_message:
+                    await channel.send(chunk)
+                    await logtodscshort(chunk)
+                    is_first_message = False
+                else:
+                    await channel.send(chunk)
+                    await logtodscshort(chunk)
+
+async def logtodsclong(text):
+    target = bot.get_channel(1414205010555699210) # Logging channel
+    await send_split_message(target, text, isreply=False)
+
+async def logtodscshort(text):
+    target = bot.get_channel(1414205010555699210) # Logging channel
+    await target.send(text)
+
+@bot.slash_command()
+@commands.check(is_user)
+async def testlog(ctx, *, text: str):
+    await logtodsclong(text)
+    await ctx.respond("Logged!")
 
 @bot.event
 async def on_message(message):
+
     if message.author == bot.user:
         return
     
     if bot.user in message.mentions:
         user_message = message.content
         print(f"{user_message} \n \n")
+        
         image_bytes = None
         image_part = None
 
@@ -445,7 +480,7 @@ async def on_message(message):
             
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
-                await send_split_message(message, text) # EDITED: Using the new split function
+                await send_split_message(message, text, isreply=True) # EDITED: Using the new split function
                 print(text)
             else:
                 text = response.candidates[0].content.parts[0].text
@@ -461,7 +496,9 @@ async def on_message(message):
                     f"Model: {currentModel} \n Personality: {personality_name}"
                 )
                 # EDITED: Using the new split function
-                await send_split_message(message, full_response)
+                await send_split_message(message, full_response, isreply=True)
+                
+                
                 
 
 bot.run(PHOTOBOT_KEY)
