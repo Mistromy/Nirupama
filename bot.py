@@ -414,10 +414,14 @@ async def on_message(message):
         return
     
     if bot.user in message.mentions:
+        startepochtime = int(time.time())
+        waiting_message = await message.reply("<a:typing:1330966203602305035> <t:" + str(startepochtime) + ":R>")
+
         user_message = message.content
         image_bytes = None
         image_part = None
         text_bytes = None
+        
 
         if message.attachments:
             for attachment in message.attachments:
@@ -435,42 +439,57 @@ async def on_message(message):
                     user_message += "\n\n" + text_bytes.decode('utf-8')
                     break
                     
-        async with message.channel.typing():
-            if image_part:
-                contents = [image_part, user_message]
-            else:
-                contents = [user_message]
-
-            response = client.models.generate_content(
-                model=currentModel,
-                config=types.GenerateContentConfig(
-                    temperature=temperature,
-                    thinking_config=types.ThinkingConfig(thinking_budget=CurrentThinkingMode),
-                    system_instruction=CurrentPersonality,
-                ),
-                contents=contents, 
-            )
-            print(str(contents) + "\n")
+        if image_part:
+            contents = [image_part, user_message]
+        else:
+            contents = [user_message]
             
+        async with message.channel.typing():
+            loop = asyncio.get_event_loop()
+
+            def blocking_task():
+                return client.models.generate_content(
+                    model=currentModel,
+                    config=types.GenerateContentConfig(
+                        temperature=temperature,
+                        thinking_config=types.ThinkingConfig(thinking_budget=CurrentThinkingMode),
+                        system_instruction=CurrentPersonality,
+                    ),
+                    contents=contents, 
+                )
+            
+            response = await loop.run_in_executor(None, blocking_task)
+
+            print(str(contents) + "\n")
+            elapsedtime = int(time.time()) - startepochtime
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
                 await send_split_message(message, text) # EDITED: Using the new split function
-                print(text)
+                print(text + "\nElapsed Time: " + str(elapsedtime) + " seconds\n\n")
             else:
                 text = response.candidates[0].content.parts[0].text
                 # Find the thinking mode name corresponding to the number
                 mode_name = next((name for name, value in ThinkingModes.items() if value == CurrentThinkingMode), str(CurrentThinkingMode))
                 personality_name = next((name for name, value in Personalities.items() if value == CurrentPersonality), str(CurrentPersonality))
-                print(response)
+                print(str(response) + "\nElapsed Time: " + str(elapsedtime) + " seconds\n\n")
 
-                # EDITED: Building the full response string first
+                
                 full_response = (
-                    f"{text} \n\n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n "
-                    f"Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n "
-                    f"Model: {currentModel} \n Personality: {personality_name}"
+                    f"{text} \n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n "
+                    f"Temperature: `{temperature}` \n Thinking Mode: `{mode_name}` (`{CurrentThinkingMode}`) \n "
+                    f"Model: `{currentModel}` \n Personality: `{personality_name}`\n"
+                    f"Time Elapsed: `{elapsedtime}` seconds"
                 )
                 # EDITED: Using the new split function
                 await send_split_message(message, full_response)
+
+            try:
+                await waiting_message.delete()
+            except discord.NotFound: 
+                pass
+            except discord.HTTPException:
+                print("Failed to delete waiting message.")
+                pass
                 
 
 bot.run(PHOTOBOT_KEY)
