@@ -472,7 +472,13 @@ async def on_message(message):
                         mime_type=attachment.content_type,
                     )
                     break
-
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith('text'):
+                    text_bytes = await attachment.read()
+                    user_message += "\n\n" + text_bytes.decode('utf-8')
+                    break
+                    
         async with message.channel.typing():
             if image_part:
                 contents = [image_part, user_message]
