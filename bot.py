@@ -1,4 +1,4 @@
-# bot.py - Updated with unified logging (Rich + RotatingFile + Discord handler)
+# bot.py (updated)
 import discord # For Py-cord
 from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
@@ -23,6 +23,9 @@ import time
 import logging
 import logging.handlers
 
+# --- NEW: import logging_setup (moved logging logic out of this file) ---
+from logging_setup import setup_logging
+
 load_dotenv()
 
 client = genai.Client()
@@ -32,284 +35,22 @@ intents.message_content = True  # Required to read message content
 
 bot = discord.Bot(intents=intents)
 
-# ---------------------- Logging Setup ----------------------
-# Change this to your logging channel
+# ---------------------- Logging Setup (delegated) ----------------------
+# Only logging-related lines were changed to call the external module.
 LOG_CHANNEL_ID = 1414205010555699210
 
-# Try to use rich for colored console logs
-try:
-    from rich.logging import RichHandler
-    RICH_AVAILABLE = True
-except Exception:
-    RICH_AVAILABLE = False
-
-# Simple split helper for Discord message length
-def split_message(text: str, limit: int = 1900):
-    if not text:
-        return [""]
-    parts = []
-    current = []
-    cur_len = 0
-    for line in text.splitlines(keepends=True):
-        if cur_len + len(line) > limit:
-            if current:
-                parts.append("".join(current))
-                current = []
-                cur_len = 0
-            while len(line) > limit:
-                parts.append(line[:limit])
-                line = line[limit:]
-        current.append(line)
-        cur_len += len(line)
-    if current:
-        parts.append("".join(current))
-    return parts
-
-# Stream redirector to capture stdout/stderr into logging
-class StreamToLogger(io.TextIOBase):
-    def __init__(self, logger: logging.Logger, level: int = logging.INFO):
-        super().__init__()
-        self.logger = logger
-        self.level = level
-        self._buffer = ""
-
-    def write(self, s):
-        if not s:
-            return
-        self._buffer += s
-        while "\n" in self._buffer:
-            line, self._buffer = self._buffer.split("\n", 1)
-            line = line.rstrip("\r")
-            if line:
-                self.logger.log(self.level, line)
-        return len(s)
-
-    def flush(self):
-        if self._buffer:
-            self.logger.log(self.level, self._buffer)
-            self._buffer = ""
-
-# Discord logging handler — batches and posts to a channel
-class DiscordLogHandler(logging.Handler):
-    def __init__(self, bot_obj, channel_id: int, level=logging.ERROR, batch_interval: float = 1.0, max_batch_chars: int = 1800):
-        super().__init__(level=level)
-        self.bot = bot_obj
-        self.channel_id = channel_id
-        self.batch_interval = batch_interval
-        self.max_batch_chars = max_batch_chars
-        self._queue: asyncio.Queue = asyncio.Queue()
-        self._worker_task: asyncio.Task | None = None
-        self._sending = False  # re-entrancy guard
-        # Filter out logs from discord internals to avoid flooding / loops
-        def _filter(record):
-            nm = (record.name or "")
-            if nm.startswith("discord") or nm.startswith("websockets") or nm.startswith("aiohttp"):
-                return False
-            return True
-        self.addFilter(_filter)
-
-    def emit(self, record: logging.LogRecord) -> None:
-        try:
-            if self._sending:
-                return  # drop to avoid feedback loop
-            msg = self.format(record)
-            if not msg:
-                return
-            loop = None
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
-            if loop and loop.is_running():
-                loop.call_soon_threadsafe(self._queue.put_nowait, msg)
-            else:
-                # synchronous fallback (unlikely on startup)
-                asyncio.get_event_loop().run_until_complete(self._queue.put(msg))
-        except Exception:
-            self.handleError(record)
-
-    async def _worker(self):
-        # ensure bot ready
-        try:
-            await self.bot.wait_until_ready()
-        except Exception:
-            pass
-
-        channel = None
-        try:
-            channel = await self.bot.fetch_channel(self.channel_id)
-        except Exception:
-            channel = None
-
-        buffer = []
-        while True:
-            try:
-                try:
-                    item = await asyncio.wait_for(self._queue.get(), timeout=self.batch_interval)
-                    buffer.append(item)
-                except asyncio.TimeoutError:
-                    pass
-
-                # drain
-                while True:
-                    try:
-                        item = self._queue.get_nowait()
-                        buffer.append(item)
-                    except asyncio.QueueEmpty:
-                        break
-
-                if buffer:
-                    combined = "\n\n".join(buffer)
-                    parts = split_message(combined, limit=self.max_batch_chars)
-
-                    self._sending = True
-                    try:
-                        if channel is None:
-                            try:
-                                channel = await self.bot.fetch_channel(self.channel_id)
-                            except Exception as e:
-                                # fallback to get_channel
-                                channel = self.bot.get_channel(self.channel_id)
-                                if channel is None:
-                                    print("DiscordLogHandler: could not obtain channel:", e, file=sys.stderr)
-
-                        if channel is not None:
-                            for part in parts:
-                                try:
-                                    # Send as codeblock for readability
-                                    await channel.send(f"```{part}```")
-                                except Exception as e:
-                                    # If send fails, print locally (will be captured by StreamToLogger)
-                                    print("DiscordLogHandler send failed:", e, file=sys.stderr)
-                        else:
-                            print("DiscordLogHandler: no channel available to send logs.", file=sys.stderr)
-                    finally:
-                        self._sending = False
-
-                    buffer = []
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                print("DiscordLogHandler worker error:", e, file=sys.stderr)
-                await asyncio.sleep(1.0)
-
-    def start_worker(self, loop: asyncio.AbstractEventLoop):
-        if self._worker_task is None:
-            self._worker_task = loop.create_task(self._worker())
-
-    def stop_worker(self):
-        if self._worker_task:
-            self._worker_task.cancel()
-            self._worker_task = None
-
-# Setup logging function
-def setup_logging(bot_obj, discord_channel_id: int | None = None,
-                  level=logging.DEBUG, log_file="bot.log",
-                  max_bytes=5_000_000, backup_count=3,
-                  discord_handler_level=logging.INFO, redirect_stdout=True, redirect_stderr=True):
-    root_logger = logging.getLogger("bot")
-    root_logger.setLevel(level)
-
-    # Clear existing handlers for idempotence
-    for h in list(root_logger.handlers):
-        root_logger.removeHandler(h)
-
-    # Rotating file handler
-    fh = logging.handlers.RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
-    fh.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s"))
-    root_logger.addHandler(fh)
-
-    # Console handler
-    if RICH_AVAILABLE:
-        ch = RichHandler(rich_tracebacks=True, tracebacks_show_locals=False)
-        ch.setFormatter(logging.Formatter("%(message)s"))
-    else:
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s"))
-    root_logger.addHandler(ch)
-
-    # Reduce noise
-    logging.getLogger("discord").setLevel(logging.WARNING)
-    logging.getLogger("websockets").setLevel(logging.WARNING)
-    logging.getLogger("aiohttp").setLevel(logging.WARNING)
-
-    discord_handler = None
-    if discord_channel_id is not None:
-        discord_handler = DiscordLogHandler(bot_obj, discord_channel_id, level=discord_handler_level)
-        discord_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s"))
-        root_logger.addHandler(discord_handler)
-        # Start worker when loop exists; trying now and also safe to call again after on_ready
-        try:
-            discord_handler.start_worker(bot_obj.loop)
-        except Exception:
-            pass
-
-    # Redirect stdout/stderr
-    if redirect_stdout:
-        sys.stdout = StreamToLogger(logging.getLogger("bot.stdout"), logging.INFO)
-    if redirect_stderr:
-        sys.stderr = StreamToLogger(logging.getLogger("bot.stderr"), logging.ERROR)
-
-    # Hook for uncaught exceptions to log them
-    def handle_exception(exc_type, exc, exc_tb):
-        logging.getLogger("bot").exception("Uncaught exception", exc_info=(exc_type, exc, exc_tb))
-    sys.excepthook = handle_exception
-
-    return root_logger, discord_handler
-
-# Initialize logging (bot exists now)
-logger, discord_handler = setup_logging(bot, LOG_CHANNEL_ID,
-                                       level=logging.DEBUG,
-                                       log_file="bot.log",
-                                       discord_handler_level=logging.INFO,
-                                       redirect_stdout=True,
-                                       redirect_stderr=True)
-
-# Convenience function to centralize "print-like" logging
-def bot_log(message: str, *, level=logging.INFO, command: str = None, extra_fields: dict | None = None, send_immediate_to_channel: discord.abc.Messageable | None = None, codeblock: bool = False):
-    """
-    Unified logging function.
-
-    - message: text to log
-    - level: logging level (logging.INFO, DEBUG, WARNING, ERROR, CRITICAL)
-    - command: optional command/function name to include with the log
-    - extra_fields: optional dict for additional context
-    - send_immediate_to_channel: if provided (discord channel or message), will immediately send message there (split safely)
-    - codeblock: whether to wrap message for immediate send in codeblock
-    """
-    ts = datetime.datetime.utcnow().isoformat(sep=" ", timespec="seconds")
-    prefix = f"[{ts}]"
-    if command:
-        prefix += f" [{command}]"
-    formatted = f"{prefix} {message}"
-    if extra_fields:
-        formatted = formatted + " | " + json.dumps(extra_fields, default=str)
-
-    # Log to file + console + discord handler (if level >= handler threshold)
-    logger.log(level, formatted)
-
-    # Optionally send immediately to a provided Discord channel/message
-    if send_immediate_to_channel:
-        # send via the existing send_split_message helper
-        async def _send_now():
-            tgt = send_immediate_to_channel
-            text = formatted
-            if codeblock:
-                # keep codeblock formatting if requested
-                text = f"```{message}```"
-            # reuse send_split_message from below
-            await send_split_message(tgt, text, isreply=False if isinstance(tgt, discord.abc.Messageable) else False)
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.create_task(_send_now())
-            else:
-                asyncio.get_event_loop().run_until_complete(_send_now())
-        except Exception as e:
-            # If immediate send fails, just log the failure locally
-            logger.exception("Failed to send immediate log to channel", exc_info=e)
-
-# ---------------------- End logging setup ----------------------
+# Initialize logging but DO NOT redirect stdout/stderr nor start the discord worker yet.
+# We'll start those in on_ready() to avoid startup race conditions.
+logger, discord_handler, bot_log, enable_stream_redirects, start_discord_logging = setup_logging(
+    bot,
+    LOG_CHANNEL_ID,
+    level=logging.DEBUG,
+    log_file="bot.log",
+    discord_handler_level=logging.INFO,
+    redirect_stdout=False,  # don't redirect during import/startup
+    redirect_stderr=False
+)
+# -----------------------------------------------------------------------
 
 ###--- SHIP COMMANDS ---###
 def read_ship_data():
@@ -361,6 +102,20 @@ def get_8ball_answer(question, lucky=False):
 
 @bot.event
 async def on_ready():
+    # Start stream redirects and the Discord logging worker now that the bot is ready.
+    try:
+        enable_stream_redirects()
+    except Exception as e:
+        # If enabling redirects fails, log locally
+        logging.getLogger("bot").exception("Failed to enable stream redirects", exc_info=e)
+
+    try:
+        if discord_handler:
+            start_discord_logging(bot.loop)
+    except Exception as e:
+        logging.getLogger("bot").exception("Failed to start discord log worker", exc_info=e)
+
+    # Now log that the bot is ready and set presence normally.
     bot_log(f"Logged in as {bot.user}", level=logging.INFO, command="on_ready")
     await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
 
