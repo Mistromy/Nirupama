@@ -19,6 +19,8 @@ from google import genai
 from google.genai import types
 import sys
 import time
+
+
 load_dotenv()
 
 client = genai.Client()
@@ -413,7 +415,6 @@ async def on_message(message):
     
     if bot.user in message.mentions:
         user_message = message.content
-        print(f"{user_message} \n \n")
         image_bytes = None
         image_part = None
 
@@ -425,6 +426,12 @@ async def on_message(message):
                         data=image_bytes,
                         mime_type=attachment.content_type,
                     )
+                    break
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith('text'):
+                    text_bytes = await attachment.read()
+                    user_message += "\n\n" + text_bytes.decode('utf-8')
                     break
                     
         async with message.channel.typing():
@@ -442,6 +449,7 @@ async def on_message(message):
                 ),
                 contents=contents, 
             )
+            print(str(contents) + "\n")
             
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
