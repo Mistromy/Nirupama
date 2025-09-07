@@ -3,3 +3,4 @@ config.py
 \__pycache__
 ship_data.json
 .env
+bot.log
