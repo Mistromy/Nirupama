@@ -417,6 +417,7 @@ async def on_message(message):
         user_message = message.content
         image_bytes = None
         image_part = None
+        text_bytes = None
 
         if message.attachments:
             for attachment in message.attachments:
