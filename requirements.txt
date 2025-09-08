@@ -5,3 +5,5 @@ openai
 python-dotenv
 requests
 -q -U google-genai
+rich
+typing 
