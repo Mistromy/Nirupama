@@ -35,12 +35,9 @@ intents.message_content = True  # Required to read message content
 
 bot = discord.Bot(intents=intents)
 
-# ---------------------- Logging Setup (delegated) ----------------------
-# Only logging-related lines were changed to call the external module.
+
 LOG_CHANNEL_ID = 1414205010555699210
 
-# Initialize logging but DO NOT redirect stdout/stderr nor start the discord worker yet.
-# We'll start those in on_ready() to avoid startup race conditions.
 logger, discord_handler, bot_log, enable_stream_redirects, start_discord_logging = setup_logging(
     bot,
     LOG_CHANNEL_ID,
@@ -104,6 +101,7 @@ def get_8ball_answer(question, lucky=False):
 async def on_ready():
     # Start stream redirects and the Discord logging worker now that the bot is ready.
     try:
+        # This will now redirect all print() calls and system errors to our logger
         enable_stream_redirects()
     except Exception as e:
         # If enabling redirects fails, log locally
@@ -111,12 +109,14 @@ async def on_ready():
 
     try:
         if discord_handler:
-            start_discord_logging(bot.loop)
+            # This function now intelligently gets the loop and starts the background task
+            start_discord_logging()
     except Exception as e:
         logging.getLogger("bot").exception("Failed to start discord log worker", exc_info=e)
 
-    # Now log that the bot is ready and set presence normally.
+    # Now log that the bot is ready. This will go to console AND Discord.
     bot_log(f"Logged in as {bot.user}", level=logging.INFO, command="on_ready")
+    print("This is a test print after redirection!") # This will also be logged!
     await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
 
 # Status settings

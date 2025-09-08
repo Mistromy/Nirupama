@@ -1,157 +1,163 @@
+# logging_setup.py
 import logging
+import logging.handlers
 import sys
 import asyncio
 import discord
-from logging import Handler, LogRecord
-
-# ANSI escape codes for colors
-class Color:
-    BLACK = '\033[30m'
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    MAGENTA = '\033[35m'
-    CYAN = '\033[36m'
-    WHITE = '\033[37m'
-    UNDERLINE = '\033[4m'
-    RESET = '\033[0m'
+from collections import deque
 
 class ColoredFormatter(logging.Formatter):
     """
-    A custom formatter to add colors to log messages based on their level.
+    A custom log formatter that adds color to console output.
     """
-    COLORS = {
-        logging.DEBUG: Color.CYAN,
-        logging.INFO: Color.GREEN,
-        logging.WARNING: Color.YELLOW,
-        logging.ERROR: Color.RED,
-        logging.CRITICAL: Color.RED + Color.UNDERLINE,
+    GREY = "\x1b[38;20m"
+    YELLOW = "\x1b[33;20m"
+    RED = "\x1b[31;20m"
+    BOLD_RED = "\x1b[31;1m"
+    BLUE = "\x1b[34;20m"
+    GREEN = "\x1b[32;20m"
+    RESET = "\x1b[0m"
+
+    # Define the format for each log level, including custom fields
+    FORMATS = {
+        logging.DEBUG: f"{GREY}%(asctime)s - %(levelname)s - {BLUE}[%(command)s]{RESET} - %(message)s",
+        logging.INFO: f"{GREEN}%(asctime)s - %(levelname)s - {BLUE}[%(command)s]{RESET} - %(message)s",
+        logging.WARNING: f"{YELLOW}%(asctime)s - %(levelname)s - {BLUE}[%(command)s]{RESET} - %(message)s",
+        logging.ERROR: f"{RED}%(asctime)s - %(levelname)s - {BLUE}[%(command)s]{RESET} - %(message)s",
+        logging.CRITICAL: f"{BOLD_RED}%(asctime)s - %(levelname)s - {BLUE}[%(command)s]{RESET} - %(message)s",
     }
 
     def format(self, record):
-        # Dynamically add the command to the record if it exists
-        command_str = ""
-        if hasattr(record, 'command') and record.command:
-            command_str = f" [{record.command}]"
-        
-        # Base format string
-        log_fmt = f"%(asctime)s [%(levelname)-8s]%(command_str)s %(message)s"
-        
-        formatter = logging.Formatter(log_fmt, "%Y-%m-%d %H:%M:%S")
-        
-        # Add our custom command string to the record for formatting
-        record.command_str = command_str
-        
-        formatted_message = formatter.format(record)
-        
-        # Apply color
-        log_color = self.COLORS.get(record.levelno, Color.WHITE)
-        return f"{log_color}{formatted_message}{Color.RESET}"
+        # Set default for custom field if not present
+        if not hasattr(record, 'command'):
+            record.command = 'general'
+            
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
+        return formatter.format(record)
 
-class DiscordHandler(Handler):
+class DiscordLogHandler(logging.Handler):
     """
-    A logging handler that sends logs to a Discord channel.
-    This handler is asynchronous and uses an asyncio.Queue to avoid blocking.
+    A logging handler that sends logs to a Discord channel via an asyncio queue.
     """
-    def __init__(self, bot: discord.Bot, channel_id: int):
-        super().__init__()
+    def __init__(self, bot: discord.Bot, channel_id: int, level=logging.NOTSET):
+        super().__init__(level=level)
         self.bot = bot
         self.channel_id = channel_id
         self.queue = asyncio.Queue()
+        self.worker_task = None
+        self.closed = False
 
-    def emit(self, record: LogRecord) -> None:
-        """
-        Formats the record and puts it into the queue.
-        This method is thread-safe.
-        """
-        msg = self.format(record)
-        # Discord has a 2000 character limit per message
-        if len(msg) > 1990:
-            msg = msg[:1990] + "..."
-        self.queue.put_nowait(msg)
+    def emit(self, record):
+        """Puts a formatted log message into the queue."""
+        if self.closed:
+            return
+        # This method can be called from any thread, so we use thread-safe put_nowait
+        try:
+            log_entry = self.format(record)
+            self.queue.put_nowait(log_entry)
+        except Exception:
+            self.handleError(record)
 
-    async def worker(self):
-        """The actual worker task that sends messages to Discord."""
-        channel = await self.bot.fetch_channel(self.channel_id)
+    async def _worker(self):
+        """The background task that sends messages from the queue to Discord."""
+        await self.bot.wait_until_ready()
+        channel = self.bot.get_channel(self.channel_id)
         if not channel:
-            print(f"ERROR: Could not find log channel with ID {self.channel_id}", file=sys.__stderr__)
+            print(f"ERROR: Logging channel with ID {self.channel_id} not found.", file=sys.__stderr__)
+            self.closed = True
             return
 
-        while True:
+        while not (self.bot.is_closed() or self.closed):
             try:
-                message = await self.queue.get()
-                if isinstance(channel, discord.TextChannel):
-                    await channel.send(f"```log\n{message}\n```")
+                record = await self.queue.get()
+                # Split messages longer than 2000 chars
+                if len(record) > 2000:
+                    # Preserve code blocks
+                    if "```" in record:
+                        parts = record.split("```")
+                        # Send content outside code blocks
+                        await channel.send(parts[0]) 
+                        # Send content inside code block, splitting if necessary
+                        code_block = parts[1]
+                        for i in range(0, len(code_block), 1980):
+                            await channel.send(f"```\n{code_block[i:i+1980]}\n```")
+                        # Send any remaining content
+                        if len(parts) > 2:
+                            await channel.send(parts[2])
+                    else: # Simple split for non-code messages
+                        for i in range(0, len(record), 2000):
+                            await channel.send(record[i:i+2000])
+                else:
+                    await channel.send(record)
+
+            except asyncio.CancelledError:
+                break # Task was cancelled
+            except discord.errors.Forbidden:
+                print(f"ERROR: Bot does not have permission to send messages in channel {self.channel_id}.", file=sys.__stderr__)
+                self.closed = True # Stop trying
             except Exception as e:
-                # Print errors to the original stderr in case the logging system itself is broken
-                print(f"Error in Discord logger worker: {e}", file=sys.__stderr__)
-            finally:
-                self.queue.task_done()
+                print(f"ERROR: Unhandled exception in Discord logging worker: {e}", file=sys.__stderr__)
+
+    def start_worker(self):
+        """Starts the background worker task if it's not already running."""
+        if self.worker_task is None or self.worker_task.done():
+            loop = asyncio.get_running_loop()
+            self.worker_task = loop.create_task(self._worker())
+            print("Discord logging worker started.")
+
 
 class StreamToLogger:
     """
-    A file-like object that redirects stream (stdout/stderr) output to a logger.
+    A file-like object that redirects stdout/stderr to a logger instance.
     """
-    def __init__(self, logger: logging.Logger, level: int):
+    def __init__(self, logger, level):
         self.logger = logger
         self.level = level
         self.linebuf = ''
 
-    def write(self, buf: str):
+    def write(self, buf):
         for line in buf.rstrip().splitlines():
-            # Log each line separately
             self.logger.log(self.level, line.rstrip())
 
     def flush(self):
-        # This is needed for compatibility with the file-like object interface.
         pass
 
 def setup_logging(bot: discord.Bot, channel_id: int, level=logging.INFO, discord_handler_level=logging.INFO, redirect_stdout=True, redirect_stderr=True, **kwargs):
     """
-    Configures the entire logging system.
+    Configures logging for the bot.
     """
-    # 1. Get the root logger
-    logger = logging.getLogger('bot')
+    logger = logging.getLogger("bot")
     logger.setLevel(level)
-    
-    # 2. Setup Console Handler with colors
+
+    # --- Console Handler with Colors ---
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter())
     logger.addHandler(console_handler)
 
-    # 3. Setup Discord Handler
-    discord_handler = DiscordHandler(bot, channel_id)
-    discord_formatter = logging.Formatter(
-        '%(asctime)s [%(levelname)-8s] [%(command)s] %(message)s',
-        '%Y-%m-%d %H:%M:%S'
-    )
+    # --- Discord Handler (starts disabled, enabled later) ---
+    discord_handler = DiscordLogHandler(bot, channel_id, level=discord_handler_level)
+    # Simple formatter for Discord, as it handles its own formatting (e.g., code blocks)
+    discord_formatter = logging.Formatter('```%(levelname)s [%(command)s] - %(asctime)s\n%(message)s\n```', datefmt="%Y-%m-%d %H:%M:%S")
     discord_handler.setFormatter(discord_formatter)
-    discord_handler.setLevel(discord_handler_level)
     logger.addHandler(discord_handler)
 
-    # Store original streams
-    original_stdout = sys.stdout
-    original_stderr = sys.stderr
+    def bot_log(message: str, level=logging.INFO, command="general", **kwargs):
+        """Custom log function to easily add command context."""
+        extra = {'command': command}
+        logger.log(level, message, extra=extra)
 
-    # 4. Define function to enable stream redirection (called later in on_ready)
     def enable_stream_redirects():
+        """Function to redirect stdout and stderr to the logger."""
         if redirect_stdout:
             sys.stdout = StreamToLogger(logger, logging.INFO)
         if redirect_stderr:
             sys.stderr = StreamToLogger(logger, logging.ERROR)
-        logger.info("Stdout and Stderr have been redirected to the logger.")
+        bot_log("Stdout and Stderr have been redirected to the logger.", command="setup")
 
-    # 5. Define function to start the Discord worker (called later in on_ready)
-    def start_discord_logging(loop):
-        loop.create_task(discord_handler.worker())
-        logger.info("Discord logging worker has been started.")
+    def start_discord_logging():
+        """Function to start the Discord handler's worker task."""
+        discord_handler.start_worker()
 
-    # 6. Define the custom logging function
-    def bot_log(message: str, level=logging.INFO, command: str = "general", extra_fields: dict = None):
-        extra = {'command': command}
-        if extra_fields:
-            extra.update(extra_fields)
-        logger.log(level, message, extra=extra)
-
+    # The setup function now returns the helper functions
     return logger, discord_handler, bot_log, enable_stream_redirects, start_discord_logging
