@@ -301,7 +301,7 @@ Personalities = {
     "Discord 2" :           "you're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy, but try to stay respectful towards the user, unless clearly participating in banter. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum. if the user asks a question, anwer it regardless of the topic, you may comment on it if you want, but always answer the question.",
     "None / Default":       "Use Discord formatting in all your messages."
 }
-CurrentPersonality = Personalities["Discord"]
+CurrentPersonality = Personalities["Discord 2"]
 
 ThinkingModes = {
     "Off": 0,
@@ -317,7 +317,23 @@ ModelOptions = {
     "Flash": "gemini-2.5-flash",
     "Flash Lite": "gemini-2.5-flash-lite",
 }       # List of models: https://ai.google.dev/gemini-api/docs/models?hl=en
-currentModel = ModelOptions["Flash"] # Default model
+currentModel = ModelOptions["Flash Lite"] # Default model
+
+AiPresets = {
+    "Fast Discord" : {
+        "personality": Personalities["Discord"],
+        "thinking_mode": ThinkingModes["Off"],
+        "model": ModelOptions["Flash Lite"],
+        "temperature": 1.3
+    },
+    "Code" : {
+        "personality": Personalities["Coder"],
+        "thinking_mode": ThinkingModes["Dynamic"],
+        "model": ModelOptions["Pro"],
+        "temperature": 0.75
+    },
+
+}
 
 @bot.command(description="Sets the temperature of the AI responses. Higher values make output more random. (0-2)")
 @commands.check(is_user)
@@ -369,6 +385,18 @@ async def settings(ctx):
         f"## Settings: \n Debug Mode: {DebugMode} \n Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n Model: {currentModel} \n Personality: {personality_name}"
     )
     bot_log("Settings displayed", level=logging.INFO, command="settings")
+
+@bot.slash_command(description="choose an ai preset")
+@commands.check(is_user)
+async def preset(ctx, preset: str = discord.Option(description = "Choose Preset", choices=list(AiPresets.keys()), deafult="Fast Discord")):
+    global CurrentPersonality, CurrentThinkingMode, currentModel, temperature
+    preset_data = AiPresets[preset]
+    CurrentPersonality = preset_data["personality"]
+    CurrentThinkingMode = preset_data["thinking_mode"]
+    currentModel = preset_data["model"]
+    temperature = preset_data["temperature"]
+    await ctx.respond(f"Preset applied: {preset}")
+    bot_log(f"Preset applied: {preset}", level=logging.INFO, command="preset")
 
 # CORRECTED: Helper function to send long messages, splitting them while preserving code blocks
 async def send_split_message(target, text, isreply):
@@ -441,11 +469,6 @@ async def send_split_message(target, text, isreply):
                     await channel.send(chunk)
 
 
-@bot.slash_command()
-@commands.check(is_user)
-async def testlog(ctx, *, text: str):
-    bot_log(text, level=logging.INFO, command="testlog")
-    await ctx.respond("Logged!")
 
 @bot.event
 async def on_message(message):
@@ -508,7 +531,7 @@ async def on_message(message):
             elapsedtime = int(time.time()) - startepochtime
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
-                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds\n\n", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
+                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
                 await send_split_message(message, text, isreply=True) # send to user
                 # Log the AI reply
             else:
