@@ -536,8 +536,9 @@ async def on_message(message):
             elapsedtime = int(time.time()) - startepochtime
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
-                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
                 await send_split_message(message, text, isreply=True) # send to user
+                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
+                
                 # Log the AI reply
             else:
                 text = response.candidates[0].content.parts[0].text
@@ -552,8 +553,9 @@ async def on_message(message):
                     f"Model: `{currentModel}` \n Personality: `{personality_name}`\n"
                     f"Time Elapsed: `{elapsedtime}` seconds"
                 ) 
-                bot_log(full_response, level=logging.DEBUG, command="ai_reply_debug", extra_fields={"model": currentModel})
                 await send_split_message(message, full_response, isreply=True)
+                bot_log(full_response, level=logging.DEBUG, command="ai_reply_debug", extra_fields={"model": currentModel})
+                
 
             try:
                 await waiting_message.delete()
