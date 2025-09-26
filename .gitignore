@@ -4,3 +4,4 @@ config.py
 ship_data.json
 .env
 bot.log
+conversation_history.db

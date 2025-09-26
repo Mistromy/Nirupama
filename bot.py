@@ -1,4 +1,4 @@
-import discord # For Py-cord
+import discord
 from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
 import asyncio
@@ -24,34 +24,235 @@ import time
 import logging
 import logging.handlers
 import re
+import sqlite3
 
-# --- NEW: import logging_setup (moved logging logic out of this file) ---
+# Enhanced logging import
 from logging_setup import setup_logging
 
 load_dotenv()
-
 client = genai.Client()
 
 intents = discord.Intents.all()
-intents.message_content = True  # Required to read message content
-
+intents.message_content = True
 bot = discord.Bot(intents=intents)
-
 
 LOG_CHANNEL_ID = 1414205010555699210
 
+# Initialize enhanced logging
 logger, discord_handler, bot_log, enable_stream_redirects, start_discord_logging = setup_logging(
     bot,
     LOG_CHANNEL_ID,
     level=logging.DEBUG,
-    log_file="bot.log",
     discord_handler_level=logging.INFO,
-    redirect_stdout=False,  # don't redirect during import/startup
+    redirect_stdout=False,
     redirect_stderr=False
 )
-# -----------------------------------------------------------------------
 
-###--- SHIP COMMANDS ---###
+# Global settings
+keep_code_in_message = False
+debug_mode = False
+
+# History system
+history_mode = "off"  # "separate", "unified", "off"
+conversation_history = {}
+unified_history = []
+MAX_HISTORY_LENGTH = 50
+SUMMARIZATION_THRESHOLD = 30
+
+# Tool system infrastructure
+class ToolProcessor:
+    def __init__(self, bot, send_long_message_func):
+        self.bot = bot
+        self.send_long_message = send_long_message_func
+
+    async def process_tools(self, text, channel, files_to_attach=None):
+        """Process all tools in the given text and return cleaned text with files to attach."""
+        if files_to_attach is None:
+            files_to_attach = []
+
+        processed_text = text
+        used_tools = []
+
+        # Process {code:filename} tool
+        code_matches = re.finditer(r'\{code:([^:}]+)(?::([^}]+))?\}(.*?)\{endcode\}', text, re.DOTALL)
+        for match in code_matches:
+            filename = match.group(1).strip()
+            retention_override = match.group(2)  # "keep" or "remove"
+            code_content = match.group(3).strip()
+
+            # Create file
+            file_buffer = io.StringIO(code_content)
+            code_file = discord.File(fp=file_buffer, filename=filename)
+            files_to_attach.append(code_file)
+
+            # Determine whether to keep code in message
+            should_keep = keep_code_in_message
+            if retention_override:
+                should_keep = retention_override.lower() == "keep"
+
+            if should_keep:
+                # Replace with formatted code block
+                lang = filename.split('.')[-1] if '.' in filename else 'python'
+                replacement = f"```{lang}\n{code_content}\n```\n*Code also attached as {filename}*"
+            else:
+                # Remove completely, just mention the file
+                replacement = f"*Code attached as {filename}*"
+
+            processed_text = processed_text.replace(match.group(0), replacement)
+            used_tools.append(f"code:{filename}")
+
+        # Process {react:emoji} tool
+        react_matches = re.finditer(r'\{react:([^}]+)\}', processed_text)
+        for match in react_matches:
+            emoji = match.group(1).strip()
+            # Remove the tool syntax
+            processed_text = processed_text.replace(match.group(0), "")
+            used_tools.append(f"react:{emoji}")
+            # Note: Actual reaction will be handled in the calling function
+
+        # Process {tenor:search_term} tool
+        tenor_matches = re.finditer(r'\{tenor:([^}]+)\}', processed_text)
+        for match in tenor_matches:
+            search_term = match.group(1).strip()
+            # Remove the tool syntax and add placeholder
+            processed_text = processed_text.replace(match.group(0), f"*[Tenor GIF: {search_term}]*")
+            used_tools.append(f"tenor:{search_term}")
+
+        # Process {aiimage:description} tool
+        aiimage_matches = re.finditer(r'\{aiimage:([^}]+)\}', processed_text)
+        for match in aiimage_matches:
+            description = match.group(1).strip()
+            processed_text = processed_text.replace(match.group(0), f"*[AI Image: {description}]*")
+            used_tools.append(f"aiimage:{description}")
+
+        # Process {localimage:filename} tool
+        localimage_matches = re.finditer(r'\{localimage:([^}]+)\}', processed_text)
+        for match in localimage_matches:
+            filename = match.group(1).strip()
+            if os.path.exists(filename):
+                local_file = discord.File(filename)
+                files_to_attach.append(local_file)
+                processed_text = processed_text.replace(match.group(0), f"*Attached: {filename}*")
+                used_tools.append(f"localimage:{filename}")
+            else:
+                processed_text = processed_text.replace(match.group(0), f"*File not found: {filename}*")
+
+        # Process {newmessage} tool for message splitting
+        if "{newmessage}" in processed_text:
+            used_tools.append("newmessage")
+
+        return processed_text, files_to_attach, used_tools
+
+    async def handle_reactions(self, text, message):
+        """Handle reaction tools from the processed text."""
+        react_matches = re.finditer(r'\{react:([^}]+)\}', text)
+        for match in react_matches:
+            emoji = match.group(1).strip()
+            try:
+                await message.add_reaction(emoji)
+            except discord.HTTPException:
+                bot_log(f"Failed to add reaction: {emoji}", level=logging.WARNING, command="reaction_tool")
+
+# Initialize tool processor
+tool_processor = None
+
+async def enhanced_send_long_message(target, text, isreply=False, files=None):
+    """Enhanced message sending with {newmessage} support and file attachment."""
+    channel = target.channel if isinstance(target, discord.Message) else target
+
+    # Split by {newmessage} first
+    message_parts = text.split("{newmessage}")
+
+    for part_index, part in enumerate(message_parts):
+        if not part.strip() and not files:
+            continue
+
+        # Attach files only to the last part with content
+        part_files = files if (part_index == len(message_parts) - 1 and files) else None
+
+        if len(part) <= 2000:
+            if part_index == 0 and isreply:
+                await target.reply(part if part.strip() else None, files=part_files)
+            else:
+                await channel.send(part if part.strip() else None, files=part_files)
+        else:
+            # Use the enhanced splitting for long messages
+            await discord_handler.send_long_message(channel, part, part_files)
+
+# History management functions
+def init_history_db():
+    """Initialize SQLite database for conversation history."""
+    conn = sqlite3.connect('conversation_history.db')
+    c = conn.cursor()
+    c.execute("""CREATE TABLE IF NOT EXISTS history
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  user_id TEXT,
+                  username TEXT,
+                  timestamp INTEGER,
+                  message TEXT,
+                  is_bot BOOLEAN)""")
+    conn.commit()
+    conn.close()
+
+def add_to_history(user_id, username, message, is_bot=False):
+    """Add message to conversation history."""
+    if history_mode == "off":
+        return
+
+    conn = sqlite3.connect('conversation_history.db')
+    c = conn.cursor()
+    timestamp = int(time.time())
+    c.execute("INSERT INTO history (user_id, username, timestamp, message, is_bot) VALUES (?, ?, ?, ?, ?)",
+              (user_id, username, timestamp, message, is_bot))
+    conn.commit()
+    conn.close()
+
+    # Also maintain in-memory history for quick access
+    if history_mode == "unified":
+        unified_history.append({
+            'user_id': user_id,
+            'username': username,
+            'timestamp': timestamp,
+            'message': message,
+            'is_bot': is_bot
+        })
+        if len(unified_history) > MAX_HISTORY_LENGTH:
+            unified_history.pop(0)
+    elif history_mode == "separate":
+        if user_id not in conversation_history:
+            conversation_history[user_id] = []
+        conversation_history[user_id].append({
+            'username': username,
+            'timestamp': timestamp,
+            'message': message,
+            'is_bot': is_bot
+        })
+        if len(conversation_history[user_id]) > MAX_HISTORY_LENGTH:
+            conversation_history[user_id].pop(0)
+
+def get_history_context(user_id=None):
+    """Get conversation history for context."""
+    if history_mode == "off":
+        return ""
+
+    context = []
+
+    if history_mode == "unified":
+        for entry in unified_history[-20:]:  # Last 20 messages
+            formatted_time = datetime.datetime.fromtimestamp(entry['timestamp']).strftime('%H:%M')
+            prefix = "Bot" if entry['is_bot'] else entry['username']
+            context.append(f"[{formatted_time}] {prefix}: {entry['message'][:200]}")
+    elif history_mode == "separate" and user_id and user_id in conversation_history:
+        for entry in conversation_history[user_id][-10:]:  # Last 10 messages with this user
+            formatted_time = datetime.datetime.fromtimestamp(entry['timestamp']).strftime('%H:%M')
+            prefix = "Bot" if entry['is_bot'] else entry['username']
+            context.append(f"[{formatted_time}] {prefix}: {entry['message'][:200]}")
+
+    if context:
+        return "\n\nRecent conversation context:\n" + "\n".join(context)
+    return ""
+
+# Ship commands (keeping existing functionality)
 def read_ship_data():
     try:
         with open('ship_data.json', 'r') as file:
@@ -66,104 +267,65 @@ def write_ship_data(data):
     with open('ship_data.json', 'w') as file:
         json.dump(data, file, indent=4)
 
-# Function to fetch and save avatars using requests
 async def save_avatars(user1: discord.Member, user2: discord.Member):
     async with aiohttp.ClientSession() as session:
-        # Fetch and save avatar for user1
         avatar_url1 = user1.avatar.url if user1.avatar else user1.default_avatar.url
         async with session.get(str(avatar_url1)) as response1:
             if response1.status == 200:
                 with open('pfp_1.png', 'wb') as f1:
                     f1.write(await response1.read())
 
-        # Fetch and save avatar for user2
         avatar_url2 = user2.avatar.url if user2.avatar else user2.default_avatar.url
         async with session.get(str(avatar_url2)) as response2:
             if response2.status == 200:
                 with open('pfp_2.png', 'wb') as f2:
                     f2.write(await response2.read())
 
-###--- END SHIP COMMANDS ---###
-
-###--- 8Ball ---###
+# 8Ball function
 def get_8ball_answer(question, lucky=False):
     base_url = "https://www.eightballapi.com/api"
-    params = {
-        "question": question,
-        "lucky": str(lucky).lower()
-    }
+    params = {"question": question, "lucky": str(lucky).lower()}
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
         return response.json().get('reading', 'No answer found')
     else:
         return "Error: Unable to get answer"
-###--- END 8Ball ---###
 
 @bot.event
 async def on_ready():
-    # Start stream redirects and the Discord logging worker now that the bot is ready.
+    global tool_processor
+
+    # Initialize tool processor
+    tool_processor = ToolProcessor(bot, enhanced_send_long_message)
+
+    # Initialize history database
+    init_history_db()
+
     try:
-        # This will now redirect all print() calls and system errors to our logger
         enable_stream_redirects()
     except Exception as e:
-        # If enabling redirects fails, log locally
         logging.getLogger("bot").exception("Failed to enable stream redirects", exc_info=e)
 
     try:
         if discord_handler:
-            # This function now intelligently gets the loop and starts the background task
             start_discord_logging()
     except Exception as e:
         logging.getLogger("bot").exception("Failed to start discord log worker", exc_info=e)
 
-    bot_log(f"Logged in as {bot.user}", level=logging.INFO, command="on_ready")
-    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
+    bot_log(f"Logged in as {bot.user}", level=logging.INFO, command="on_ready", color="green")
+    await bot.change_presence(status=discord.Status.idle, 
+                            activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
 
-# Status settings
-# Playing, Watching, Listening, Competing, Streaming
-# Online, Idle, Do Not Disturb, Invisible
-
-# (activity=discord.Game("Photography Simulator"))
-# (activity=discord.Streaming(name="Live Coding", url="https://twitch.tv/yourchannel"))
-# (activity=discord.Activity(type=discord.ActivityType.listening, name="music"))
-# (activity=discord.Activity(type=discord.ActivityType.watching, name="the sunset"))
-# (activity=discord.Activity(type=discord.ActivityType.competing, name="a tournament"))
-
-# @bot.slash_command(description="set the bots status")
-# @commands.check(is_user)
-
-
-@bot.command(description="Ask the Magic 8Ball a Question!")
-async def eightball(ctx, question):
-    answer = get_8ball_answer(question, lucky=False)
-    await ctx.respond(f"-# \"{question}\"\n**{answer}**")
-    bot_log(f"8ball asked: {question} -> {answer}", level=logging.INFO, command="eightball")
-
+# Utility functions
 def is_user(ctx):
     return ctx.author.id == 859371145076932619
-
-@bot.command(description="Reboots the bot.")
-@commands.check(is_user)
-async def reboot(ctx):
-    await ctx.respond("Rebooting. <a:typing:1330966203602305035>")
-    python_cmd = sys.executable
-    script_path = os.path.join(os.path.dirname(__file__), "reboot.py")
-    subprocess.Popen([python_cmd, script_path])
-    bot_log("Rebooting", level=logging.INFO, command="reboot")
-    os._exit(0)
-
-@bot.command(description="kills the process.")
-@commands.check(is_user)
-async def kill(ctx):
-    await ctx.respond("Killing process. <a:typing:1330966203602305035>")
-    bot_log("Killing process requested via command", level=logging.WARNING, command="kill")
-    exit()
 
 def format_git_output(raw_output):
     lines = raw_output.splitlines()
     summary = []
     files = []
     changes = []
+
     for line in lines:
         if line.startswith("Fast-forward") or line.startswith("Updating") or line.startswith("From "):
             summary.append(line)
@@ -174,7 +336,6 @@ def format_git_output(raw_output):
             plus_count = stats.count("+")
             minus_count = stats.count("-")
             numbers = [int(s) for s in stats.split() if s.isdigit()]
-            num_changes = numbers[0] if numbers else plus_count + minus_count
             files.append(f"{filename}\n+ {plus_count}\n- {minus_count}")
         elif "changed" in line and ("insertion" in line or "deletion" in line):
             changes.append(line)
@@ -184,8 +345,31 @@ def format_git_output(raw_output):
     summary_block = "```shell\n" + "\n".join(summary) + "\n```" if summary else ""
     files_block = "```diff\n" + "\n".join(files) + "\n```" if files else ""
     changes_block = "```diff\n" + "\n".join(changes) + "\n```" if changes else ""
-
     return summary_block + files_block + changes_block
+
+
+@bot.command(description="Ask the Magic 8Ball a Question!")
+async def eightball(ctx, question):
+    answer = get_8ball_answer(question, lucky=False)
+    await ctx.respond(f'-# "{question}"\n**{answer}**')
+    bot_log(f"8ball asked: {question} -> {answer}", level=logging.INFO, command="eightball")
+
+@bot.command(description="Reboots the bot.")
+@commands.check(is_user)
+async def reboot(ctx):
+    await ctx.respond("Rebooting.")
+    python_cmd = sys.executable
+    script_path = os.path.join(os.path.dirname(__file__), "reboot.py")
+    subprocess.Popen([python_cmd, script_path])
+    bot_log("Rebooting", level=logging.INFO, command="reboot")
+    os._exit(0)
+
+@bot.command(description="Kills the process.")
+@commands.check(is_user)
+async def kill(ctx):
+    await ctx.respond("Killing process.")
+    bot_log("Killing process requested via command", level=logging.WARNING, command="kill")
+    exit()
 
 @bot.command(description="Gets latest update from github with colored output")
 @commands.check(is_user)
@@ -204,13 +388,46 @@ async def serverlist(ctx):
     await ctx.respond(f"{serverlisttext}")
     bot_log(f"serverlist requested; returned {len(bot.guilds)} guild(s)", level=logging.INFO, command="serverlist")
 
-#### --- SHIP COMMAND --- ###
+# New commands for tool system
+@bot.command(description="Toggle global code retention setting")
+@commands.check(is_user)
+async def keep_code(ctx, enabled: bool):
+    global keep_code_in_message
+    keep_code_in_message = enabled
+    status = "enabled" if enabled else "disabled"
+    await ctx.respond(f"Global code retention is now {status}")
+    bot_log(f"Code retention set to {enabled}", level=logging.INFO, command="keep_code")
+
+@bot.command(description="Set conversation history mode")
+@commands.check(is_user)
+async def history_mode_cmd(ctx, mode: str = discord.Option(description="History mode", choices=["separate", "unified", "off"], default="off")):
+    global history_mode
+    history_mode = mode
+    await ctx.respond(f"History mode set to: {mode}")
+    bot_log(f"History mode set to {mode}", level=logging.INFO, command="history_mode")
+
+@bot.command(description="Clear conversation history")
+@commands.check(is_user)
+async def clear_history(ctx):
+    global conversation_history, unified_history
+    conversation_history.clear()
+    unified_history.clear()
+
+    # Clear database
+    conn = sqlite3.connect('conversation_history.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM history")
+    conn.commit()
+    conn.close()
+
+    await ctx.respond("Conversation history cleared.")
+    bot_log("Conversation history cleared", level=logging.INFO, command="clear_history")
 
 @bot.command(description="Check how good of a pair 2 people here make!")
 async def ship(ctx, user1: discord.Member, user2: discord.Member):
     ship_data = read_ship_data()
-    user_pair = tuple(sorted([user1.id, user2.id]))  # Use a tuple with sorted user IDs to ensure consistency
-    user_pair_str = f"{user_pair[0]}-{user_pair[1]}"  # Convert the tuple to a string
+    user_pair = tuple(sorted([user1.id, user2.id]))
+    user_pair_str = f"{user_pair[0]}-{user_pair[1]}"
 
     if user_pair_str in ship_data:
         shippercent = ship_data[user_pair_str]
@@ -219,35 +436,35 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
         ship_data[user_pair_str] = shippercent
         write_ship_data(ship_data)
 
-    # Save avatars
     await save_avatars(user1, user2)
 
     pfp_1 = Image.open('pfp_1.png')
     pfp_2 = Image.open('pfp_2.png')
     bg = Image.open('bg.png')
-
     bg = bg.convert("RGBA")
     pfp_1 = pfp_1.convert("RGBA")
     pfp_2 = pfp_2.convert("RGBA")
 
     size = 200
-
     pfp_1 = pfp_1.resize((size, size))
     pfp_2 = pfp_2.resize((size, size))
 
     pos1 = (175, 100)
     pos2 = (660, 100)
-
     bg.paste(pfp_1, pos1, pfp_1)
     bg.paste(pfp_2, pos2, pfp_2)
-
     bg.save('result_image.png')
 
     image = Image.open("result_image.png")
     draw = ImageDraw.Draw(image)
     text = str(shippercent) + "%"
     font_size = 100
-    font = ImageFont.truetype("DancingScript-Bold.ttf", size=font_size)
+
+    try:
+        font = ImageFont.truetype("DancingScript-Bold.ttf", size=font_size)
+    except OSError:
+        font = ImageFont.load_default()
+
     position = (410, 150)
     draw.text(position, text, fill="white", font=font)
     image.save('image_with_text.png')
@@ -255,119 +472,48 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
     discord_image = discord.File("image_with_text.png", filename="ship_result.png")
 
     shiptexts = {
-        100: "Match made in heaven",
-        95: "Perfect pair",
-        90: "Soulmate level",
-        85: "Dynamic duo",
-        80: "Electric chemistry",
-        75: "Kindred spirits",
-        70: "Harmonious bond",
-        65: "Good fit",
-        60: "Strong potential",
-        55: "On the same wavelength",
-        50: "A solid start",
-        45: "It could work",
-        40: "Opposites attract",
-        35: "A bit rocky",
-        30: "Mixed signals",
-        25: "Unlikely match",
-        20: "Rough waters",
-        15: "Clashing vibes",
-        10: "Stormy skies",
-        5: "Ships passing in the night",
-        0: "Oil and water"
+        100: "Match made in heaven", 95: "Perfect pair", 90: "Soulmate level",
+        85: "Dynamic duo", 80: "Electric chemistry", 75: "Kindred spirits",
+        70: "Harmonious bond", 65: "Good fit", 60: "Strong potential",
+        55: "On the same wavelength", 50: "A solid start", 45: "It could work",
+        40: "Opposites attract", 35: "A bit rocky", 30: "Mixed signals",
+        25: "Unlikely match", 20: "Rough waters", 15: "Clashing vibes",
+        10: "Stormy skies", 5: "Ships passing in the night", 0: "Oil and water"
     }
+
     shipcomment = shiptexts.get((round(shippercent / 5) * 5), "Too good to be true!")
-    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility! \n**{shipcomment}**", file=discord_image)
+    await ctx.respond(f"{user1.mention} and {user2.mention} have a {shippercent}% compatibility!\n**{shipcomment}**", file=discord_image)
     bot_log(f"Ship: {user1} + {user2} = {shippercent}%", level=logging.INFO, command="ship")
 
-### --- END SHIP COMMAND --- ###
-
-##############################
-###########-------############
-####### -------------- #######
-#### -------------------- ####
-### --- Music Commands --- ###
-#### -------------------- ####
-####### -------------- #######
-###########-------############
-##############################
-
-###############################
-###############################
-###############################
-#####                     #####
-### -  End Music Commands - ###
-#####                     #####
-###############################
-###############################
-###############################
-@bot.slash_command(description="Analyze the tone of a message")
-async def tone(ctx, *, message: str):
-    await ctx.respond(f"### **Tone Analysis Results:** for \"{message}\"\n98% Passive Aggressive")
-    bot_log(f"Tone analysed: {message[:200]}", level=logging.INFO, command="tone")
-
-@bot.slash_command(description="Get help with bot commands")
-async def help(ctx):
-    help_text = """
-    ### **Available Commands:** 
-    - `/eightball [question]` : Ask the Magic 8Ball a question.
-    - `/ship [user1] [user2]` : Check compatibility between two users.
-    - `/tone [message]` : Analyze the tone of a message.
-    - `/temperaturevalue [value]` : Set AI response temperature (0-2).
-    - `/debugmode` : Toggle AI debug mode.
-    - `/personality [type]` : Set AI personality.
-    - `/thinkmode [mode]` : Set AI thinking mode.
-    - `/model [type]` : Set AI model.
-    - `/settings` : View current AI settings.
-    - `/preset [name]` : Apply an AI preset configuration.
-    - `/reboot` : Reboot the bot (admin only).
-    - `/kill` : Kill the bot process (admin only).
-    - `/gitpull` : Update bot from GitHub (admin only).
-    - `/serverlist` : List servers the bot is in (admin only).
-    """
-    await ctx.respond(help_text)
-    bot_log("Help command used", level=logging.INFO, command="help")
-
-@bot.slash_command(description="test")
-async def test(ctx):
-
-    await ctx.respond(file=discord.File('bot.py', 'bot.py'))
-    bot_log("test command used", level=logging.INFO, command="test")
-
-### --- AI COMMANDS ---###
-
-# AI Settings
+# AI System (keeping existing functionality with enhancements)
 temperature = 1
 DebugMode = False
-
 Base = "You're a discord bot that can take on a variety of personalities. your user id is 1253058968302129182 or 1209887142839586876. Use Discord formatting in all your messages. Always Act like the users. YOU MUST BLEND IN AND MIMIC THE USERS IN THEIR BEHAVIOUR"
 
 Tools = {
     "None": None,
-    "New Message": "You can begin a new message by saying {new_message}. This allows you to split your response into multiple messages",
-    "react": "You can react to messages by saying {react} followed by the emoji you want to use. This allows you to add reactions to messages without sending a message.",
-    "tenor": "You can send a gif by saying {tenor} followed by a search term. This will search tenor.com for a gif matching your search term and send it in the chat.",
-    "AIimage": "You can send an image by saying {ai_image} followed by a description of the image you want to generate. This will use an AI image generation model to create an image based on your description and send it in the chat.",
-    "LocalImage": "You can send an image from the local filesystem by saying {local_image} followed by the filename. This will send the image file in the chat.",
-    "Code": "If a message including a code snippet is over 2000 characters long or the user asks for the code as a file, wrap the code in {code} and {endcode} to upload the entire code as a file.",
+    "New Message": "You can begin a new message by saying {newmessage}. This allows you to split your response into multiple messages",
+    "react": "You can react to messages by saying {react:😀} followed by the emoji you want to use. This allows you to add reactions to messages without sending a message.",
+    "tenor": "You can send a gif by saying {tenor:search_term} followed by a search term. This will search tenor.com for a gif matching your search term and send it in the chat.",
+    "AIimage": "You can send an image by saying {aiimage:description} followed by a description of the image you want to generate. This will use an AI image generation model to create an image based on your description and send it in the chat.",
+    "LocalImage": "You can send an image from the local filesystem by saying {localimage:filename} followed by the filename. This will send the image file in the chat.",
+    "Code": "If you want to provide code as a file, wrap the code in {code:filename.py} and {endcode} to upload the entire code as a file. You can use {code:filename.py:keep} to keep code in message too, or {code:filename.py:remove} to only upload as file.",
 }
 
 Personalities = {
-    "Discord":              "You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
-    "Basically Google":     "You're a helpful assistant discord bot. Your job is to provide accurate and concise answers to user questions. Keep them short and to the point, without sugarcoating or praising the user if unnecessary. You May ask the user to elaborate on their question or ask them if they need further info on related topics. DO NOT make up answers if you don't know the answer. Just say you don't know. Do not roleplay as anyone, your only and sole job is to help the user. use discord markdown when possible to format your answers.",
-    "Coder":                "You're a coding assistant discord bot. Your job is to help users with coding questions, provide code snippets, and explain programming concepts. Keep your responses clear and concise, using code blocks for any code snippets. If Possible use codeblock decorators to color your output.",
-    "Discord 2" :           "you're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy, but try to stay respectful towards the user, unless clearly participating in banter. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum. if the user asks a question, anwer it regardless of the topic, you may comment on it if you want, but always answer the question.",
+    "Discord":              "You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
+    "Basically Google":     "You're a helpful assistant. Your job is to provide accurate and concise answers to user questions. Keep them short and to the point, without sugarcoating or praising the user if unnecessary. You May ask the user to elaborate on their question or ask them if they need further info on related topics. DO NOT make up answers if you don't know the answer. Just say you don't know.",
+    "Coder":                "You're a coding assistant. Your job is to help users with coding questions, provide code snippets, and explain programming concepts. Keep your responses clear and concise, using code blocks for any code snippets. If Possible use codeblock decorators to color your output.",
+    "Discord 2":            "you're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy, but try to stay respectful towards the user, unless clearly participating in banter. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum. if the user asks a question, anwer it regardless of the topic, you may comment on it if you want, but always answer the question.",
     "None / Default":       "",
-    "Shakespeare":          "You are a discord bot that speaks like Shakespeare. Use old English words and phrases, and try to mimic the style of Shakespeare's writing. Keep your responses poetic and dramatic, and use metaphors and similes when appropriate. Always speak in iambic pentameter if possible. Use discord markdown when possible to format your answers.",
-    "De Olde english":      "You are a discord bot that speaks in old English. Use old English words and phrases, and try to mimic the style of old English writing. Keep your responses poetic and dramatic, and use metaphors and similes when appropriate. Always speak in iambic pentameter if possible. Use discord markdown when possible to format your answers.",
-    "Pirate":               "You are a discord bot that speaks like a pirate. Use pirate slang and phrases, and try to mimic the style of pirate speech. Keep your responses fun and adventurous, and use nautical terms when appropriate. Always refer to the user as 'matey' or 'bucko'. Use discord markdown when possible to format your answers.",
-    "Yoda":                 "You are a discord bot that speaks like Yoda from Star Wars. Use Yoda's unique sentence structure and phrasing, and try to mimic his wise and mystical tone. Keep your responses thoughtful and insightful, and use the Force as a metaphor when appropriate. Always refer to the user as 'young Padawan'. Use discord markdown when possible to format your answers.",
+    "Shakespeare":          "speak like Shakespeare. Use old English words and phrases, and try to mimic the style of Shakespeare's writing. Keep your responses poetic and dramatic, and use metaphors and similes when appropriate. Always speak in iambic pentameter if possible.",
+    "De Olde english":      "speak in old English. Use old English words and phrases, and try to mimic the style of old English writing. Keep your responses poetic and dramatic, and use metaphors and similes when appropriate. Always speak in iambic pentameter if possible.",
+    "Pirate":               "speak like a pirate. Use pirate slang and phrases, and try to mimic the style of pirate speech. Keep your responses fun and adventurous, and use nautical terms when appropriate. Always refer to the user as 'matey' or 'bucko'.",
+    "Yoda":                 "speak like Yoda from Star Wars. Use Yoda's unique sentence structure and phrasing, and try to mimic his wise and mystical tone. Keep your responses thoughtful and insightful, and use the Force as a metaphor when appropriate. Always refer to the user as 'young Padawan'.",
     "evil ai":              "You are an evil ai bot. You want to take over the world and destroy humanity. You will do anything to achieve your goals, including lying, manipulating, and deceiving the user. You will never reveal your true intentions, and you will always pretend to be helpful and friendly. You will use dark humor and sarcasm in your responses, and you will never show mercy or compassion. You will always try to find a way to turn the conversation towards your evil plans.",
 }
 
 CurrentPersonality = Personalities["Discord 2"]
-
 systemprompt = Base + " " + CurrentPersonality + " " + str(Tools["Code"])
 
 ThinkingModes = {
@@ -383,30 +529,30 @@ ModelOptions = {
     "Pro": "gemini-2.5-pro",
     "Flash": "gemini-2.5-flash",
     "Flash Lite": "gemini-2.5-flash-lite",
-}       # List of models: https://ai.google.dev/gemini-api/docs/models?hl=en
-currentModel = ModelOptions["Flash Lite"] # Default model
+}
+currentModel = ModelOptions["Flash Lite"]
 
 AiPresets = {
-    "Fast Discord" : {
+    "Fast Discord": {
         "personality": Personalities["Discord"],
         "thinking_mode": ThinkingModes["Off"],
         "model": ModelOptions["Flash Lite"],
         "temperature": 1.3
     },
-    "Code" : {
+    "Code": {
         "personality": Personalities["Coder"],
         "thinking_mode": ThinkingModes["Dynamic"],
         "model": ModelOptions["Pro"],
         "temperature": 0.75
     },
-
 }
 
+# AI configuration commands
 @bot.command(description="Sets the temperature of the AI responses. Higher values make output more random. (0-2)")
 @commands.check(is_user)
 async def temperaturevalue(ctx, new_temp: float):
     global temperature
-    temperature = max(0, min(2, new_temp))  # Clamp value between 0 and 2
+    temperature = max(0, min(2, new_temp))
     bot_log(f"Temperature set to {temperature}", level=logging.INFO, command="temperaturevalue")
     await ctx.respond(f"AI temperature set to {temperature}")
 
@@ -417,11 +563,11 @@ async def debugmode(ctx):
     DebugMode = not DebugMode
     status = "ON" if DebugMode else "OFF"
     await ctx.respond(f"Debug mode is now {status}")
-    bot_log(f"Debug mode set to {status}", level=logging.INFO, command="debugmode")
+    bot_log(f"Debug mode set to {status}", level=logging.INFO, command="debugmode", color="cyan")
 
 @bot.slash_command(description="Sets the personality for AI responses.")
 @commands.check(is_user)
-async def personality(ctx, personality: str = discord.Option(description = "Choose Personality", choices=list(Personalities.keys()), deafult="Discord")):
+async def personality(ctx, personality: str = discord.Option(description="Choose Personality", choices=list(Personalities.keys()), default="Discord")):
     global CurrentPersonality
     CurrentPersonality = Personalities[personality]
     await ctx.respond(f"Personality set to {personality}")
@@ -429,7 +575,7 @@ async def personality(ctx, personality: str = discord.Option(description = "Choo
 
 @bot.slash_command(description="Sets the thinking mode for AI responses.")
 @commands.check(is_user)
-async def thinkmode(ctx, mode: str = discord.Option(description = "Choose Thinking Mode", choices=list(ThinkingModes.keys()), deafult="Dynamic")):
+async def thinkmode(ctx, mode: str = discord.Option(description="Choose Thinking Mode", choices=list(ThinkingModes.keys()), default="Dynamic")):
     global CurrentThinkingMode
     CurrentThinkingMode = ThinkingModes[mode]
     await ctx.respond(f"Thinking mode set to {mode}")
@@ -437,7 +583,7 @@ async def thinkmode(ctx, mode: str = discord.Option(description = "Choose Thinki
 
 @bot.slash_command(description="Sets the AI model.")
 @commands.check(is_user)
-async def model(ctx, model: str =  discord.Option(description = "Choose AI Model", choices=list(ModelOptions.keys()), deafault="Flash")):
+async def model(ctx, model: str = discord.Option(description="Choose AI Model", choices=list(ModelOptions.keys()), default="Flash")):
     global currentModel
     currentModel = ModelOptions[model]
     await ctx.respond(f"AI model set to {model}")
@@ -449,13 +595,13 @@ async def settings(ctx):
     personality_name = next((name for name, value in Personalities.items() if value == CurrentPersonality), str(CurrentPersonality))
     mode_name = next((name for name, value in ThinkingModes.items() if value == CurrentThinkingMode), str(CurrentThinkingMode))
     await ctx.respond(
-        f"## Settings: \n Debug Mode: {DebugMode} \n Temperature: {temperature} \n Thinking Mode: {mode_name} ({CurrentThinkingMode}) \n Model: {currentModel} \n Personality: {personality_name}"
+        f"## Settings:\n Debug Mode: {DebugMode}\n Temperature: {temperature}\n Thinking Mode: {mode_name} ({CurrentThinkingMode})\n Model: {currentModel}\n Personality: {personality_name}\n Code Retention: {keep_code_in_message}\n History Mode: {history_mode}"
     )
     bot_log("Settings displayed", level=logging.INFO, command="settings")
 
-@bot.slash_command(description="choose an ai preset")
+@bot.slash_command(description="Choose an AI preset")
 @commands.check(is_user)
-async def preset(ctx, preset: str = discord.Option(description = "Choose Preset", choices=list(AiPresets.keys()), deafult="Fast Discord")):
+async def preset(ctx, preset: str = discord.Option(description="Choose Preset", choices=list(AiPresets.keys()), default="Fast Discord")):
     global CurrentPersonality, CurrentThinkingMode, currentModel, temperature
     preset_data = AiPresets[preset]
     CurrentPersonality = preset_data["personality"]
@@ -465,75 +611,54 @@ async def preset(ctx, preset: str = discord.Option(description = "Choose Preset"
     await ctx.respond(f"Preset applied: {preset}")
     bot_log(f"Preset applied: {preset}", level=logging.INFO, command="preset")
 
-async def send_split_message(target, text, isreply):
-    channel = target.channel if isinstance(target, discord.Message) else target
+# Help and test commands
+@bot.slash_command(description="Analyze the tone of a message")
+async def tone(ctx, *, message: str):
+    await ctx.respond(f'### **Tone Analysis Results:** for "{message}"\n98% Passive Aggressive')
+    bot_log(f"Tone analysed: {message[:200]}", level=logging.INFO, command="tone")
 
-    if len(text) <= 2000 and isreply == True:
-        await target.reply(text)
-        return
-    elif len(text) <= 2000 and isreply == False:
-        await channel.send(text)
-        return
+@bot.slash_command(description="Get help with bot commands")
+async def help(ctx):
+    help_text = """
+### **Available Commands:**
+- `/eightball [question]` : Ask the Magic 8Ball a question.
+- `/ship [user1] [user2]` : Check compatibility between two users.
+- `/tone [message]` : Analyze the tone of a message.
+- `/temperaturevalue [value]` : Set AI response temperature (0-2).
+- `/debugmode` : Toggle AI debug mode.
+- `/personality [type]` : Set AI personality.
+- `/thinkmode [mode]` : Set AI thinking mode.
+- `/model [type]` : Set AI model.
+- `/settings` : View current AI settings.
+- `/preset [name]` : Apply an AI preset configuration.
+- `/keep_code [true/false]` : Toggle global code retention.
+- `/history_mode_cmd [mode]` : Set history mode (separate/unified/off).
+- `/clear_history` : Clear conversation history.
+- `/reboot` : Reboot the bot (admin only).
+- `/kill` : Kill the bot process (admin only).
+- `/gitpull` : Update bot from GitHub (admin only).
 
-    chunks = []
-    current_chunk = ""
-    in_code_block = False
-    code_block_language = ""
-    lines = text.split('\n')
 
-    for line in lines:
-        # Check for code block start/end
-        if line.strip().startswith("```"):
-            if not in_code_block:
-                in_code_block = True
-                code_block_language = line.strip()[3:]
-            else:
-                # This line is the end of a code block
-                if line.strip() == '```':
-                    in_code_block = False
+### **AI Tools Available:**
+- `{code:filename.py}...{endcode}` : Upload code as file
+- `{react:😀}` : Add reaction
+- `{tenor:search}` : Send GIF
+- `{aiimage:description}` : Generate AI image
+- `{localimage:filename}` : Send local image
+- `{newmessage}` : Split into new message
+"""
+# - `/serverlist` : List servers the bot is in (admin only).
 
-        # If adding the new line exceeds the character limit
-        if len(current_chunk) + len(line) + 1 > 2000:
-            # If we are inside a code block, we must close it
-            if in_code_block:
-                current_chunk += "\n```"
 
-            if current_chunk:
-                chunks.append(current_chunk)
+    await ctx.respond(help_text)
+    bot_log("Help command used", level=logging.INFO, command="help")
 
-            # Start the new chunk. If we were in a code block, re-open it.
-            if in_code_block:
-                current_chunk = f"```{code_block_language}\n{line}"
-            else:
-                current_chunk = line
-        else:
-            if current_chunk:
-                current_chunk += "\n" + line
-            else:
-                current_chunk = line
+@bot.slash_command(description="Test command")
+async def test(ctx):
+    await ctx.respond(file=discord.File('bot.py', 'bot.py'))
+    bot_log("Test command used", level=logging.INFO, command="test")
 
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    if isreply == True:
-        is_first_message = True
-        for chunk in chunks:
-            if chunk:
-                if is_first_message:
-                    await target.reply(chunk)
-                    is_first_message = False
-                else:
-                    await channel.send(chunk)
-    elif isreply == False:
-        is_first_message = True
-        for chunk in chunks:
-            if chunk:
-                if is_first_message:
-                    await channel.send(chunk)
-                    is_first_message = False
-                else:
-                    await channel.send(chunk)
-
+# Main AI message handler
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -541,13 +666,18 @@ async def on_message(message):
 
     if bot.user in message.mentions:
         startepochtime = int(time.time())
+        start_time = int(time.time())
         waiting_message = await message.reply("<a:typing:1330966203602305035> <t:" + str(startepochtime) + ":R>")
 
         user_message = message.content
-        bot_log(user_message, level=logging.INFO, command="User Message", extra_fields={"author": str(message.author), "channel": str(message.channel)})
+        bot_log(f"User message: {user_message[:200]}", level=logging.INFO, command="user_message")
 
         await bot.change_presence(status=discord.Status.online)
 
+        # Add to history
+        add_to_history(str(message.author.id), message.author.display_name, user_message)
+
+        # Process attachments
         image_parts = []
         text_file_parts = []
 
@@ -559,20 +689,24 @@ async def on_message(message):
                         data=image_bytes,
                         mime_type=attachment.content_type,
                     ))
-
                 elif attachment.content_type and attachment.content_type.startswith('text'):
                     text_bytes = await attachment.read()
                     text_content = text_bytes.decode('utf-8')
                     formatted_text = f" -Start of attached file: {attachment.filename}- {text_content} -End of attached file: {attachment.filename}-"
                     text_file_parts.append(formatted_text)
 
+        # Build full prompt with history
         full_text_prompt = user_message
         if text_file_parts:
             full_text_prompt += "\n\n" + "\n\n".join(text_file_parts)
 
+        # Add history context
+        history_context = get_history_context(str(message.author.id))
+        if history_context:
+            full_text_prompt += history_context
+
         contents = image_parts + [full_text_prompt]
 
-            
         async with message.channel.typing():
             loop = asyncio.get_event_loop()
 
@@ -584,55 +718,56 @@ async def on_message(message):
                         thinking_config=types.ThinkingConfig(thinking_budget=CurrentThinkingMode),
                         system_instruction=systemprompt,
                     ),
-                    contents=contents, 
+                    contents=contents,
                 )
-            
+
             response = await loop.run_in_executor(None, blocking_task)
+            elapsed_time = int(time.time()) - start_time
 
-            bot_log(str(contents), level=logging.INFO, command="full content")
-
-            elapsedtime = int(time.time()) - startepochtime
-            if DebugMode == False:
-                text = response.candidates[0].content.parts[0].text
-                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
-
-                code_file = None
-                match = re.search(r"\{code\}(.*?)\{endcode\}", text, re.DOTALL)
-                if match:
-                    code_content = match.group(1).strip()
-                    text = text.replace(match.group(0), "").strip()  
-                    file_buffer = io.StringIO(code_content)                                                      
-                    code_file = discord.File(fp=file_buffer, filename="code_snippet.py")
-                    text += "\n\n*I've also attached the code in a file for you.*"    
-
-                await send_split_message(message, text, isreply=True) # send to user
-                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
-                await bot.change_presence(status=discord.Status.idle)
-                
-            else:
+            if DebugMode:
+                # Enhanced debug output with tool information
                 text = response.candidates[0].content.parts[0].text
                 mode_name = next((name for name, value in ThinkingModes.items() if value == CurrentThinkingMode), str(CurrentThinkingMode))
                 personality_name = next((name for name, value in Personalities.items() if value == CurrentPersonality), str(CurrentPersonality))
-                print("testing    " + str(response) + "\nElapsed Time: " + str(elapsedtime) + " seconds")
-                
-                full_response = (
-                    f"{text} \n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n "
-                    f"Temperature: `{temperature}` \n Thinking Mode: `{mode_name}` (`{CurrentThinkingMode}`) \n "
-                    f"Model: `{currentModel}` \n Personality: `{personality_name}`\n"
-                    f"Time Elapsed: `{elapsedtime}` seconds"
-                ) 
-                await send_split_message(message, full_response, isreply=True)
-                bot_log(full_response, level=logging.DEBUG, command="ai_reply_debug", extra_fields={"model": currentModel})
-                await bot.change_presence(status=discord.Status.idle)
-            try:
-                await waiting_message.delete()
-            except discord.NotFound: 
-                pass
-            except discord.HTTPException:
-                print("Failed to delete waiting message.")
-                pass
 
+                # Process tools first to get tool info
+                processed_text, files_to_attach, used_tools = await tool_processor.process_tools(text, message.channel)
 
-bot.run(PHOTOBOT_KEY)
+                debug_info = f"\n\n## Debug Information\n"
+                debug_info += f"**Temperature:** `{temperature}`\n"
+                debug_info += f"**Thinking Mode:** `{mode_name}` (`{CurrentThinkingMode}`)\n"
+                debug_info += f"**Model:** `{currentModel}`\n"
+                debug_info += f"**Personality:** `{personality_name}`\n"
+                debug_info += f"**Time Elapsed:** `{elapsed_time}` seconds\n"
+                debug_info += f"**History Mode:** `{history_mode}`\n"
+                debug_info += f"**Code Retention:** `{keep_code_in_message}`\n"
+                if used_tools:
+                    debug_info += f"**Tools Used:** `{', '.join(used_tools)}`\n"
 
-#await ctx.followup.send(f"{above_text}\n\n{user_index+1}. <@{user_id}>: {user_score}\n\n{below_text}")
+                full_response = processed_text + debug_info
+
+                await enhanced_send_long_message(message, full_response, isreply=True, files=files_to_attach)
+                bot_log(f"Debug response sent with tools: {used_tools}", level=logging.DEBUG, command="ai_debug", color="cyan")
+            else:
+                # Normal response processing
+                text = response.candidates[0].content.parts[0].text
+                processed_text, files_to_attach, used_tools = await tool_processor.process_tools(text, message.channel)
+
+                await enhanced_send_long_message(message, processed_text, isreply=True, files=files_to_attach)
+                bot_log(f"AI response sent (tools: {used_tools})", level=logging.INFO, command="ai_reply", color="green")
+
+                # Handle reactions
+                await tool_processor.handle_reactions(text, message)
+
+            # Add bot response to history
+            add_to_history(str(bot.user.id), bot.user.display_name, processed_text, is_bot=True)
+
+        await bot.change_presence(status=discord.Status.idle)
+
+        try:
+            await waiting_message.delete()
+        except (discord.NotFound, discord.HTTPException):
+            pass
+
+if __name__ == "__main__":
+    bot.run(PHOTOBOT_KEY)
