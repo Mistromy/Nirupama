@@ -21,6 +21,7 @@ import sys
 import time
 import logging
 import logging.handlers
+import re
 
 # --- NEW: import logging_setup (moved logging logic out of this file) ---
 from logging_setup import setup_logging
@@ -310,7 +311,7 @@ async def help(ctx):
 @bot.slash_command(description="test")
 async def test(ctx):
 
-    await ctx.respond(file=discord.File('sound.mp3', 'test.mp3'))
+    await ctx.respond(file=discord.File('bot.py', 'bot.py'))
     bot_log("test command used", level=logging.INFO, command="test")
 
 ### --- AI COMMANDS ---###
@@ -520,45 +521,35 @@ async def on_message(message):
         startepochtime = int(time.time())
         waiting_message = await message.reply("<a:typing:1330966203602305035> <t:" + str(startepochtime) + ":R>")
 
-        # The user's typed message
         user_message = message.content
         bot_log(user_message, level=logging.INFO, command="User Message", extra_fields={"author": str(message.author), "channel": str(message.channel)})
 
         await bot.change_presence(status=discord.Status.online)
 
-        # --- MODIFICATION START ---
-
-        # Lists to hold parts from multiple attachments
         image_parts = []
         text_file_parts = []
 
         if message.attachments:
-            # Use a single loop to process all attachments
             for attachment in message.attachments:
-                # Handle images
                 if attachment.content_type and attachment.content_type.startswith('image'):
                     image_bytes = await attachment.read()
                     image_parts.append(types.Part.from_bytes(
                         data=image_bytes,
                         mime_type=attachment.content_type,
                     ))
-                # Handle text files
+
                 elif attachment.content_type and attachment.content_type.startswith('text'):
                     text_bytes = await attachment.read()
                     text_content = text_bytes.decode('utf-8')
-                    # Format the text to include the filename for context
                     formatted_text = f" -Start of attached file: {attachment.filename}- {text_content} -End of attached file: {attachment.filename}-"
                     text_file_parts.append(formatted_text)
 
-        # Combine the user's message with the content from all text files
         full_text_prompt = user_message
         if text_file_parts:
             full_text_prompt += "\n\n" + "\n\n".join(text_file_parts)
 
-        # The final 'contents' list starts with all image parts, followed by the combined text
         contents = image_parts + [full_text_prompt]
 
-        # --- MODIFICATION END ---
             
         async with message.channel.typing():
             loop = asyncio.get_event_loop()
