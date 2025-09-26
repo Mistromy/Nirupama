@@ -1,4 +1,3 @@
-# bot.py (updated)
 import discord # For Py-cord
 from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
@@ -286,7 +285,33 @@ async def tone(ctx, *, message: str):
     await ctx.respond(f"### **Tone Analysis Results:** for \"{message}\"\n98% Passive Aggressive")
     bot_log(f"Tone analysed: {message[:200]}", level=logging.INFO, command="tone")
 
+@bot.slash_command(description="Get help with bot commands")
+async def help(ctx):
+    help_text = """
+    ### **Available Commands:** 
+    - `/eightball [question]` : Ask the Magic 8Ball a question.
+    - `/ship [user1] [user2]` : Check compatibility between two users.
+    - `/tone [message]` : Analyze the tone of a message.
+    - `/temperaturevalue [value]` : Set AI response temperature (0-2).
+    - `/debugmode` : Toggle AI debug mode.
+    - `/personality [type]` : Set AI personality.
+    - `/thinkmode [mode]` : Set AI thinking mode.
+    - `/model [type]` : Set AI model.
+    - `/settings` : View current AI settings.
+    - `/preset [name]` : Apply an AI preset configuration.
+    - `/reboot` : Reboot the bot (admin only).
+    - `/kill` : Kill the bot process (admin only).
+    - `/gitpull` : Update bot from GitHub (admin only).
+    - `/serverlist` : List servers the bot is in (admin only).
+    """
+    await ctx.respond(help_text)
+    bot_log("Help command used", level=logging.INFO, command="help")
 
+@bot.slash_command(description="test")
+async def test(ctx):
+
+    await ctx.respond(file=discord.File('sound.mp3', 'test.mp3'))
+    bot_log("test command used", level=logging.INFO, command="test")
 
 ### --- AI COMMANDS ---###
 
@@ -303,6 +328,7 @@ Tools = {
     "tenor": "You can send a gif by saying {tenor} followed by a search term. This will search tenor.com for a gif matching your search term and send it in the chat.",
     "AIimage": "You can send an image by saying {ai_image} followed by a description of the image you want to generate. This will use an AI image generation model to create an image based on your description and send it in the chat.",
     "LocalImage": "You can send an image from the local filesystem by saying {local_image} followed by the filename. This will send the image file in the chat.",
+    "Code": "If a message including a code snippet is over 2000 characters long, wrap the code in {code} and {endcode} to upload the entire code as a file.",
 }
 
 
@@ -487,10 +513,8 @@ async def send_split_message(target, text, isreply):
                     await channel.send(chunk)
 
 
-
 @bot.event
 async def on_message(message):
-
     if message.author == bot.user:
         return
 
@@ -498,35 +522,43 @@ async def on_message(message):
         startepochtime = int(time.time())
         waiting_message = await message.reply("<a:typing:1330966203602305035> <t:" + str(startepochtime) + ":R>")
 
+        # The user's typed message
         user_message = message.content
-        # Log the user triggering the bot
         bot_log(user_message, level=logging.INFO, command="User Message", extra_fields={"author": str(message.author), "channel": str(message.channel)})
 
-        image_bytes = None
-        image_part = None
-        text_bytes = None
-        
+        # --- MODIFICATION START ---
+
+        # Lists to hold parts from multiple attachments
+        image_parts = []
+        text_file_parts = []
 
         if message.attachments:
+            # Use a single loop to process all attachments
             for attachment in message.attachments:
+                # Handle images
                 if attachment.content_type and attachment.content_type.startswith('image'):
                     image_bytes = await attachment.read()
-                    image_part = types.Part.from_bytes(
+                    image_parts.append(types.Part.from_bytes(
                         data=image_bytes,
                         mime_type=attachment.content_type,
-                    )
-                    break
-        if message.attachments:
-            for attachment in message.attachments:
-                if attachment.content_type and attachment.content_type.startswith('text'):
+                    ))
+                # Handle text files
+                elif attachment.content_type and attachment.content_type.startswith('text'):
                     text_bytes = await attachment.read()
-                    user_message += "\n\n" + text_bytes.decode('utf-8')
-                    break
-                    
-        if image_part:
-            contents = [image_part, user_message]
-        else:
-            contents = [user_message]
+                    text_content = text_bytes.decode('utf-8')
+                    # Format the text to include the filename for context
+                    formatted_text = f" -Start of attached file: {attachment.filename}- {text_content} -End of attached file: {attachment.filename}-"
+                    text_file_parts.append(formatted_text)
+
+        # Combine the user's message with the content from all text files
+        full_text_prompt = user_message
+        if text_file_parts:
+            full_text_prompt += "\n\n" + "\n\n".join(text_file_parts)
+
+        # The final 'contents' list starts with all image parts, followed by the combined text
+        contents = image_parts + [full_text_prompt]
+
+        # --- MODIFICATION END ---
             
         async with message.channel.typing():
             loop = asyncio.get_event_loop()
@@ -552,13 +584,11 @@ async def on_message(message):
                 await send_split_message(message, text, isreply=True) # send to user
                 bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
                 
-                # Log the AI reply
             else:
                 text = response.candidates[0].content.parts[0].text
                 mode_name = next((name for name, value in ThinkingModes.items() if value == CurrentThinkingMode), str(CurrentThinkingMode))
                 personality_name = next((name for name, value in Personalities.items() if value == CurrentPersonality), str(CurrentPersonality))
                 print("testing    " + str(response) + "\nElapsed Time: " + str(elapsedtime) + " seconds")
-
                 
                 full_response = (
                     f"{text} \n\n# DebugMode Enabled: {DebugMode}\n{response} \n\n "
@@ -569,7 +599,6 @@ async def on_message(message):
                 await send_split_message(message, full_response, isreply=True)
                 bot_log(full_response, level=logging.DEBUG, command="ai_reply_debug", extra_fields={"model": currentModel})
                 
-
             try:
                 await waiting_message.delete()
             except discord.NotFound: 
