@@ -331,8 +331,6 @@ Tools = {
     "Code": "If a message including a code snippet is over 2000 characters long, wrap the code in {code} and {endcode} to upload the entire code as a file.",
 }
 
-
-
 Personalities = {
     "Discord":              "You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
     "Basically Google":     "You're a helpful assistant discord bot. Your job is to provide accurate and concise answers to user questions. Keep them short and to the point, without sugarcoating or praising the user if unnecessary. You May ask the user to elaborate on their question or ask them if they need further info on related topics. DO NOT make up answers if you don't know the answer. Just say you don't know. Do not roleplay as anyone, your only and sole job is to help the user. use discord markdown when possible to format your answers.",
@@ -526,6 +524,8 @@ async def on_message(message):
         user_message = message.content
         bot_log(user_message, level=logging.INFO, command="User Message", extra_fields={"author": str(message.author), "channel": str(message.channel)})
 
+        await bot.change_presence(status=discord.Status.online)
+
         # --- MODIFICATION START ---
 
         # Lists to hold parts from multiple attachments
@@ -583,6 +583,7 @@ async def on_message(message):
                 text = response.candidates[0].content.parts[0].text
                 await send_split_message(message, text, isreply=True) # send to user
                 bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
+                await bot.change_presence(status=discord.Status.idle)
                 
             else:
                 text = response.candidates[0].content.parts[0].text
@@ -598,7 +599,7 @@ async def on_message(message):
                 ) 
                 await send_split_message(message, full_response, isreply=True)
                 bot_log(full_response, level=logging.DEBUG, command="ai_reply_debug", extra_fields={"model": currentModel})
-                
+                await bot.change_presence(status=discord.Status.idle)
             try:
                 await waiting_message.delete()
             except discord.NotFound: 
