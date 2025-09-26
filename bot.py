@@ -7,6 +7,8 @@ from PIL import Image, ImageDraw, ImageFont
 import aiohttp
 import requests
 from discord.ext import tasks, commands
+from discord import Option
+from discord import FFmpegPCMAudio
 import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -281,6 +283,25 @@ async def ship(ctx, user1: discord.Member, user2: discord.Member):
 
 ### --- END SHIP COMMAND --- ###
 
+##############################
+###########-------############
+####### -------------- #######
+#### -------------------- ####
+### --- Music Commands --- ###
+#### -------------------- ####
+####### -------------- #######
+###########-------############
+##############################
+
+###############################
+###############################
+###############################
+#####                     #####
+### -  End Music Commands - ###
+#####                     #####
+###############################
+###############################
+###############################
 @bot.slash_command(description="Analyze the tone of a message")
 async def tone(ctx, *, message: str):
     await ctx.respond(f"### **Tone Analysis Results:** for \"{message}\"\n98% Passive Aggressive")
@@ -444,7 +465,6 @@ async def preset(ctx, preset: str = discord.Option(description = "Choose Preset"
     await ctx.respond(f"Preset applied: {preset}")
     bot_log(f"Preset applied: {preset}", level=logging.INFO, command="preset")
 
-# CORRECTED: Helper function to send long messages, splitting them while preserving code blocks
 async def send_split_message(target, text, isreply):
     channel = target.channel if isinstance(target, discord.Message) else target
 
@@ -514,7 +534,6 @@ async def send_split_message(target, text, isreply):
                 else:
                     await channel.send(chunk)
 
-
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -575,6 +594,17 @@ async def on_message(message):
             elapsedtime = int(time.time()) - startepochtime
             if DebugMode == False:
                 text = response.candidates[0].content.parts[0].text
+                bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
+
+                code_file = None
+                match = re.search(r"\{code\}(.*?)\{endcode\}", text, re.DOTALL)
+                if match:
+                    code_content = match.group(1).strip()
+                    text = text.replace(match.group(0), "").strip()  
+                    file_buffer = io.StringIO(code_content)                                                      
+                    code_file = discord.File(fp=file_buffer, filename="code_snippet.py")
+                    text += "\n\n*I've also attached the code in a file for you.*"    
+
                 await send_split_message(message, text, isreply=True) # send to user
                 bot_log(text + "\nTime Taken: " + str(elapsedtime) + " seconds", level=logging.INFO, command="Ai Reply", extra_fields={"model": currentModel, "channel": str(message.channel)})
                 await bot.change_presence(status=discord.Status.idle)
