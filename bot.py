@@ -514,7 +514,7 @@ Personalities = {
 }
 
 CurrentPersonality = Personalities["Discord 2"]
-systemprompt = Base + " " + CurrentPersonality + " " + str(Tools["Code"])
+systemprompt = Base + " " + CurrentPersonality + " " + str(Tools["Code"]) + " " + str(Tools["New Message"])
 
 ThinkingModes = {
     "Off": 0,
@@ -648,7 +648,6 @@ async def help(ctx):
 - `{newmessage}` : Split into new message
 """
 # - `/serverlist` : List servers the bot is in (admin only).
-
 
     await ctx.respond(help_text)
     bot_log("Help command used", level=logging.INFO, command="help")
