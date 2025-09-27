@@ -1,0 +1,14 @@
+# Todos
+## Improve logging for more color support
+## Fix discord logging file limit
+## Put all settings into /settings
+## Fix all tools: react, tenor, etc
+## Tenor tool should send a prompt like: i want a funny gif of someone falling, then cheap model looks for gifs, reads the image, and takes the best one
+## Fix online status not changing back to yellow
+
+# Create AI Pipeline
+## First cheap model reads message and decides what tools to use ####### OR selected model reads message and sends response with tool calls and parameters.
+## Code filters thru response and runs tools if there are any.
+## Feedback gets given back to ai if exists etc for search image, using cheapest model if possible.
+## Ai response gets sent to user
+### ...Writing message gets updated with currect status every time
