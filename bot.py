@@ -774,8 +774,7 @@ async def on_message(message):
                 # Process tools first to get tool info
                 processed_text, files_to_attach, used_tools = await tool_processor.process_tools(text, message.channel)
 
-                debug_info = f"\n\n## Debug Information\n"
-                debug_info += f"**Temperature:** `{temperature}`\n"
+                debug_info = f"**Temperature:** `{temperature}`\n"
                 debug_info += f"**Thinking Mode:** `{mode_name}` (`{CurrentThinkingMode}`)\n"
                 debug_info += f"**Model:** `{currentModel}`\n"
                 debug_info += f"**Personality:** `{personality_name}`\n"
@@ -785,17 +784,17 @@ async def on_message(message):
                 if used_tools:
                     debug_info += f"**Tools Used:** `{', '.join(used_tools)}`\n"
 
-                full_response = processed_text + debug_info
+                full_response = processed_text +"\n\n# Debug Info:\n"+ str(response) +"\n\n## Settings:\n"+ debug_info
 
                 await enhanced_send_long_message(message, full_response, isreply=True, files=files_to_attach)
-                bot_log(f"Debug response sent with tools: {used_tools}", level=logging.DEBUG, command="ai_debug", color="cyan")
+                bot_log(f"{response} {used_tools}", level=logging.DEBUG, command="ai_debug", color="cyan")
             else:
                 # Normal response processing
                 text = response.candidates[0].content.parts[0].text
                 processed_text, files_to_attach, used_tools = await tool_processor.process_tools(text, message.channel)
 
                 await enhanced_send_long_message(message, processed_text, isreply=True, files=files_to_attach)
-                bot_log(f"AI response sent (tools: {used_tools})", level=logging.INFO, command="ai_reply", color="green")
+                bot_log(f"{text}(tools: {used_tools})", level=logging.INFO, command="ai_reply", color="green")
 
                 # Handle reactions
                 await tool_processor.handle_reactions(text, message)
