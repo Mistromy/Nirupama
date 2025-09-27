@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 import aiohttp
 import requests
 from discord.ext import tasks, commands
+from discord.ui import Select, View
 from discord import Option
 from discord import FFmpegPCMAudio
 import datetime
@@ -491,7 +492,6 @@ DebugMode = False
 Base = "You're a discord bot that can take on a variety of personalities. your user id is 1253058968302129182 or 1209887142839586876. Use Discord formatting in all your messages. Always Act like the users. YOU MUST BLEND IN AND MIMIC THE USERS IN THEIR BEHAVIOUR"
 
 Tools = {
-    "None": None,
     "New Message": "You can begin a new message by saying {newmessage}. This allows you to split your response into multiple messages",
     "react": "You can react to messages by saying {react:😀} followed by the emoji you want to use. This allows you to add reactions to messages without sending a message.",
     "tenor": "You can send a gif by saying {tenor:search_term} followed by a search term. This will search tenor.com for a gif matching your search term and send it in the chat.",
@@ -499,6 +499,8 @@ Tools = {
     "LocalImage": "You can send an image from the local filesystem by saying {localimage:filename} followed by the filename. This will send the image file in the chat.",
     "Code": "If you want to provide code as a file, wrap the code in {code:filename.py} and {endcode} to upload the entire code as a file. You can use {code:filename.py:keep} to keep code in message too, or {code:filename.py:remove} to only upload as file.",
 }
+
+EnabledTools = []
 
 Personalities = {
     "Discord":              "You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
@@ -514,7 +516,7 @@ Personalities = {
 }
 
 CurrentPersonality = Personalities["Discord 2"]
-systemprompt = Base + " " + CurrentPersonality + " " + str(Tools["Code"]) + " " + str(Tools["New Message"])
+systemprompt = Base + " " + CurrentPersonality + " " + str(EnabledTools)
 
 ThinkingModes = {
     "Off": 0,
@@ -598,6 +600,46 @@ async def settings(ctx):
         f"## Settings:\n Debug Mode: {DebugMode}\n Temperature: {temperature}\n Thinking Mode: {mode_name} ({CurrentThinkingMode})\n Model: {currentModel}\n Personality: {personality_name}\n Code Retention: {keep_code_in_message}\n History Mode: {history_mode}"
     )
     bot_log("Settings displayed", level=logging.INFO, command="settings")
+
+# Helper class for the dropdown menu
+class ToolSelect(Select):
+    def __init__(self):
+        # Get options from your global Tools dict
+        options = [
+            discord.SelectOption(label=tool_name, description=tool_desc[:100], default=tool_name in EnabledTools)
+            for tool_name, tool_desc in Tools.items()
+        ]
+        super().__init__(placeholder="Select the tools to enable...", min_values=0, max_values=len(options), options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        global EnabledTools, systemprompt
+        
+        # Update the global list with the new selections
+        EnabledTools = self.values
+        
+        # Rebuild the system prompt with the new tools list
+        systemprompt = Base + " " + CurrentPersonality + " " + str(EnabledTools)
+        
+        # Let the user know it worked
+        enabled_tools_str = ", ".join(f"`{tool}`" for tool in EnabledTools) if EnabledTools else "None"
+        await interaction.response.edit_message(content=f"✅ Tools updated. Enabled: {enabled_tools_str}", view=None)
+        bot_log(f"Tools updated by {interaction.user}: {EnabledTools}", level=logging.INFO, command="tools")
+
+# Helper class for the view
+class ToolsView(View):
+    def __init__(self):
+        super().__init__(timeout=180) # View times out after 3 minutes
+        self.add_item(ToolSelect())
+@bot.slash_command(description="Enable or disable AI tools with a selector.")
+@commands.check(is_user)
+async def tools(ctx):
+    view = ToolsView()
+    enabled_tools_str = ", ".join(f"`{tool}`" for tool in EnabledTools) if EnabledTools else "None"
+    await ctx.respond(
+        f"Select which tools the AI can use.\nCurrently enabled: {enabled_tools_str}",
+        view=view,
+        ephemeral=True # So only you see it
+    )
 
 @bot.slash_command(description="Choose an AI preset")
 @commands.check(is_user)
