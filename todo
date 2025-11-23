@@ -5,6 +5,8 @@
 ## Fix all tools: react, tenor, etc
 ## Tenor tool should send a prompt like: i want a funny gif of someone falling, then cheap model looks for gifs, reads the image, and takes the best one
 ## Fix online status not changing back to yellow
+## Mabye create something that uses embeds cuz why not
+
 
 # Create AI Pipeline
 ## First cheap model reads message and decides what tools to use ####### OR selected model reads message and sends response with tool calls and parameters.
@@ -12,3 +14,4 @@
 ## Feedback gets given back to ai if exists etc for search image, using cheapest model if possible.
 ## Ai response gets sent to user
 ### ...Writing message gets updated with currect status every time
+

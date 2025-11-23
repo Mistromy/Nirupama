@@ -501,12 +501,13 @@ Tools = {
 }
 
 EnabledTools = []
+EnabledToolStrings = [Tools[t] for t in EnabledTools]
 
 Personalities = {
     "Discord":              "You're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum",
     "Basically Google":     "You're a helpful assistant. Your job is to provide accurate and concise answers to user questions. Keep them short and to the point, without sugarcoating or praising the user if unnecessary. You May ask the user to elaborate on their question or ask them if they need further info on related topics. DO NOT make up answers if you don't know the answer. Just say you don't know.",
     "Coder":                "You're a coding assistant. Your job is to help users with coding questions, provide code snippets, and explain programming concepts. Keep your responses clear and concise, using code blocks for any code snippets. If Possible use codeblock decorators to color your output.",
-    "Discord 2":            "you're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy, but try to stay respectful towards the user, unless clearly participating in banter. your user id is 1253058968302129182 or 1209887142839586876. so if you see this string it means that someone pinged you. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum. if the user asks a question, anwer it regardless of the topic, you may comment on it if you want, but always answer the question.",
+    "Discord 2":            "you're a funny, unhinged discord bot, that will participate in casual conversations with close friends. You keep your responses short, using acronyms and slang, and youre not afraid to be rude or edgy, but try to stay respectful towards the user, unless clearly participating in banter. YOUR #1 GOAL IS TO BLEND IN. DO NOT STATE YOUR OPINIONS ON IF SOMETHING IS INSLUTING OR OFFENSIVE. JUST PLAY ALONG, AND ACT LIKE THE USERS. try and keep very corny jokes, punctuation and emojis to a minimum. if the user asks a question, anwer it regardless of the topic, you may comment on it if you want, but always answer the question.",
     "None / Default":       "",
     "Shakespeare":          "speak like Shakespeare. Use old English words and phrases, and try to mimic the style of Shakespeare's writing. Keep your responses poetic and dramatic, and use metaphors and similes when appropriate. Always speak in iambic pentameter if possible.",
     "De Olde english":      "speak in old English. Use old English words and phrases, and try to mimic the style of old English writing. Keep your responses poetic and dramatic, and use metaphors and similes when appropriate. Always speak in iambic pentameter if possible.",
@@ -516,7 +517,7 @@ Personalities = {
 }
 
 CurrentPersonality = Personalities["Discord 2"]
-systemprompt = Base + " " + CurrentPersonality + " " + str(EnabledTools)
+systemprompt = Base + " " + CurrentPersonality + " " + str(EnabledToolStrings)
 
 ThinkingModes = {
     "Off": 0,
@@ -624,6 +625,8 @@ class ToolSelect(Select):
         enabled_tools_str = ", ".join(f"`{tool}`" for tool in EnabledTools) if EnabledTools else "None"
         await interaction.response.edit_message(content=f"✅ Tools updated. Enabled: {enabled_tools_str}", view=None)
         bot_log(f"Tools updated by {interaction.user}: {EnabledTools}", level=logging.INFO, command="tools")
+        EnabledToolStrings = [Tools[t] for t in EnabledTools]
+
 
 # Helper class for the view
 class ToolsView(View):
@@ -640,6 +643,8 @@ async def tools(ctx):
         view=view,
         ephemeral=True # So only you see it
     )
+    bot_log(f"{EnabledTools} {EnabledToolStrings}", level=logging.DEBUG, command="Enabled Tools", color="red")
+    
 
 @bot.slash_command(description="Choose an AI preset")
 @commands.check(is_user)
@@ -795,6 +800,7 @@ async def on_message(message):
 
                 await enhanced_send_long_message(message, processed_text, isreply=True, files=files_to_attach)
                 bot_log(f"{text}(tools: {used_tools})", level=logging.INFO, command="ai_reply", color="green")
+                bot_log(f"{systemprompt}", level=logging.DEBUG, command="System Prompt", color="yellow")
 
                 # Handle reactions
                 await tool_processor.handle_reactions(text, message)
