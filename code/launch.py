@@ -61,8 +61,8 @@ def main():
             
         # Code 2: Reboot Request (User ran /reboot)
         elif exit_code == 2:
-            print("🔄 Reboot requested. Restarting in 2 seconds...")
-            time.sleep(2)
+            print("🔄 Reboot requested. Restarting...")
+            time.sleep(1)
             continue 
             
         # Code 1: Crash / Error

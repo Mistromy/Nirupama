@@ -3,13 +3,12 @@ import asyncio
 import sys
 from utils.discord_helpers import send_smart_message
 
-# --- 1. CUSTOM FORMATTER (Your preferred style) ---
+# --- 1. CUSTOM FORMATTER ---
 
 class ColoredFormatter(logging.Formatter):
     """
     Custom formatter with colors, timestamps, and line numbers.
     """
-    # ANSI Escape Codes
     GREY = "\x1b[38;20m"
     YELLOW = "\x1b[33;20m"
     RED = "\x1b[31;20m"
@@ -32,9 +31,13 @@ class ColoredFormatter(logging.Formatter):
         
         # Standard format: [Time] [Level] [File:Line] Message
         # We use %(lineno)d for line number and %(filename)s for file
+        # If a category was passed in extra, use it, otherwise use 'SYS'
+        cat = getattr(record, 'category', 'SYS')
+        
         log_fmt = (
             f"{self.GREY}%(asctime)s{self.RESET} - "
             f"{color}%(levelname)-8s{self.RESET} - "
+            # This will now correctly show the file that CALLED the log function
             f"{self.BLUE}[%(filename)s:%(lineno)d]{self.RESET} - "
             f"%(message)s"
         )
@@ -51,7 +54,6 @@ class DiscordQueueHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            # Simple format for Discord
             msg = self.format(record)
             self.queue.put_nowait(msg)
         except Exception:
@@ -64,13 +66,12 @@ async def discord_log_worker(bot, channel_id, queue_handler):
     if not channel:
         print(f"Warning: Log Channel ID {channel_id} not found.")
         return
-
-    print(f"Connected to Log Channel: #{channel.name}")
+    
+    bot_log(f"Connected to Log Channel: #{channel.name}", level="info")
 
     while not bot.is_closed():
         try:
             record = await queue_handler.queue.get()
-            # Send as code block
             await send_smart_message(channel, f"```ini\n{record}\n```")
         except asyncio.CancelledError:
             break
@@ -80,13 +81,9 @@ async def discord_log_worker(bot, channel_id, queue_handler):
 # --- 3. PUBLIC SETUP FUNCTIONS ---
 
 def setup_logging():
-    """
-    Sets up the console logger immediately.
-    Returns the logger instance.
-    """
     logger = logging.getLogger("bot_logger")
     logger.setLevel(logging.INFO)
-    logger.handlers = [] # Clear existing
+    logger.handlers = [] 
 
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter())
@@ -94,16 +91,11 @@ def setup_logging():
     
     return logger
 
-# Initialize globally so it can be imported
 log = setup_logging()
 
 def setup_discord_logging(bot, channel_id):
-    """
-    Attaches the Discord handler to the existing logger.
-    """
     queue_handler = DiscordQueueHandler()
-    # Format for Discord (Cleaner, less ANSI colors)
-    formatter = logging.Formatter('[%(levelname)s] [%(filename)s] %(message)s')
+    formatter = logging.Formatter('[%(levelname)s] [%(category)s] %(message)s')
     queue_handler.setFormatter(formatter)
     queue_handler.setLevel(logging.INFO)
     
@@ -111,9 +103,18 @@ def setup_discord_logging(bot, channel_id):
     
     bot.loop.create_task(discord_log_worker(bot, channel_id, queue_handler))
 
-def bot_log(message, level="info"):
+def bot_log(message, level="info", **kwargs):
     """
-    Simple wrapper for logging.
+    Wrapper for logging that accepts 'category' and passes it to the formatter.
     """
     lvl = getattr(logging, level.upper(), logging.INFO)
-    log.log(lvl, message)
+    
+    # We pass kwargs as 'extra' dict so the Formatter can see 'category'
+    extra = kwargs
+    if 'category' not in extra:
+        extra['category'] = 'General'
+    
+    # CRITICAL FIX: stacklevel=2
+    # This tells Python: "Don't report this line (inside bot_log). 
+    # Report the line calling this function."
+    log.log(lvl, message, extra=extra, stacklevel=2)
