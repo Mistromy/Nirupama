@@ -14,8 +14,8 @@ intents = discord.Intents.all()
 bot = discord.Bot(intents=intents)
 
 @bot.event
-async def on_ready():  
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
+async def on_ready():
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
     
     # Start the Discord Logging Worker
     setup_discord_logging(bot, LOG_CHANNEL_ID)
@@ -25,23 +25,24 @@ async def on_ready():
 
 @bot.slash_command(description="Reboots the bot")
 async def reboot(ctx):
-    await ctx.respond("🔄 Rebooting system...", ephemeral=True)
+    await ctx.respond("🔄 Rebooting system...", ephemeral=False)
     bot_log(f"Reboot initiated by {ctx.author.name}", level="warning")
     exit_status = 2
     await bot.close()
 
 @bot.slash_command(description="Kills the bot")
 async def kill(ctx):
-    await ctx.respond("👋 Shutting down...", ephemeral=True)
+    await ctx.respond("👋 Shutting down...", ephemeral=False)
     bot_log(f"Shutdown initiated by {ctx.author.name}", level="critical")
     exit_status = 0
     await bot.close()
 
 
-cogs_list = ['cogs.ai', 'cogs.general']
+cogs_list = ['cogs.ai_core', 'cogs.ai_settings', 'cogs.admin']
 for cog in cogs_list:
     try:
         bot.load_extension(cog)
+        bot_log(f"Loaded cog: {cog}", level="info")
     except Exception as e:
         bot_log(f"Failed to load {cog}: {e}", level="error")
 
