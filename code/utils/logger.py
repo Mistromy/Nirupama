@@ -29,8 +29,6 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         color = self.COLORS.get(record.levelno, self.RESET)
         
-        # Standard format: [Time] [Level] [File:Line] Message
-        # We use %(lineno)d for line number and %(filename)s for file
         # If a category was passed in extra, use it, otherwise use 'SYS'
         cat = getattr(record, 'category', 'SYS')
         

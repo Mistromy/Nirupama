@@ -34,7 +34,7 @@ class MyNewCog(commands.Cog):
         # It holds info about WHO ran the command and WHERE.
         
         await ctx.respond("Hello from the new cog!")
-        bot_log(f"Command executed by {ctx.author.name}")
+        bot_log(f"Command executed by {ctx.author.name}", level="info")
 
 # 5. THE HOOK (Spawn Actor)
 # This is the MOST IMPORTANT part.

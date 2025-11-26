@@ -167,14 +167,12 @@ class AISettingsCog(commands.Cog):
     @discord.slash_command(description="Open AI Settings")
     async def settings(self, ctx):
         await ctx.respond(embed=get_settings_embed(), view=SettingsView())
+        bot_log(f"AI settings opened by {ctx.author.name}", category="Settings")
 
     @discord.slash_command(description="Manage Tools")
     async def tools(self, ctx):
         await ctx.respond("Tools:", view=ToolsView(), ephemeral=True)
-    
-    @discord.slash_command(description="Analyze tone")
-    async def tone(self, ctx, message: str):
-        await ctx.respond(f'### Tone Analysis: "{message}"\n98% Passive Aggressive')
+        bot_log(f"Tools management opened by {ctx.author.name}", category="Settings")
 
 def setup(bot):
     bot.add_cog(AISettingsCog(bot))

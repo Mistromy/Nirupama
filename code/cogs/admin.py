@@ -6,80 +6,234 @@ import os
 
 
 # 1. IMPORTS (Dependencies)
-# Just like "Add Component" or "Cast To".
-# If you need your global variables, import ai_state.
-# If you need to log things, import bot_log.
 from utils.logger import bot_log
-# from utils.ai_state import ai_state  <-- Uncomment if you need shared data
 
-class admin(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot 
 
-    async def get_extensions(self, ctx: discord.AutocompleteContext):
-        return list(self.bot.extensions.keys())
-    
-    @discord.slash_command(description="Reload specified cog")
-    async def reload_cog(self, ctx, cog_name: str = Option(autocomplete=get_extensions)):
+# ==================== MODALS ====================
+
+class StatusModal(discord.ui.Modal):
+    """Modal for changing bot status and presence"""
+    def __init__(self, bot, cog):
+        super().__init__(title="Change Bot Status")
+        self.bot = bot
+        self.cog = cog
+
+        self.status = discord.ui.TextInput(
+            label="Status",
+            placeholder="Online, Idle, Do Not Disturb, Invisible",
+            required=True,
+            max_length=20
+        )
+        self.add_item(self.status)
+
+        self.activity_type = discord.ui.TextInput(
+            label="Activity Type",
+            placeholder="Playing, Streaming, Listening, Watching, Competing",
+            required=True,
+            max_length=20
+        )
+        self.add_item(self.activity_type)
+
+        self.activity_name = discord.ui.TextInput(
+            label="Activity Name",
+            placeholder="e.g., /help or your game",
+            required=True,
+            max_length=100
+        )
+        self.add_item(self.activity_name)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        chosenstatus = self.cog.status_map.get(self.status.value, discord.Status.online)
+        chosenactivitytype = self.cog.activity_map.get(self.activity_type.value, discord.ActivityType.playing)
+
+        activity = discord.Activity(type=chosenactivitytype, name=self.activity_name.value)
+        await self.bot.change_presence(status=chosenstatus, activity=activity)
+        bot_log(f"Status updated by {interaction.user.name} to {self.status.value}", level="info")
+        await interaction.response.send_message(f"✅ Status updated to `{self.status.value}` with activity `{self.activity_name.value}`", ephemeral=True)
+
+
+class CogSelectModal(discord.ui.Modal):
+    """Modal for selecting a cog to reload/unload"""
+    def __init__(self, bot, action: str, cogs_list):
+        super().__init__(title=f"{action.capitalize()} Cog")
+        self.bot = bot
+        self.action = action
+        self.cogs_list = cogs_list
+
+        self.cog_name = discord.ui.TextInput(
+            label="Cog Name",
+            placeholder="e.g., code.cogs.admin",
+            required=True,
+            max_length=100
+        )
+        self.add_item(self.cog_name)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        cog_name = self.cog_name.value
         try:
-            self.bot.reload_extension(cog_name)
-            await ctx.respond(f"Reloaded cog: {cog_name}", ephemeral=True)
-            bot_log(f"{cog_name} reloaded by {ctx.author.name}", level="info")
+            if self.action == "reload":
+                self.bot.reload_extension(cog_name)
+                await interaction.response.send_message(f"✅ Reloaded cog: `{cog_name}`", ephemeral=True)
+                bot_log(f"{cog_name} reloaded by {interaction.user.name}", level="info")
+            elif self.action == "unload":
+                self.bot.unload_extension(cog_name)
+                await interaction.response.send_message(f"✅ Unloaded cog: `{cog_name}`", ephemeral=True)
+                bot_log(f"{cog_name} unloaded by {interaction.user.name}", level="info")
         except Exception as e:
-            await ctx.respond(f"Failed to reload cog: {cog_name}. Error: {e}", ephemeral=True)
-            bot_log(f"Failed to reload cog {cog_name} by {ctx.author.name}: {e}", level="error")
+            await interaction.response.send_message(f"❌ Failed to {self.action} cog `{cog_name}`: {e}", ephemeral=True)
+            bot_log(f"Failed to {self.action} cog {cog_name} by {interaction.user.name}: {e}", level="error")
+
+
+# ==================== VIEWS/DROPDOWNS ====================
+
+class CogSelectDropdown(discord.ui.Select):
+    """Dropdown for selecting which cog to manage"""
+    def __init__(self, bot, action: str, cog):
+        self.bot = bot
+        self.action = action
+        self.cog = cog
         
-    @discord.slash_command(description="Unload specified cog")
-    async def unload_cog(self, ctx, cog_name: str = Option(autocomplete=get_extensions)):
-        try:
-            self.bot.unload_extension(cog_name)
-            await ctx.respond(f"Unloaded cog: {cog_name}", ephemeral=True)
-            bot_log(f"{cog_name} unloaded by {ctx.author.name}", level="info")
-        except Exception as e:
-            await ctx.respond(f"Failed to unload cog: {cog_name}. Error: {e}", ephemeral=True)
-            bot_log(f"Failed to unload cog {cog_name} by {ctx.author.name}: {e}", level="error")
+        options = [
+            discord.SelectOption(label=ext_name, description=ext_name)
+            for ext_name in list(bot.extensions.keys())[:25]  # Discord limit of 25 options
+        ]
+        
+        super().__init__(
+            placeholder=f"Select a cog to {action}...",
+            min_values=1,
+            max_values=1,
+            options=options if options else [discord.SelectOption(label="No cogs loaded", value="none")]
+        )
 
-    @discord.slash_command(description="Kills the bot")
-    async def kill(self, ctx):
-        await ctx.respond("Shutting down...", ephemeral=False)
-        bot_log(f"Shutdown initiated by {ctx.author.name}", level="critical")
+    async def callback(self, interaction: discord.Interaction):
+        if self.values[0] == "none":
+            await interaction.response.send_message("No cogs available", ephemeral=True)
+            return
+
+        cog_name = self.values[0]
+        try:
+            if self.action == "reload":
+                self.bot.reload_extension(cog_name)
+                await interaction.response.send_message(f"✅ Reloaded cog: `{cog_name}`", ephemeral=True)
+                bot_log(f"{cog_name} reloaded by {interaction.user.name}", level="info")
+            elif self.action == "unload":
+                self.bot.unload_extension(cog_name)
+                await interaction.response.send_message(f"✅ Unloaded cog: `{cog_name}`", ephemeral=True)
+                bot_log(f"{cog_name} unloaded by {interaction.user.name}", level="info")
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Failed to {self.action} cog `{cog_name}`: {e}", ephemeral=True)
+            bot_log(f"Failed to {self.action} cog {cog_name}: {e}", level="error")
+
+
+class CogManagementView(discord.ui.View):
+    """View for cog management with dropdown"""
+    def __init__(self, bot, action: str, cog):
+        super().__init__(timeout=300)
+        self.bot = bot
+        self.action = action
+        self.cog = cog
+        self.add_item(CogSelectDropdown(bot, action, cog))
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
+    async def back_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.edit_message(view=AdminMainView(self.bot, self.cog))
+
+
+class ServersListView(discord.ui.View):
+    """View for displaying servers list"""
+    def __init__(self, bot, cog):
+        super().__init__(timeout=300)
+        self.bot = bot
+        self.cog = cog
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
+    async def back_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.edit_message(view=AdminMainView(self.bot, self.cog))
+
+
+class AdminMainView(discord.ui.View):
+    """Main admin panel view with all command buttons"""
+    def __init__(self, bot, cog):
+        super().__init__(timeout=300)
+        self.bot = bot
+        self.cog = cog
+
+    @discord.ui.button(label="Reload Cog", style=discord.ButtonStyle.blurple)
+    async def reload_cog_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = CogManagementView(self.bot, "reload", self.cog)
+        await interaction.response.edit_message(content="**Select a cog to reload:**", view=view)
+
+    @discord.ui.button(label="Unload Cog", style=discord.ButtonStyle.blurple)
+    async def unload_cog_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = CogManagementView(self.bot, "unload", self.cog)
+        await interaction.response.edit_message(content="**Select a cog to unload:**", view=view)
+
+    @discord.ui.button(label="Change Status", style=discord.ButtonStyle.blurple)
+    async def status_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        modal = StatusModal(self.bot, self.cog)
+        await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="List Servers", style=discord.ButtonStyle.blurple)
+    async def servers_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        serverlisttext = "\n".join([guild.name for guild in self.bot.guilds])
+        await interaction.response.edit_message(
+            content=f"**Servers ({len(self.bot.guilds)}):**\n```\n{serverlisttext}\n```",
+            view=ServersListView(self.bot, self.cog)
+        )
+        bot_log(f"/servers ran by {interaction.user.name}. Returned {len(self.bot.guilds)} guild(s)", level="info")
+
+    @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.danger)
+    async def shutdown_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("🛑 Shutting down...", ephemeral=False)
+        bot_log(f"Shutdown initiated by {interaction.user.name}", level="critical")
         self.bot.exit_code = 0
         await self.bot.close()
 
-    @discord.slash_command(description="Reboots the bot")
-    async def reboot(self, ctx):
-        await ctx.respond("Rebooting system...", ephemeral=False)
-        bot_log(f"Reboot initiated by {ctx.author.name}", level="warning")
+    @discord.ui.button(label="Reboot", style=discord.ButtonStyle.danger)
+    async def reboot_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("🔄 Rebooting system...", ephemeral=False)
+        bot_log(f"Reboot initiated by {interaction.user.name}", level="warning")
         self.bot.exit_code = 2
         await self.bot.close()
+        
+class admincommands(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-    @discord.slash_command(description="List servers")
-    async def servers(self, ctx):
-        serverlisttext = ""
-        for guild in self.bot.guilds:
-            serverlisttext = serverlisttext + guild.name + "\n"
-        await ctx.respond(f"{serverlisttext}")
-        bot_log(f"/servers ran by:{ctx.author.name}. Returned {len(self.bot.guilds)} guild(s)", level="info")
+    # Status and activity maps
+    status_map = {
+        "Online": discord.Status.online,
+        "Idle": discord.Status.idle,
+        "Do Not Disturb": discord.Status.dnd,
+        "Invisible": discord.Status.invisible
+    }
+    
+    activity_map = {
+        "Playing": discord.ActivityType.playing,
+        "Streaming": discord.ActivityType.streaming,
+        "Listening": discord.ActivityType.listening,
+        "Watching": discord.ActivityType.watching,
+        "Competing": discord.ActivityType.competing,
+        "Custom": discord.ActivityType.custom
+    }
 
-    @discord.slash_command(description="Change bot status")
-    async def status(self, ctx, status: str):
-        try:
-            status_mapping = {
-                "online": discord.Status.online,
-                "idle": discord.Status.idle,
-                "dnd": discord.Status.dnd,
-                "invisible": discord.Status.invisible
-            }
-            if status.lower() not in status_mapping:
-                await ctx.respond("Invalid status. Choose from: online, idle, dnd, invisible.", ephemeral=True)
-                return
+    async def admin_check(self, ctx):
+        """Check if user is admin"""
+        if ctx.author.id != 859371145076932619:
+            await ctx.respond("🚫 Thout art not worthy!", ephemeral=True)
+            return False
+        return True
 
-            await self.bot.change_presence(status=status_mapping[status.lower()])
-            await ctx.respond(f"Status changed to {status}.", ephemeral=True)
-            bot_log(f"Status changed to {status} by {ctx.author.name}", level="info")
-        except Exception as e:
-            await ctx.respond(f"Failed to change status. Error: {e}", ephemeral=True)
-            bot_log(f"Failed to change status by {ctx.author.name}: {e}", level="error")
+    @discord.slash_command(description="Admin control panel with UI", name="admin")
+    async def admin_panel(self, ctx):
+        """Main admin panel command"""
+        # Check if user is admin
+        if not await self.admin_check(ctx):
+            return
+
+        bot_log(f"Admin panel accessed by {ctx.author.name}", level="info")
+        await ctx.respond("**🎛️ Admin Control Panel**", view=AdminMainView(self.bot, self), ephemeral=True)
+
 
 def setup(bot):
-    bot.add_cog(admin(bot))
+    bot.add_cog(admincommands(bot))
