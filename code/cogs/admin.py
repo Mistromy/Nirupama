@@ -248,6 +248,37 @@ class AdminMainView(discord.ui.View):
         
         bot_log(f"Git pull executed by {interaction.user.name}", level="info")
 
+    @discord.ui.button(label="Wake up", style=discord.ButtonStyle.green)
+    async def wake_up_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("🌞 Waking up from invisible...", ephemeral=True)
+        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name="/help"))
+        bot_log(f"Bot set to online by {interaction.user.name}", level="info")
+        # Optionally reload all cogs
+        for ext_name in os.listdir("code/cogs"):
+            if ext_name.endswith(".py"):
+                cog_name = f"cogs.{ext_name[:-3]}"
+                try:
+                    if cog_name not in self.bot.extensions:
+                        self.bot.load_extension(cog_name)
+                except Exception as e:
+                    bot_log(f"Failed to load {cog_name}: {e}", level="error")
+
+    # @discord.ui.button(label="Load Cog", style=discord.ButtonStyle.green)
+
+    # @discord.ui.button(label="Load All Cogs", style=discord.ButtonStyle.green)
+
+    @discord.ui.button(label="Fake Offline", style=discord.ButtonStyle.danger)
+    async def fake_offline_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("🤫 Going invisible (fake offline)...", ephemeral=True)
+        await self.bot.change_presence(status=discord.Status.invisible)
+        bot_log(f"Bot set to invisible by {interaction.user.name}", level="info")
+        for ext_name in list(self.bot.extensions.keys()):
+            if ext_name != "cogs.admin":
+                try:
+                    self.bot.unload_extension(ext_name)
+                except Exception as e:
+                    bot_log(f"Failed to unload {ext_name}: {e}", level="error")
+
     @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.danger)
     async def shutdown_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_message("🛑 Shutting down...", ephemeral=False)
