@@ -17,7 +17,8 @@ bot.exit_code = 0
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name="you sleep"))
+    serverlisttext = "".join([guild.name for guild in bot.guilds])
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(bot.guilds)} servers"))
     
     # Start the Discord Logging Worker
     setup_discord_logging(bot, LOG_CHANNEL_ID)

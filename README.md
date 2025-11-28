@@ -140,3 +140,12 @@ All existing functionality is preserved:
 - All existing slash commands
 
 The enhanced system is fully backward compatible while adding powerful new features for AI tool integration and better logging.
+
+### Ship command Modifiers
+- Current activity
+- server join date
+- account creation date
+- current status
+- roles on server
+- nickname similarities (how many characters in strings are similar)
+- message count
