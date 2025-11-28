@@ -31,8 +31,9 @@ class commands(commands.Cog):
     async def ship(self, ctx, user1: discord.Member, user2: discord.Member):
         await ctx.defer()
         ship_percentage, log, ai_comment = await utils.ship.calculate_ship_percentage(user1, user2, ctx.guild)
-        await ctx.respond(f"💖 The compatibility between {user1.mention} and {user2.mention} is **{ship_percentage}%**!\n\n> *{ai_comment}*")
-        # await ctx.send_followup(utils.ship.query_ai)
+        await ctx.respond(f" 💖 The compatibility between {user1.mention} and {user2.mention} is **{ship_percentage}%**!\n\n> {ai_comment}")
+        bot_log(f"/ship {user1} {user2}.{log} ran by {ctx.author.name}")
+
 # 5. THE HOOK (Spawn Actor)
 # This is the MOST IMPORTANT part.
 # When 'main.py' runs 'bot.load_extension()', it looks specifically for this function.
