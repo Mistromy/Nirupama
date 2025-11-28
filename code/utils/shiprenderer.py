@@ -1,180 +1,174 @@
 import PIL
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
 import base64
-import os
-import aiohttp
-from html2image import Html2Image
-
-
+import textwrap
 from utils.logger import bot_log
 
-htmltoimage = Html2Image(size=(900,350), browser_executable=r"F:\vivaldi\Application\vivaldi.exe")  # Path to your browser executable
+# Configuration
+BG_PATH = r"bg.png" # Make sure this path is correct relative to your bot execution
+FONT_PATH = r"arial.ttf" # REPLACE THIS with path to Poppins-Bold.ttf for better looks
+OUTPUT_FILE = "ship_result.png"
 
-
-
-def generateimage(avatar1, avatar2, name1, name2, percent, comment):
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,600;0,800;1,500&display=swap" rel="stylesheet">
-        <style>
-            body {{
-                margin: 0;
-                padding: 0;
-                /* This ensures no white borders around the capture */
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                background: #000; /* Just so you can see the edges in browser */
-            }}
-
-            /* THE MAIN CANVAS - MATCH THIS TO YOUR IMAGE SIZE */
-            .card {{
-                width: 900px;   /* <--- CHANGE TO BG.PNG WIDTH */
-                height: 350px;  /* <--- CHANGE TO BG.PNG HEIGHT */
-                
-                /* Background Logic */
-                background-image: url('D:/HAX/python/discord bots/Nirupama/bg.png');
-                background-size: cover; 
-                background-position: center;
-                background-repeat: no-repeat;
-                
-                /* Layout Logic */
-                display: flex;
-                flex-direction: column; /* Stack top (avatars) and bottom (text) */
-                justify-content: center; /* Center vertically */
-                align-items: center;     /* Center horizontally */
-                overflow: hidden;        /* Cut off anything sticking out */
-                font-family: 'Poppins', sans-serif;
-                position: relative;
-            }}
-
-            /* --- TOP SECTION: Avatars & Score --- */
-            .top-row {{
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                width: 80%; /* Width of the content area */
-                margin-bottom: 20px; /* Space between avatars and text box */
-            }}
-
-            .user-group {{
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }}
-
-            .pfp {{
-                width: 130px;
-                height: 130px;
-                border-radius: 50%;
-                border: 5px solid rgba(255,255,255,0.9);
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                object-fit: cover;
-            }}
-
-            .name-tag {{
-                margin-top: 8px;
-                background: rgba(0,0,0,0.6);
-                color: white;
-                padding: 4px 12px;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: 600;
-            }}
-
-            .center-score {{
-                text-align: center;
-                color: white;
-                text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            }}
-
-            .percent-text {{
-                font-size: 90px;
-                font-weight: 800;
-                line-height: 1;
-                margin: 0;
-            }}
-
-            .status-text {{
-                background: white;
-                color: #b30000;
-                padding: 2px 10px;
-                border-radius: 4px;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                display: inline-block;
-            }}
-
-            /* --- BOTTOM SECTION: The Quote Box --- */
-            .quote-container {{
-                width: 700px;
-                background: rgba(255, 255, 255, 0.95);
-                border-radius: 20px;
-                padding: 15px 30px;
-                position: relative; /* Needed for the quote marks */
-                box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-                
-                /* Text Styling */
-                color: #555;        /* Dark Grey */
-                font-size: 18px;
-                font-style: italic; /* Italics */
-                text-align: center;
-                line-height: 1.4;
-            }}
-
-            /* The Big Quote Mark Visual */
-            .quote-container::before {{
-                content: "“";
-                position: absolute;
-                top: -20px;
-                left: 20px;
-                font-size: 80px;
-                color: #b30000; /* Match your red theme */
-                font-family: serif;
-                line-height: 1;
-            }}
-        </style>
-    </head>
-    <body>
-
-        <div class="card">
-            
-            <div class="top-row">
-                <div class="user-group">
-                    <img class="pfp" src="{avatar1}">
-                    <div class="name-tag">"{name1}""</div>
-                </div>
-
-                <div class="center-score">
-                    <div class="percent-text">"{percent}%"</div>
-                    <div class="status-text"></div>
-                </div>
-
-                <div class="user-group">
-                    <img class="pfp" src="{avatar2}">
-                    <div class="name-tag">"{name2}"</div>
-                </div>
-            </div>
-
-            <div class="quote-container">
-                comment
-            </div>
-
-        </div>
-
-    </body>
-    </html>
-    """
-
-    outputfile = "ship_result.png"
+def load_font(size):
     try:
-        htmltoimage.screenshot(get_html=html_content, save_as=outputfile, size=(900,350))
-        return outputfile
+        return ImageFont.truetype(FONT_PATH, size)
+    except OSError:
+        # Fallback if custom font not found
+        return ImageFont.load_default()
+
+def circular_crop(image, size=(130, 130)):
+    """Crops an image to a circle and adds a border, similar to CSS border-radius: 50%"""
+    # Resize
+    image = image.resize(size, Image.Resampling.LANCZOS)
+    
+    # Create circular mask
+    mask = Image.new("L", size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0) + size, fill=255)
+    
+    # Apply mask
+    output = ImageOps.fit(image, mask.size, centering=(0.5, 0.5))
+    output.putalpha(mask)
+    
+    # Add Border (5px solid white) - CSS: border: 5px solid rgba(255,255,255,0.9);
+    border_thickness = 5
+    border_color = (255, 255, 255, 230) # 230 is alpha (~0.9)
+    
+    # Draw border ring on top
+    draw_overlay = ImageDraw.Draw(output)
+    draw_overlay.ellipse((0, 0, size[0]-1, size[1]-1), outline=border_color, width=border_thickness)
+    
+    return output
+
+def generateimage(avatar1_b64, avatar2_b64, name1, name2, percent, comment):
+    try:
+        # 1. Setup Canvas
+        # Load background or create black if missing
+        try:
+            base = Image.open(BG_PATH).convert("RGBA")
+            base = base.resize((900, 350))
+        except Exception:
+            base = Image.new("RGBA", (900, 350), (0, 0, 0, 255))
+
+        # Create a transparent overlay for drawing semi-transparent boxes
+        overlay = Image.new("RGBA", base.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(overlay)
+
+        # 2. Process Avatars
+        # ship.py sends "data:image/png;base64,....." -> we need to strip header
+        def process_avatar_data(b64_string):
+            if "base64," in b64_string:
+                b64_string = b64_string.split("base64,")[1]
+            img_data = base64.b64decode(b64_string)
+            return Image.open(io.BytesIO(img_data)).convert("RGBA")
+
+        pfp1 = circular_crop(process_avatar_data(avatar1_b64))
+        pfp2 = circular_crop(process_avatar_data(avatar2_b64))
+
+        # 3. Positioning Logic (The "Flexbox" simulation)
+        # Y positions
+        avatar_y = 50
+        name_y = 190
+        
+        # X positions
+        center_x = 450
+        pfp1_x = 100
+        pfp2_x = 900 - 100 - 130 # Right side aligned
+
+        # Paste Avatars
+        base.paste(pfp1, (pfp1_x, avatar_y), pfp1)
+        base.paste(pfp2, (pfp2_x, avatar_y), pfp2)
+
+        # 4. Draw Names (with dark background pills)
+        font_name = load_font(20)
+        
+        def draw_name_tag(text, center_x, top_y):
+            # Calculate text size
+            bbox = font_name.getbbox(text)
+            w = bbox[2] - bbox[0]
+            h = bbox[3] - bbox[1]
+            padding = 10
+            
+            # Background pill (Black 60% opacity)
+            # x0, y0, x1, y1
+            shape = [center_x - w/2 - padding, top_y, center_x + w/2 + padding, top_y + h + padding*2]
+            draw.rounded_rectangle(shape, radius=10, fill=(0, 0, 0, 150))
+            
+            # Text
+            # We draw text on the 'overlay' but it needs to be fully opaque
+            # Actually, standard PIL draw is easier for text on top of the overlay
+            pass 
+
+        # Draw backgrounds for names first
+        draw_name_tag(name1, pfp1_x + 65, name_y) # 65 is half of avatar width
+        draw_name_tag(name2, pfp2_x + 65, name_y)
+
+        # Composite the semi-transparent backgrounds now
+        base = Image.alpha_composite(base, overlay)
+        
+        # Now draw the solid white text on top
+        draw_final = ImageDraw.Draw(base)
+        
+        # Helper to center text
+        def draw_centered_text(text, x, y, font, color=(255,255,255)):
+            bbox = font.getbbox(text)
+            w = bbox[2] - bbox[0]
+            draw_final.text((x - w/2, y), text, font=font, fill=color)
+
+        draw_centered_text(name1, pfp1_x + 65, name_y + 5, font_name)
+        draw_centered_text(name2, pfp2_x + 65, name_y + 5, font_name)
+
+        # 5. Draw Center Score
+        font_score = load_font(80) # Big text
+        draw_centered_text(f"{percent}%", center_x, 70, font_score)
+
+        # Status text below score (e.g. "MATCH")
+        font_status = load_font(16)
+        # White box with red text
+        status_text = "COMPATIBILITY"
+        bbox = font_status.getbbox(status_text)
+        sw = bbox[2] - bbox[0]
+        # Draw white box behind status
+        draw_final.rectangle([center_x - sw/2 - 10, 155, center_x + sw/2 + 10, 180], fill="white")
+        draw_final.text((center_x - sw/2, 158), status_text, font=font_status, fill="#b30000")
+
+        # 6. Comment Box (Bottom Section)
+        # Draw the rounded white container
+        # CSS: width: 700px; padding: 15px 30px;
+        box_w, box_h = 700, 80
+        box_x = (900 - box_w) // 2
+        box_y = 240
+        
+        # New overlay for the white box (95% opacity)
+        overlay2 = Image.new("RGBA", base.size, (255, 255, 255, 0))
+        draw2 = ImageDraw.Draw(overlay2)
+        draw2.rounded_rectangle([box_x, box_y, box_x + box_w, box_y + box_h], radius=20, fill=(255, 255, 255, 240))
+        base = Image.alpha_composite(base, overlay2)
+        draw_final = ImageDraw.Draw(base) # Update drawer
+
+        # Text Wrap Logic
+        font_comment = load_font(18)
+        # Approx chars per line depends on font size. 
+        wrapper = textwrap.TextWrapper(width=60) 
+        wrapped_lines = wrapper.wrap(comment)
+        
+        text_start_y = box_y + 20
+        line_height = 24
+        
+        for i, line in enumerate(wrapped_lines[:3]): # Limit to 3 lines
+            draw_centered_text(line, center_x, text_start_y + (i * line_height), font_comment, color="#555")
+
+        # 7. Quote Mark
+        font_quote = load_font(60)
+        draw_final.text((box_x + 10, box_y - 20), "“", font=font_quote, fill="#b30000")
+
+        # 8. Save
+        base.save(OUTPUT_FILE)
+        return OUTPUT_FILE
+
     except Exception as e:
         bot_log(f"Error generating ship image: {e}", level="error")
+        import traceback
+        traceback.print_exc() # Print full error to console for debugging
         return None
