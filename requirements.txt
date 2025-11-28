@@ -7,3 +7,5 @@ requests
 -q -U google-genai
 rich
 typing 
+html2image
+google-genai

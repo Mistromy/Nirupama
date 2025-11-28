@@ -3,6 +3,9 @@ import random
 from discord import Member, Guild
 from utils.logger import bot_log
 from utils.ai_interface import query_ai
+from utils.shiprenderer import generateimage
+import aiohttp
+import base64
 
 async def calculate_ship_percentage(user1: Member, user2: Member, guild: Guild):
     # 1. Start with a chaotic neutral base
@@ -98,3 +101,26 @@ async def calculate_ship_percentage(user1: Member, user2: Member, guild: Guild):
     """)
     return final_score, log, ai_comment
     
+async def getavatars(user: Member):
+    avatar_url = str(user.display_avatar.url)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(avatar_url) as resp:
+            if resp.status == 200:
+                data = await resp.read()
+                encoded = base64.b64encode(data).decode('utf-8')
+                return f"data:image/png;base64,{encoded}"
+            else:
+                bot_log(f"Failed to fetch avatar image from {avatar_url}", level="error")
+                return None
+    return ""
+
+async def process_ship(user1: Member, user2: Member, guild: Guild):
+    ship_percentage, log, ai_comment = await calculate_ship_percentage(user1, user2, guild)
+    avatar1 = await getavatars(user1)
+    avatar2 = await getavatars(user2)
+    loop = asyncio.get_event_loop()
+    bot_log(f"Generating ship image for {user1} and {user2}", level="info")
+    image_path = await loop.run_in_executor(
+        None, generateimage, avatar1, avatar2,
+        user1.display_name, user2.display_name, ship_percentage, ai_comment)
+    return ship_percentage, log, ai_comment, image_path
