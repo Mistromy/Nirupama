@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nirupama - Discord Bot</title>
+    <meta name="description" content="Nirupama - A fun utility Discord bot with AI capabilities, ship command, and more!">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2>🤖 Nirupama</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#commands">Commands</a></li>
+                <li><a href="#stats">Stats</a></li>
+                <li><a href="#support">Support</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1>Nirupama Shere</h1>
+                <p class="subtitle">General Purpose Bot with AI-Powered Features</p>
+                <p class="description">Moderation & Level tracing features coming soon!</p>
+                <div class="cta-buttons">
+                    <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot" class="btn btn-primary" id="inviteBtn">
+                        <span class="btn-icon">➕</span> Add to Server
+                    </a>
+                    <a href="https://github.com/mistromy/Nirupama" target="_blank" class="btn btn-secondary">
+                        <span class="btn-icon">📁</span> GitHub
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="bot-avatar">
+                    <div class="avatar-circle">
+                        <span>🤖</span>
+                    </div>
+                    <div class="status-indicator online"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">✨ Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>AI Conversations</h3>
+                    <p>Speak with his unfiltered AI. Ask questions or engage in banter.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💕</div>
+                    <h3>Ship Calculator</h3>
+                    <p>Take a glimple into destiny's eyes!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Fun Commands</h3>
+                    <p>Dice roll, 8Ball, tone analyzer and more.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Customizable & Adaptive AI</h3>
+                    <p>Adjust AI personality, and response behaviors to fit your server's vibe, or let the AI adapt automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Smart Tools</h3>
+                    <p>Bring commands to another level with AI, enabling code generation, reactions, and GIF searching.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Suggestion System</h3>
+                    <p>Submit feature requests and bug reports directly through Discord commands.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Commands Section -->
+    <section id="commands" class="commands">
+        <div class="container">
+            <h2 class="section-title">🎯 Commands</h2>
+            <div class="commands-grid">
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/ship</span>
+                        <span class="command-tag">Fun</span>
+                    </div>
+                    <p>Check compatibility between two users with AI-generated analysis and a visual ship result!</p>
+                    <code>/ship @user1 @user2</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/diceroll</span>
+                        <span class="command-tag">Utility</span>
+                    </div>
+                    <p>Roll a 6-sided dice and see what fate has in store for you!</p>
+                    <code>/diceroll</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/eightball</span>
+                        <span class="command-tag">Fun</span>
+                    </div>
+                    <p>Ask the magic 8ball any yes/no question and receive mystical wisdom.</p>
+                    <code>/eightball question</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/tone</span>
+                        <span class="command-tag">Fun</span>
+                    </div>
+                    <p>Analyze the tone of any text to understand its emotional content.</p>
+                    <code>/tone text</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/suggest</span>
+                        <span class="command-tag">Feedback</span>
+                    </div>
+                    <p>Submit feature requests, suggestions, or bug reports to help improve the bot.</p>
+                    <code>/suggest your_suggestion</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/set_ai_personality</span>
+                        <span class="command-tag">Admin</span>
+                    </div>
+                    <p>Customize the AI's personality and behavior in your server.</p>
+                    <code>/set_ai_personality</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/set_thinking_mode</span>
+                        <span class="command-tag">Admin</span>
+                    </div>
+                    <p>Choose how the AI processes and responds to messages.</p>
+                    <code>/set_thinking_mode mode</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
+                        <span class="command-name">/ai_toggle</span>
+                        <span class="command-tag">Admin</span>
+                    </div>
+                    <p>Enable or disable AI responses in channels or for the entire server.</p>
+                    <code>/ai_toggle</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section (Placeholder for future implementation) -->
+    <section id="stats" class="stats">
+        <div class="container">
+            <h2 class="section-title">📊 Live Stats</h2>
+            <p class="stats-subtitle">Real-time statistics from the bot</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🖥️</div>
+                    <div class="stat-value" id="serverCount">---</div>
+                    <div class="stat-label">Servers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="userCount">---</div>
+                    <div class="stat-label">Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value" id="commandCount">---</div>
+                    <div class="stat-label">Commands Run</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-value" id="aiResponses">---</div>
+                    <div class="stat-label">AI Responses</div>
+                </div>
+            </div>
+            <div class="stats-note">
+                <p>💡 <em>Live stats feature coming soon! This will show real-time data from all bot instances.</em></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section id="support" class="support">
+        <div class="container">
+            <h2 class="section-title">💖 Support the Project</h2>
+            <div class="support-content">
+                <div class="support-text">
+                    <h3>Help Keep Nirupama Running!</h3>
+                    <p>Nirupama is a passion project. Your support helps cover API expenses, and allows for new features to be added in the future.</p>
+                    <p>Every contribution, no matter how small, makes a huge difference. Thank you for your support!</p>
+                </div>
+                <!-- Ko-fi Embed -->
+                <div class="kofi-container">
+                    <iframe 
+                        id='kofiframe' 
+                        src='https://ko-fi.com/mist/?hidefeed=true&widget=true&embed=true&preview=true' 
+                        style='border:none;width:100%;padding:4px;background:#f9f9f9;' 
+                        height='712' 
+                        title='mistromy'>
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Future Features Section -->
+    <section id="roadmap" class="roadmap">
+        <div class="container">
+            <h2 class="section-title">🚀 Upcoming Features</h2>
+            <div class="roadmap-grid">
+                <div class="roadmap-item">
+                    <div class="roadmap-status planned">Planned</div>
+                    <h3>Server Moderation</h3>
+                    <p>Advanced moderation features including report buttons, auto-moderation based on report frequency, and mod channel integration.</p>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-status in-progress">In Progress</div>
+                    <h3>AI Memory</h3>
+                    <p>Enhanced AI with conversation memory to provide more contextual and personalized responses.</p>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-status planned">Planned</div>
+                    <h3>Enhanced Ship Algorithm</h3>
+                    <p>More factors including activity, join dates, status, roles, and message count for more accurate compatibility calculations.</p>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-status planned">Planned</div>
+                    <h3>Dictionary Command</h3>
+                    <p>Quick word and phrase lookups with definitions, synonyms, and usage examples.</p>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-status planned">Planned</div>
+                    <h3>Leveling System</h3>
+                    <p>Engagement-based leveling with XP rewards, leaderboards, custom role rewards, advanced stats, boosters, shop & more. Turn messages into a currency.</p>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-status planned">Planned</div>
+                    <h3>Custom Commands</h3>
+                    <p>Create personalized commands with custom responses, images, and AI integration.</p>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-status planned">Planned</div>
+                    <h3>Better AI integration</h3>
+                    <p>Allow the AI to view the message the user is responing to, to get more context. plus query the user's pfp or anything else for better immmersion.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Server Invite Section -->
+    <section id="invite" class="invite-section">
+        <div class="container">
+            <div class="invite-card">
+                <h2>Ready to Add Nirupama?</h2>
+                <p>Join thousands of servers already enjoying Nirupama's features!</p>
+                <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot" class="btn btn-primary btn-large" id="inviteBtnBottom">
+                    <span class="btn-icon">🚀</span> Invite to Server
+                </a>
+                <p class="permissions-note">Uses Admin Permissions due to the bot growing rapdily. Contact <a href="https://discord.com/users/859371145076932619" class="discord-link">@Mistroym</a> if you want to add the bot with less permissions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Nirupama Bot</h3>
+                    <p>A fun utility Discord bot with AI capabilities.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="https://github.com/mistromy/Nirupama" target="_blank">GitHub</a></li>
+                        <li><a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot">Invite Bot</a></li>
+                        <li><a href="https://ko-fi.com/mistromy" target="_blank">Support on Ko-fi</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#commands">Commands</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#roadmap">Roadmap</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Nirupama Bot. Made with 💙 by <a href="https://discord.com/users/859371145076932619" class="discord-link">Mistromy</a> | <a href="https://github.com/mistromy" target="_blank">GitHub</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
