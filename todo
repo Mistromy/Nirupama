@@ -15,3 +15,6 @@
 ## Ai response gets sent to user
 ### ...Writing message gets updated with currect status every time
 
+# Make the ai be able to see ship images
+# allow it to change the result a bit
+# feed the display name instead of username to ship command

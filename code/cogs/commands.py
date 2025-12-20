@@ -27,7 +27,7 @@ class commands(commands.Cog):
             if ai_comment:
                 await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%\n\n> {ai_comment}")
             else:
-                await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%")
+                await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%\n\n {log}")
         # await ctx.respond(f" 💖 The compatibility between {user1.mention} and {user2.mention} is **{ship_percentage}%**!\n\n> {ai_comment}")
         bot_log(f"/ship {user1} {user2}.{log} ran by {ctx.author.name}")
 

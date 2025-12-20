@@ -119,8 +119,8 @@ async def process_ship(user1: Member, user2: Member, guild: Guild):
     avatar1 = await getavatars(user1)
     avatar2 = await getavatars(user2)
     loop = asyncio.get_event_loop()
-    bot_log(f"Generating ship image for {user1} and {user2}", level="info")
+    bot_log(f"Generating ship image for {user1.display_name}({user1.id}) and {user2.display_name}({user2.id})", level="info")
     image_path = await loop.run_in_executor(
         None, generateimage, avatar1, avatar2,
-        user1.display_name, user2.display_name, ship_percentage, ai_comment)
-    return ship_percentage, log, ai_comment, image_path
+        user1.display_name, user2.display_name, ship_percentage, ai_comment, log)
+    return ship_percentage, log, ai_comment, image_path, log

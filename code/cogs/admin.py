@@ -281,14 +281,14 @@ class AdminMainView(discord.ui.View):
 
     @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.danger)
     async def shutdown_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("🛑 Shutting down...", ephemeral=False)
+        await interaction.response.send_message("🛑 Shutting down...", ephemeral=True)
         bot_log(f"Shutdown initiated by {interaction.user.name}", level="critical")
         self.bot.exit_code = 0
         await self.bot.close()
 
     @discord.ui.button(label="Reboot", style=discord.ButtonStyle.danger)
     async def reboot_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("🔄 Rebooting system...", ephemeral=False)
+        await interaction.response.send_message("🔄 Rebooting system...", ephemeral=True)
         bot_log(f"Reboot initiated by {interaction.user.name}", level="warning")
         self.bot.exit_code = 2
         await self.bot.close()
