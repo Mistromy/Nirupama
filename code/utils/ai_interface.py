@@ -12,7 +12,12 @@ client = OpenAI(
 )
 
 async def query_ai(prompt: str):
-    response = await client.chat.completions.create(
-    model = "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
-    messages = prompt)
-    return response.text
+    print(prompt)
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(None, lambda: client.chat.completions.create(
+        model="cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+        messages=[{"role": "user", "content": prompt}]))
+    if response:
+        return response.choices[0].message.content
+    else:
+        return None

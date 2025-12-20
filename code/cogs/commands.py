@@ -24,8 +24,11 @@ class commands(commands.Cog):
         ship_percentage, log, ai_comment, image_path = await utils.ship.process_ship(user1, user2, ctx.guild)
         if image_path:
             file=discord.File(image_path, filename="ship_result.png")
-            await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%\n\n> {ai_comment}")
-        await ctx.respond(f" 💖 The compatibility between {user1.mention} and {user2.mention} is **{ship_percentage}%**!\n\n> {ai_comment}")
+            if ai_comment:
+                await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%\n\n> {ai_comment}")
+            else:
+                await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%")
+        # await ctx.respond(f" 💖 The compatibility between {user1.mention} and {user2.mention} is **{ship_percentage}%**!\n\n> {ai_comment}")
         bot_log(f"/ship {user1} {user2}.{log} ran by {ctx.author.name}")
 
     @discord.slash_command(description="Submit a feature request or suggestion / bug report")
