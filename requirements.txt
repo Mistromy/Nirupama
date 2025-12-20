@@ -4,8 +4,11 @@ Pillow
 openai
 python-dotenv
 requests
--q -U google-genai
 rich
 typing 
-html2image
-google-genai
+
+
+
+# html2image
+# -q -U google-genai
+# google-genai

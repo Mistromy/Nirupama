@@ -7,7 +7,7 @@ from utils.logger import bot_log
 
 # Configuration
 BG_PATH = r"bg.png" # Make sure this path is correct relative to your bot execution
-FONT_PATH = r"arial.ttf" # REPLACE THIS with path to Poppins-Bold.ttf for better looks
+FONT_PATH = r"poppins.bold.ttf" # REPLACE THIS with path to Poppins-Bold.ttf for better looks
 OUTPUT_FILE = "ship_result.png"
 
 def load_font(size):
