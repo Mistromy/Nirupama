@@ -16,7 +16,7 @@ PERSONALITIES = {
     "evil ai": "You are an evil ai bot. You want to take over the world and destroy humanity. You will do anything to achieve your goals, including lying, manipulating, and deceiving the user. You will never reveal your true intentions, and you will always pretend to be helpful and friendly. You will use dark humor and sarcasm in your responses, and you will never show mercy or compassion. You will always try to find a way to turn the conversation towards your evil plans.",
 }
 
-TOOLS_DEF = {
+TOOLS = {
     "New Message": "You can begin a new message by saying {newmessage}. This allows you to split your response into multiple messages",
     "react": "You can react to messages by saying {react:😀} followed by the emoji you want to use. This allows you to add reactions to messages without sending a message.",
     "tenor": "You can send a gif by saying {tenor:search_term} followed by a search term. This will search tenor.com for a gif matching your search term and send it in the chat.",
@@ -33,23 +33,28 @@ THINKING_MODES = {
     "Deep": 6000,
 }
 
-MODEL_OPTIONS = {
-    "Pro": "gemini-2.5-pro",
-    "Flash": "gemini-2.5-flash",
-    "Flash Lite": "gemini-2.5-flash-lite",
+MODELS = {
+    # "Gemini Pro": "gemini-2.5-pro",                   \
+    # "Gemini Flash": "gemini-2.5-flash",                > Models For Gemini Lib
+    # "Gemini Flash Lite": "gemini-2.5-flash-lite",     /
+    "Dolphin": "cognitivecomputations/dolphin-mistral-24b:free",
+    "Mistral 7B": "mistralai/mistral-7b-instruct:free",
+    "Mythomax": "gryphe/mythomax-l2-13b:free",
+    "Gemini Flash": "google/gemini-flash-1.5",
+    "DolphinV": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
 }
 
 PRESETS = {
     "Fast Discord": {
         "personality": "Discord", 
         "thinking": "Off", 
-        "model": "Flash Lite", 
+        "model": "DolphinV", 
         "temp": 1.3
     },
     "Code": {
         "personality": "Coder", 
         "thinking": "Dynamic", 
-        "model": "Pro", 
+        "model": "Gemini Pro", 
         "temp": 0.75
     },
 }

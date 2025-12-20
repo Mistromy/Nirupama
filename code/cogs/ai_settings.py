@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ui import Select, View, Button, Modal, InputText
 from utils.logger import bot_log
 from utils.ai_state import ai_state  # Import the shared state
-from data.ai_data import PERSONALITIES, TOOLS_DEF, THINKING_MODES, MODEL_OPTIONS, PRESETS
+from data.ai_data import PERSONALITIES, TOOLS, THINKING_MODES, MODELS, PRESETS
 
 OWNER_ID = 859371145076932619
 
@@ -33,14 +33,14 @@ class SettingsView(View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("⛔ You do not have permission.", ephemeral=True)
+            await interaction.response.send_message("What do you think you're doing? ", ephemeral=True)
             return False
         return True
 
     def build_ui(self):
         # 1. Model
         m_opts = [discord.SelectOption(label=k, description=v, default=(v == ai_state.current_model)) 
-                  for k, v in MODEL_OPTIONS.items()]
+                  for k, v in MODELS.items()]
         self.model_sel = Select(placeholder="Select Model", options=m_opts, row=0)
         self.model_sel.callback = self.model_cb
         self.add_item(self.model_sel)
@@ -91,7 +91,8 @@ class SettingsView(View):
 
     # Callbacks
     async def model_cb(self, interaction):
-        ai_state.current_model = self.model_sel.values[0]
+        selected_label = self.model_sel.values[0]
+        ai_state.current_model = MODELS[selected_label]
         await self.refresh_message(interaction)
 
     async def pers_cb(self, interaction):
@@ -127,7 +128,7 @@ class ToolsView(View):
         super().__init__(timeout=180)
         options = [
             discord.SelectOption(label=k, description=v[:100], default=(k in ai_state.enabled_tools))
-            for k, v in TOOLS_DEF.items()
+            for k, v in TOOLS.items()
         ]
         self.sel = Select(placeholder="Select active tools...", min_values=0, max_values=len(options), options=options)
         self.sel.callback = self.callback

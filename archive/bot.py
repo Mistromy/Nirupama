@@ -1,5 +1,5 @@
 import discord
-from config import PHOTOBOT_KEY, NASA_API_KEY
+#  from config import PHOTOBOT_KEY, NASA_API_KEY
 import random
 import asyncio
 import json
@@ -815,5 +815,5 @@ async def on_message(message):
         except (discord.NotFound, discord.HTTPException):
             pass
 
-if __name__ == "__main__":
-    bot.run(PHOTOBOT_KEY)
+# if __name__ == "__main__":
+    # bot.run(PHOTOBOT_KEY)

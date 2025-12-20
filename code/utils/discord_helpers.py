@@ -7,10 +7,12 @@ async def send_smart_message(destination, text, files=None, is_reply=False):
     if not text and not files:
         return
 
-    # Determine the actual send function
-    target_send_func = destination.send
+    # Determine the actual send function and channel
     if is_reply and isinstance(destination, discord.Message):
         target_send_func = destination.reply
+    else:
+        # For channels or if not a reply
+        target_send_func = destination.send
 
     # 1. Split by explicit {newmessage} marker
     raw_parts = text.split("{newmessage}")

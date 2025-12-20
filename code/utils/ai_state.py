@@ -1,9 +1,6 @@
-from data.ai_data import PERSONALITIES, TOOLS_DEF, THINKING_MODES, MODEL_OPTIONS, PRESETS
+from data.ai_data import PERSONALITIES, TOOLS, THINKING_MODES, MODELS, PRESETS
 
 class AIStateManager:
-    """
-    Singleton class to hold the current configuration of the AI in RAM.
-    """
     _instance = None
 
     def __new__(cls):
@@ -19,20 +16,20 @@ class AIStateManager:
         self.history_mode = "off"
         self.enabled_tools = []
         
-        self.current_personality_name = "Discord 2"
+        self.current_personality_name = "Discord"
         self.current_thinking_mode = THINKING_MODES["Dynamic"]
-        self.current_model = MODEL_OPTIONS["Flash Lite"]
+        self.current_model = MODELS["DolphinV"]
 
     @property
     def system_prompt(self):
-        base = "You're a discord bot. Act like the users. "
-        p_text = PERSONALITIES.get(self.current_personality_name, "")
+        base = "You're a discord bot. Your user ID is 1209887142839586876. Use Discord markdown formatting. Act like the user, adapting to their behavior. Keep your answers short, avoid punctiuation and emojis. "
+        personality = PERSONALITIES.get(self.current_personality_name, "")
         
         # Only send enabled tools
-        enabled_strings = [TOOLS_DEF[t] for t in self.enabled_tools if t in TOOLS_DEF]
+        enabled_strings = [TOOLS[t] for t in self.enabled_tools if t in TOOLS]
         tools_text = str(enabled_strings)
         
-        return f"{base} {p_text} Tools: {tools_text}"
+        return f"{base} {personality} Tools: {tools_text}"
 
     def apply_preset(self, preset_name):
         if preset_name in PRESETS:
@@ -44,7 +41,7 @@ class AIStateManager:
             
             # Safely get model
             m_name = p['model']
-            self.current_model = MODEL_OPTIONS.get(m_name, "gemini-2.5-flash")
+            self.current_model = MODELS.get(m_name, "gemini-2.5-flash")
             
             self.temperature = p['temp']
             return True
