@@ -150,8 +150,11 @@ def generateimage(avatar1_b64, avatar2_b64, name1, name2, percent, comment):
         # Text Wrap Logic
         font_comment = load_font(18)
         # Approx chars per line depends on font size. 
-        wrapper = textwrap.TextWrapper(width=60) 
-        wrapped_lines = wrapper.wrap(comment)
+        wrapper = textwrap.TextWrapper(width=60)
+        if comment:
+            wrapped_lines = wrapper.wrap(comment)
+        else:
+            wrapped_lines = ""
         
         text_start_y = box_y + 20
         line_height = 24

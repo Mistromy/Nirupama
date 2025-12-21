@@ -135,7 +135,8 @@ class AICoreCog(commands.Cog):
 
             except Exception as e:
                 bot_log(f"AI Error: {e}", level="error", category="AI")
-                await message.reply(f"**Big Oopsie** <a:Rage:923565182800769064>: {e}")
+                # mabye add a rate limit handler and then update the message with (this is taking a while, please wait a bit longer)
+                await message.reply(f"**Big Oopsie** <a:Rage:923565182800769064>\nSomething went wrong. You might be rate limited or the AI quota got depleted for today.")
             finally:
                 try: await waiting.delete()
                 except: pass
