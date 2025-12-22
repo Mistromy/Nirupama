@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 import random
 from utils.logger import bot_log
-import utils.ship 
+import utils.ship
+from tracking import getgraph
 
 class commands(commands.Cog):
     def __init__(self, bot):
@@ -49,6 +50,12 @@ class commands(commands.Cog):
         result = random.randint(1, 6)
         await ctx.respond(f"🎲 You rolled a **{result}**!")
         bot_log(f"/roll rolled a {result} by {ctx.author.name}")
+
+    @discord.slash_command(description="check how many messages you or someone has sent in this server")
+    async def messagecount(self, ctx, user: discord.Member = None):
+        await getgraph(self, ctx, user)
+        await ctx.send_followup("Command Is Unfinished", ephemeral=True)
+        bot_log(f"/messagecount ran by {ctx.author.name}")
 
 # 5. THE HOOK (Spawn Actor)
 # This is the MOST IMPORTANT part.

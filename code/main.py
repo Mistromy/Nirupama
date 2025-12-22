@@ -50,7 +50,7 @@ async def on_ready():
 #         bot_log(f"Failed to restart cog {cog_name} by {ctx.author.name}: {e}", level="error")
 
 
-cogs_list = ['cogs.admin', 'cogs.commands', 'cogs.ai_settings', 'cogs.ai_core']
+cogs_list = ['cogs.admin', 'cogs.commands', 'cogs.ai_settings', 'cogs.ai_core', 'cogs.tracking']
 for cog in cogs_list:
     try:
         bot.load_extension(cog)
