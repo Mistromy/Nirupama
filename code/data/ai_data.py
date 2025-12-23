@@ -42,6 +42,8 @@ MODELS = {
     "Mythomax": "gryphe/mythomax-l2-13b:free",
     "Gemini Flash": "google/gemini-flash-1.5",
     "DolphinV": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+    "Perplexity Sonar Pro": "sonar-pro",
+    "Perplexity Sonar": "sonar",
 }
 
 PRESETS = {

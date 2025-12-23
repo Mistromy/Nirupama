@@ -78,9 +78,13 @@ class AICoreCog(commands.Cog):
         self.bot = bot
         self.tool_processor = ToolProcessor(bot)
 
+        # self.client = OpenAI(
+        #     api_key=os.getenv("OPENROUTER_API_KEY"),
+        #     base_url="https://openrouter.ai/api/v1",
+        # )
         self.client = OpenAI(
-            api_key=os.getenv("OPENROUTER_API_KEY"),
-            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("PERPLEXITY_API_KEY"),
+            base_url="https://api.perplexity.ai"
         )
 
     @commands.Cog.listener()

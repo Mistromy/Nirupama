@@ -57,9 +57,5 @@ class commands(commands.Cog):
     #     await ctx.send_followup("Command Is Unfinished", ephemeral=True)
     #     bot_log(f"/messagecount ran by {ctx.author.name}")
 
-# 5. THE HOOK (Spawn Actor)
-# This is the MOST IMPORTANT part.
-# When 'main.py' runs 'bot.load_extension()', it looks specifically for this function.
-# If this is missing, the file is just text; it never gets added to the bot.
 def setup(bot):
     bot.add_cog(commands(bot))

@@ -44,6 +44,42 @@ class ColoredFormatter(logging.Formatter):
         formatter = logging.Formatter(log_fmt, datefmt="%H:%M:%S")
         return formatter.format(record)
 
+
+class AnsiDiscordFormatter(logging.Formatter):
+    """
+    ANSI-colored formatter for Discord code blocks using ```ansi fences.
+    """
+    GREY = "\x1b[38;20m"
+    YELLOW = "\x1b[33;20m"
+    RED = "\x1b[31;20m"
+    BOLD_RED = "\x1b[31;1m"
+    BLUE = "\x1b[34;20m"
+    GREEN = "\x1b[32;20m"
+    CYAN = "\x1b[36;20m"
+    RESET = "\x1b[0m"
+
+    COLORS = {
+        logging.DEBUG: GREY,
+        logging.INFO: GREEN,
+        logging.WARNING: YELLOW,
+        logging.ERROR: RED,
+        logging.CRITICAL: BOLD_RED,
+    }
+
+    def format(self, record):
+        color = self.COLORS.get(record.levelno, self.RESET)
+        cat = getattr(record, 'category', 'SYS')
+
+        log_fmt = (
+            f"{self.GREY}%(asctime)s{self.RESET} "
+            f"{color}[%(levelname)s]{self.RESET} "
+            f"{self.CYAN}[{cat}]{self.RESET} "
+            f"%(message)s"
+        )
+
+        formatter = logging.Formatter(log_fmt, datefmt="%H:%M:%S")
+        return formatter.format(record)
+
 # --- 2. DISCORD HANDLER ---
 
 class DiscordQueueHandler(logging.Handler):
@@ -74,7 +110,7 @@ async def discord_log_worker(bot, channel_id, queue_handler):
             # Receive the tuple: (formatted message, importance flag)
             msg, is_important = await queue_handler.queue.get()
             ping = "<@859371145076932619> " if is_important else ""
-            await send_smart_message(channel, f"{ping}```ini\n{msg}\n```")
+            await send_smart_message(channel, f"{ping}```ansi\n{msg}\n```")
         except asyncio.CancelledError:
             break
         except Exception as e:
@@ -97,8 +133,7 @@ log = setup_logging()
 
 def setup_discord_logging(bot, channel_id):
     queue_handler = DiscordQueueHandler()
-    formatter = logging.Formatter('[%(levelname)s] [%(category)s] %(message)s')
-    queue_handler.setFormatter(formatter)
+    queue_handler.setFormatter(AnsiDiscordFormatter())
     queue_handler.setLevel(logging.INFO)
     
     log.addHandler(queue_handler)
