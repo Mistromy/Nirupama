@@ -25,38 +25,30 @@ async def on_ready():
     
     bot_log(f"Logged in as {bot.user}", level="info")
 
-# @bot.slash_command(description="Reboots the bot")
-# async def reboot(ctx):
-#     await ctx.respond("🔄 Rebooting system...", ephemeral=False)
-#     bot_log(f"Reboot initiated by {ctx.author.name}", level="warning")
-#     bot.exit_code = 2
-#     await bot.close()
+@bot.event
+async def on_guild_join(guild):
+    serverlisttext = "".join([guild.name for guild in bot.guilds])
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(bot.guilds)} servers"))
+    bot_log(f"Joined new guild: {guild.name} (ID: {guild.id})", level="info", important=True)
 
-# @bot.slash_command(description="Kills the bot")
-# async def kill(ctx):
-#     await ctx.respond("Shutting down...", ephemeral=False)
-#     bot_log(f"Shutdown initiated by {ctx.author.name}", level="critical")
-#     bot.exit_code = 0
-#     await bot.close()
-
-# @bot.slash_command(description="restart specified cog")
-# async def restart_cog(ctx, cog_name: str):
-#     try:
-#         bot.reload_extension(cog_name)
-#         await ctx.respond(f"Restarted cog: {cog_name}", ephemeral=True)
-#         bot_log(f"Cog {cog_name} restarted by {ctx.author.name}", level="info")
-#     except Exception as e:
-#         await ctx.respond(f"Failed to restart cog: {cog_name}. Error: {e}", ephemeral=True)
-#         bot_log(f"Failed to restart cog {cog_name} by {ctx.author.name}: {e}", level="error")
-
+@bot.event
+async def on_guild_remove(guild):
+    serverlisttext = "".join([guild.name for guild in bot.guilds])
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(bot.guilds)} servers"))
+    bot_log(f"Removed from guild: {guild.name} (ID: {guild.id})", level="info", important=True)
 
 cogs_list = ['cogs.admin', 'cogs.commands', 'cogs.ai_settings', 'cogs.ai_core', 'cogs.tracking']
+protected_cogs = ['cogs.admin', 'cogs.tracking']  # Always-on cogs
+
+# Expose to bot for other cogs (e.g., admin) to use
+bot.cogs_to_load = cogs_list
+bot.protected_cogs = set(protected_cogs)
 for cog in cogs_list:
     try:
         bot.load_extension(cog)
         bot_log(f"Loaded cog: {cog}", level="info")
     except Exception as e:
-        bot_log(f"Failed to load {cog}: {e}", level="error")
+        bot_log(f"Failed to load {cog}: {e}", level="error", important=True)
 
 if __name__ == "__main__":
     if not BOT_TOKEN:

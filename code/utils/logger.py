@@ -2,6 +2,7 @@ import logging
 import asyncio
 import sys
 from utils.discord_helpers import send_smart_message
+from datetime import datetime
 
 # --- 1. CUSTOM FORMATTER ---
 
@@ -53,7 +54,8 @@ class DiscordQueueHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            self.queue.put_nowait(msg)
+            is_important = getattr(record, "important", False)
+            self.queue.put_nowait((msg, is_important))
         except Exception:
             self.handleError(record)
 
@@ -69,8 +71,10 @@ async def discord_log_worker(bot, channel_id, queue_handler):
 
     while not bot.is_closed():
         try:
-            record = await queue_handler.queue.get()
-            await send_smart_message(channel, f"```ini\n{record}\n```")
+            # Receive the tuple: (formatted message, importance flag)
+            msg, is_important = await queue_handler.queue.get()
+            ping = "<@859371145076932619> " if is_important else ""
+            await send_smart_message(channel, f"{ping}```ini\n{msg}\n```")
         except asyncio.CancelledError:
             break
         except Exception as e:
@@ -103,7 +107,8 @@ def setup_discord_logging(bot, channel_id):
 
 def bot_log(message, level="info", **kwargs):
     """
-    Wrapper for logging that accepts 'category' and passes it to the formatter.
+    Wrapper for logging that accepts 'category' and an 'important' flag.
+    Use: bot_log("msg", level="info", important=True)
     """
     lvl = getattr(logging, level.upper(), logging.INFO)
     
@@ -111,6 +116,10 @@ def bot_log(message, level="info", **kwargs):
     extra = kwargs
     if 'category' not in extra:
         extra['category'] = 'General'
+    
+    # Minimal: if caller set important=True, carry it through to the LogRecord
+    if extra.get('important'):
+        extra['important'] = True
     
     # CRITICAL FIX: stacklevel=2
     # This tells Python: "Don't report this line (inside bot_log). 
