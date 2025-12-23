@@ -87,6 +87,11 @@ class AICoreCog(commands.Cog):
             base_url="https://api.perplexity.ai"
         )
 
+    @staticmethod
+    def remove_citations(text):
+        """Remove citation brackets like [1], [2], etc."""
+        return re.sub(r'\[\d+\]', '', text)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user:
@@ -118,6 +123,7 @@ class AICoreCog(commands.Cog):
                 ))
 
                 raw_text = response.choices[0].message.content
+                raw_text = self.remove_citations(raw_text)
                 elapsed = int(time.time() - start_time)
 
                 # 3. Process Tools (Split messages, handle code blocks, etc.)
