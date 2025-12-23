@@ -49,7 +49,12 @@ def format_git_output_ansi(raw_output):
             parts = line.split("|", 1)
             file_part = parts[0].strip()
             stats_part = parts[1].strip()
-            colored.append(f"{CYAN}{file_part}{RESET} {YELLOW}{stats_part}{RESET}")
+
+            stats_colored = stats_part
+            stats_colored = stats_colored.replace("+", f"{GREEN}+{RESET}{YELLOW}")
+            stats_colored = stats_colored.replace("-", f"{RED}-{RESET}{YELLOW}")
+
+            colored.append(f"{CYAN}{file_part}{RESET} {YELLOW}{stats_colored}{RESET}")
         elif stripped.startswith("+"):
             colored.append(f"{GREEN}{line}{RESET}")
         elif stripped.startswith("-"):
