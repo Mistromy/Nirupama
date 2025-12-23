@@ -1,5 +1,4 @@
 # Todos
-## Improve logging for more color support
 ## Fix discord logging file limit
 ## Put all settings into /settings
 ## Fix all tools: react, tenor, etc
@@ -15,6 +14,8 @@
 ## Ai response gets sent to user
 ### ...Writing message gets updated with currect status every time
 
-# Make the ai be able to see ship images
+# Make the ai be able to see ship pfps for ship
 # allow it to change the result a bit
 # feed the display name instead of username to ship command
+
+# add update button to automatically git pull, and restart necessary cogs.
