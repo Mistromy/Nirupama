@@ -37,7 +37,7 @@ class commands(commands.Cog):
         with open("suggestions.md", "a") as f:
             f.write(f"- **{ctx.author.name}**: {suggestion}\n")
         await ctx.respond("Thank you for your suggestion! It has been recorded.", ephemeral=True)
-        bot_log(f"Suggestion submitted by {ctx.author.name}: {suggestion}", level="info")
+        bot_log(f"Suggestion submitted by {ctx.author.name}: {suggestion}", level="info", important=True)
 
     @discord.slash_command(description="Search a word or phrase in a Dictionary")
     async def dictionary(self, ctx, term: str):
