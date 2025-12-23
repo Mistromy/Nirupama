@@ -5,7 +5,7 @@ import sys
 import os
 from discord.ui import InputText
 import subprocess
-from utils.git_format import format_git_output
+from utils.git_format import format_git_output, format_git_output_ansi
 
 
 # 1. IMPORTS (Dependencies)
@@ -289,9 +289,9 @@ class AdminMainView(discord.ui.View):
     @discord.ui.button(label="Git Pull", style=discord.ButtonStyle.green)
     async def git_pull_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         result = subprocess.run(["git", "pull"], capture_output=True, text=True)
-        formatted = format_git_output(result.stdout + result.stderr)
+        formatted = format_git_output_ansi(result.stdout + result.stderr)
         await interaction.response.send_message(
-            content=f"**Git Pull Result:**\n```\n{result.stdout}\n```",
+            content=f"**Git Pull Result:**\n```ansi\n{formatted}\n```",
             ephemeral=True
         )
         
