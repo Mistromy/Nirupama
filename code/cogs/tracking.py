@@ -50,7 +50,10 @@ class tracker(commands.Cog):
             bot_log(f"Activity log failed: {e}", level="error")
 
     @commands.slash_command(description="Generate activity graph for a user")
-    async def getgraph(self, ctx, user_id, guild_id):
+    async def getgraph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
+        user_id = user.id if user else ctx.author.id
+        guild = guild or ctx.guild
+        guild_id = guild.id if guild else ctx.guild.id
         try:
             response = self.supabase.table("message_activity").select(
                 "bucket_time, message_count"
@@ -69,6 +72,27 @@ class tracker(commands.Cog):
             bucket_times.reverse()
             message_counts.reverse()
 
+            # Fill gaps with zeros
+            # Create a dictionary for fast lookup
+            data_dict = {bucket_times[i]: message_counts[i] for i in range(len(bucket_times))}
+            
+            # Find the time range
+            min_bucket = min(bucket_times)
+            max_bucket = max(bucket_times)
+            
+            # Generate all hourly buckets in range
+            all_buckets = []
+            all_counts = []
+            current_bucket = min_bucket
+            while current_bucket <= max_bucket:
+                all_buckets.append(current_bucket)
+                all_counts.append(data_dict.get(current_bucket, 0))  # Use 0 if bucket not found
+                current_bucket += 3600  # Add 1 hour
+            
+            # Use the complete data for plotting
+            bucket_times = all_buckets
+            message_counts = all_counts
+
             # Convert to datetime
             xs = [datetime.fromtimestamp(t) for t in bucket_times]
             ys = message_counts
@@ -77,8 +101,8 @@ class tracker(commands.Cog):
             fig, ax = plt.subplots(figsize=(10, 4))
             ax.plot(xs, ys, color="#5865F2", linewidth=2)
             ax.fill_between(xs, ys, color="#5865F2", alpha=0.2)
-            ax.set_title("Your Activity")
-            ax.set_ylabel("Messages")
+            ax.set_title(f"{user}'s Activity in {guild}")
+            ax.set_ylabel("Messages per hour")
             ax.grid(True, alpha=0.3)
 
             for spine in ax.spines.values():
@@ -97,6 +121,43 @@ class tracker(commands.Cog):
             bot_log(f"Graph failed: {e}", level="error")
             await ctx.respond("Error generating graph.", ephemeral=True)
 
+    @commands.slash_command(description="Get your total message count")
+    async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
+        user_id = user.id if user else ctx.author.id
+        user = user or ctx.author
+        guild_id = guild.id if guild else ctx.guild.id
+        member_join_epoch = int(user.joined_at.timestamp())
+
+        response = self.supabase.table("message_activity").select(
+            "bucket_time"
+        ).eq("guild_id", guild_id).order(
+            "bucket_time"
+        ).limit(1).execute()  # just get the first one
+        rows = response.data
+        if rows:
+            guild_added_epoch = rows[0]["bucket_time"]  # Extract the timestamp
+        else:
+            guild_added_epoch = None
+
+
+        try:
+            response = self.supabase.table("message_activity").select(
+                "message_count"
+            ).eq("user_id", user_id).eq("guild_id", guild_id).execute()
+
+            rows = response.data
+            total_messages = sum(r["message_count"] for r in rows) if rows else 0
+
+            await ctx.respond(f"User <@{user_id}> has sent a total of {total_messages} messages in {guild.name if guild else ctx.guild.name}.")
+            member_has_updaetd_stats = False
+            bot_log(f"Set member_has_updaetd_stats to False for debugging", level="info")
+            if member_join_epoch < guild_added_epoch and member_has_updaetd_stats == False:
+                await ctx.send_followup(f"Looks like you have joined this server before the bot started tracking levels. You can use the search feature to find your total message count. if you believe that the bot's message count is incorrect, you may request an update with updatemystats. a mod will then be able to assign you the correct amount of leves", ephemeral=True)
+        except Exception as e:
+            bot_log(f"Message count failed: {e}", level="error")
+            await ctx.respond("Error retrieving message count.", ephemeral=True)
+    
+            
 
 def setup(bot):
     bot.add_cog(tracker(bot))
