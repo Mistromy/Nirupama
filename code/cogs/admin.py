@@ -174,9 +174,50 @@ class CogSelectDropdown(discord.ui.Select):
                 self.bot.unload_extension(cog_name)
                 await interaction.response.send_message(f"✅ Unloaded cog: `{cog_name}`", ephemeral=True)
                 bot_log(f"{cog_name} unloaded by {interaction.user.name}", level="info")
+            elif self.action == "load":
+                self.bot.load_extension(cog_name)
+                await interaction.response.send_message(f"✅ Loaded cog: `{cog_name}`", ephemeral=True)
+                bot_log(f"{cog_name} loaded by {interaction.user.name}", level="info")
         except Exception as e:
             await interaction.response.send_message(f"❌ Failed to {self.action} cog `{cog_name}`: {e}", ephemeral=True)
             bot_log(f"Failed to {self.action} cog {cog_name}: {e}", level="error")
+
+
+class CogLoadDropdown(discord.ui.Select):
+    """Dropdown for selecting which cog to load from configured list"""
+    def __init__(self, bot, cog):
+        self.bot = bot
+        self.cog = cog
+        
+        # Get available cogs from main's list that aren't loaded yet
+        available_cogs = getattr(bot, 'cogs_to_load', [])
+        unloaded = [c for c in available_cogs if c not in bot.extensions]
+        
+        options = [
+            discord.SelectOption(label=cog_name, description=cog_name)
+            for cog_name in unloaded[:25]  # Discord limit
+        ]
+        
+        super().__init__(
+            placeholder="Select a cog to load...",
+            min_values=1,
+            max_values=1,
+            options=options if options else [discord.SelectOption(label="All cogs loaded", value="none")]
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.values[0] == "none":
+            await interaction.response.send_message("All cogs already loaded", ephemeral=True)
+            return
+
+        cog_name = self.values[0]
+        try:
+            self.bot.load_extension(cog_name)
+            await interaction.response.send_message(f"✅ Loaded cog: `{cog_name}`", ephemeral=True)
+            bot_log(f"{cog_name} loaded by {interaction.user.name}", level="info")
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Failed to load cog `{cog_name}`: {e}", ephemeral=True)
+            bot_log(f"Failed to load cog {cog_name}: {e}", level="error")
 
 
 class CogManagementView(discord.ui.View):
@@ -186,7 +227,10 @@ class CogManagementView(discord.ui.View):
         self.bot = bot
         self.action = action
         self.cog = cog
-        self.add_item(CogSelectDropdown(bot, action, cog))
+        if action == "load":
+            self.add_item(CogLoadDropdown(bot, cog))
+        else:
+            self.add_item(CogSelectDropdown(bot, action, cog))
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
     async def back_button(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -222,6 +266,11 @@ class AdminMainView(discord.ui.View):
         view = CogManagementView(self.bot, "unload", self.cog)
         await interaction.response.send_message(content="**Select a cog to unload:**", view=view, ephemeral=True)
 
+    @discord.ui.button(label="Load Cog", style=discord.ButtonStyle.blurple)
+    async def load_cog_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = CogManagementView(self.bot, "load", self.cog)
+        await interaction.response.send_message(content="**Select a cog to load:**", view=view, ephemeral=True)
+
     @discord.ui.button(label="Change Status", style=discord.ButtonStyle.blurple)
     async def status_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         view = StatusDropdowns(self.bot, self.cog)
@@ -250,20 +299,26 @@ class AdminMainView(discord.ui.View):
 
     @discord.ui.button(label="Wake up", style=discord.ButtonStyle.green)
     async def wake_up_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("🌞 Waking up from invisible...", ephemeral=True)
-        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name="/help"))
+        await interaction.response.send_message("Waking up from invisible...", ephemeral=True)
+        serverlisttext = "".join([guild.name for guild in self.bot.guilds])
+        await self.bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(self.bot.guilds)} servers"))
         bot_log(f"Bot set to online by {interaction.user.name}", level="info")
-        # Load configured cogs from main
+    
+        loaded = []
+        failed = []
         for cog_name in getattr(self.bot, 'cogs_to_load', []):
             try:
                 if cog_name not in self.bot.extensions:
                     self.bot.load_extension(cog_name)
+                    loaded.append(cog_name)
             except Exception as e:
+                failed.append(f"{cog_name}: {e}")
                 bot_log(f"Failed to load {cog_name}: {e}", level="error")
 
-    # @discord.ui.button(label="Load Cog", style=discord.ButtonStyle.green)
-
-    # @discord.ui.button(label="Load All Cogs", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Load Cog", style=discord.ButtonStyle.green)
+    async def load_cog_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        view = CogManagementView(self.bot, "load", self.cog)
+        await interaction.response.send_message(content="**Select a cog to load:**", view=view, ephemeral=True)
 
     @discord.ui.button(label="Fake Offline", style=discord.ButtonStyle.danger)
     async def fake_offline_button(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -328,7 +383,9 @@ class admincommands(commands.Cog):
             return
 
         bot_log(f"Admin panel accessed by {ctx.author.name}", level="info")
-        await ctx.respond("**Dev Options**", view=AdminMainView(self.bot, self), ephemeral=True)
+        all_loaded = list(self.bot.extensions.keys())
+
+        await ctx.respond(f"**Loaded Cogs**\n```{all_loaded}```", view=AdminMainView(self.bot, self), ephemeral=True)
 
 
 def setup(bot):
