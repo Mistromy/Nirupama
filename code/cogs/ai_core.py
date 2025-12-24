@@ -10,7 +10,7 @@ import re
 from utils.logger import bot_log
 from utils.discord_helpers import send_smart_message
 from utils.ai_state import ai_state
-from data.ai_data import THINKING_MODES
+from data.ai_data import THINKING_MODES, PROVIDERS
 
 # --- 1. THE TOOL PROCESSOR (Kept from your original code) ---
 class ToolProcessor:
@@ -77,15 +77,26 @@ class AICoreCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.tool_processor = ToolProcessor(bot)
+        self.clients = {}  # Cache for API clients
+        self._init_client()
 
-        # self.client = OpenAI(
-        #     api_key=os.getenv("OPENROUTER_API_KEY"),
-        #     base_url="https://openrouter.ai/api/v1",
-        # )
-        self.client = OpenAI(
-            api_key=os.getenv("PERPLEXITY_API_KEY"),
-            base_url="https://api.perplexity.ai"
-        )
+    def _init_client(self):
+        """Initialize or switch to the current provider's client"""
+        provider_config = ai_state.get_provider_config()
+        
+        if ai_state.current_provider not in self.clients:
+            api_key = os.getenv(provider_config["env_key"])
+            if not api_key:
+                bot_log(f"Warning: {provider_config['env_key']} not found in environment", level="warning", category="AI")
+                return
+            
+            self.clients[ai_state.current_provider] = OpenAI(
+                api_key=api_key,
+                base_url=provider_config["base_url"]
+            )
+            bot_log(f"Initialized {ai_state.current_provider} client", category="AI")
+        
+        self.client = self.clients[ai_state.current_provider]
 
     @staticmethod
     def remove_citations(text):
@@ -109,17 +120,15 @@ class AICoreCog(commands.Cog):
                     {"role": "user", "content": prompt}
                 ]
             
+                # Ensure we have the right client for the current provider
+                self._init_client()
+                
                 loop = asyncio.get_running_loop()
                 
                 response = await loop.run_in_executor(None, lambda: self.client.chat.completions.create(
                     model=ai_state.current_model,
                     messages=messages,
                     temperature=ai_state.temperature,
-                    # These headers help OpenRouter track your app (optional but good)
-                    # extra_headers={
-                    #     "HTTP-Referer": "https://mistromy.github.io/Nirupama/",
-                    #     "X-Title": "Nirupama Discord Bot",
-                    # }
                 ))
 
                 raw_text = response.choices[0].message.content
@@ -131,8 +140,8 @@ class AICoreCog(commands.Cog):
 
                 # 4. Debug Append
                 if ai_state.debug_mode:
-                    debug = (f"**Temp:** `{ai_state.temperature}` | **Model:** `{ai_state.current_model}` | "
-                            f"**Time:** `{elapsed}s`")
+                    debug = (f"**Provider:** `{ai_state.current_provider}` | **Model:** `{ai_state.current_model_name}` | "
+                            f"**Temp:** `{ai_state.temperature}` | **Time:** `{elapsed}s`")
                     final_text += f"\n\n## Debug Info\n{debug}"
 
                 # 5. Send Message
@@ -141,7 +150,7 @@ class AICoreCog(commands.Cog):
                 # 6. Post-Send Actions (Reactions)
                 await self.tool_processor.handle_reactions(raw_text, message)
                 
-                bot_log(f"Replied to {message.author} using {ai_state.current_model}", category="AI")
+                bot_log(f"Replied to {message.author} using {ai_state.current_provider}/{ai_state.current_model_name}", category="AI")
 
             except Exception as e:
                 bot_log(f"AI Error: {e}", level="error", category="AI")

@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ui import Select, View, Button, Modal, InputText
 from utils.logger import bot_log
 from utils.ai_state import ai_state  # Import the shared state
-from data.ai_data import PERSONALITIES, TOOLS, THINKING_MODES, MODELS, PRESETS
+from data.ai_data import PERSONALITIES, TOOLS, THINKING_MODES, MODELS, PRESETS, PROVIDERS
 
 OWNER_ID = 859371145076932619
 
@@ -38,30 +38,38 @@ class SettingsView(View):
         return True
 
     def build_ui(self):
-        # 1. Model
-        m_opts = [discord.SelectOption(label=k, description=v, default=(v == ai_state.current_model)) 
-                  for k, v in MODELS.items()]
-        self.model_sel = Select(placeholder="Select Model", options=m_opts, row=0)
+        # 0. Provider Selection
+        prov_opts = [discord.SelectOption(label=prov, default=(prov == ai_state.current_provider)) 
+                     for prov in PROVIDERS.keys()]
+        self.prov_sel = Select(placeholder="Select Provider", options=prov_opts, row=0)
+        self.prov_sel.callback = self.provider_cb
+        self.add_item(self.prov_sel)
+        
+        # 1. Model (filtered by current provider)
+        current_models = PROVIDERS[ai_state.current_provider]["models"]
+        m_opts = [discord.SelectOption(label=k, description=v[:100], default=(v == ai_state.current_model)) 
+                  for k, v in current_models.items()]
+        self.model_sel = Select(placeholder="Select Model", options=m_opts, row=1)
         self.model_sel.callback = self.model_cb
         self.add_item(self.model_sel)
 
         # 2. Personality (Limit 25)
         p_keys = list(PERSONALITIES.keys())[:25]
         p_opts = [discord.SelectOption(label=k, default=(k == ai_state.current_personality_name)) for k in p_keys]
-        self.pers_sel = Select(placeholder="Select Personality", options=p_opts, row=1)
+        self.pers_sel = Select(placeholder="Select Personality", options=p_opts, row=2)
         self.pers_sel.callback = self.pers_cb
         self.add_item(self.pers_sel)
 
         # 3. Thinking
         t_opts = [discord.SelectOption(label=k, value=str(v), default=(v == ai_state.current_thinking_mode)) 
                   for k, v in THINKING_MODES.items()]
-        self.think_sel = Select(placeholder="Thinking Budget", options=t_opts, row=2)
+        self.think_sel = Select(placeholder="Thinking Budget", options=t_opts, row=3)
         self.think_sel.callback = self.think_cb
         self.add_item(self.think_sel)
         
         # 4. Preset
         pr_opts = [discord.SelectOption(label=k) for k in PRESETS.keys()]
-        self.preset_sel = Select(placeholder="Load Preset...", options=pr_opts, row=3)
+        self.preset_sel = Select(placeholder="Load Preset...", options=pr_opts, row=4)
         self.preset_sel.callback = self.preset_cb
         self.add_item(self.preset_sel)
 
@@ -90,9 +98,20 @@ class SettingsView(View):
         await interaction.response.edit_message(embed=embed, view=self)
 
     # Callbacks
+    async def provider_cb(self, interaction):
+        ai_state.current_provider = self.prov_sel.values[0]
+        # Set default model for the new provider
+        models = PROVIDERS[ai_state.current_provider]["models"]
+        first_model_name = list(models.keys())[0]
+        ai_state.current_model = models[first_model_name]
+        ai_state.current_model_name = first_model_name
+        bot_log(f"Provider switched to {ai_state.current_provider}", category="Settings")
+        await self.refresh_message(interaction)
+    
     async def model_cb(self, interaction):
         selected_label = self.model_sel.values[0]
-        ai_state.current_model = MODELS[selected_label]
+        ai_state.current_model = PROVIDERS[ai_state.current_provider]["models"][selected_label]
+        ai_state.current_model_name = selected_label
         await self.refresh_message(interaction)
 
     async def pers_cb(self, interaction):
@@ -150,7 +169,8 @@ def get_settings_embed():
     # Reverse lookup thinking label
     t_label = next((k for k, v in THINKING_MODES.items() if v == ai_state.current_thinking_mode), str(ai_state.current_thinking_mode))
     
-    embed.add_field(name="Model", value=f"`{ai_state.current_model}`", inline=True)
+    embed.add_field(name="Provider", value=f"`{ai_state.current_provider}`", inline=True)
+    embed.add_field(name="Model", value=f"`{ai_state.current_model_name}`", inline=True)
     embed.add_field(name="Personality", value=f"`{ai_state.current_personality_name}`", inline=True)
     embed.add_field(name="Thinking", value=f"`{t_label}`", inline=True)
     embed.add_field(name="Temperature", value=f"`{ai_state.temperature}`", inline=True)

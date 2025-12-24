@@ -1,4 +1,4 @@
-from data.ai_data import PERSONALITIES, TOOLS, THINKING_MODES, MODELS, PRESETS
+from data.ai_data import PERSONALITIES, TOOLS, THINKING_MODES, MODELS, PRESETS, PROVIDERS
 
 class AIStateManager:
     _instance = None
@@ -18,7 +18,9 @@ class AIStateManager:
         
         self.current_personality_name = "Discord"
         self.current_thinking_mode = THINKING_MODES["Dynamic"]
-        self.current_model = MODELS["DolphinV"]
+        self.current_provider = "Groq"  # Default to Groq (free and uncensored)
+        self.current_model = PROVIDERS["Groq"]["models"]["Llama 3.3 70B"]
+        self.current_model_name = "Llama 3.3 70B"
 
     @property
     def system_prompt(self):
@@ -39,13 +41,22 @@ class AIStateManager:
             t_mode = p['thinking']
             self.current_thinking_mode = THINKING_MODES.get(t_mode, 0)
             
-            # Safely get model
-            m_name = p['model']
-            self.current_model = MODELS.get(m_name, "gemini-2.5-flash")
+            # Get provider and model
+            provider = p.get('provider', 'Groq')
+            self.current_provider = provider
+            
+            model_name = p.get('model')
+            if model_name and model_name in PROVIDERS[provider]["models"]:
+                self.current_model = PROVIDERS[provider]["models"][model_name]
+                self.current_model_name = model_name
             
             self.temperature = p['temp']
             return True
         return False
+
+    def get_provider_config(self):
+        """Get the current provider's configuration"""
+        return PROVIDERS[self.current_provider]
 
 # Global instance
 ai_state = AIStateManager()

@@ -33,30 +33,66 @@ THINKING_MODES = {
     "Deep": 6000,
 }
 
-MODELS = {
-    # "Gemini Pro": "gemini-2.5-pro",                   \
-    # "Gemini Flash": "gemini-2.5-flash",                > Models For Gemini Lib
-    # "Gemini Flash Lite": "gemini-2.5-flash-lite",     /
-    "Dolphin": "cognitivecomputations/dolphin-mistral-24b:free",
-    "Mistral 7B": "mistralai/mistral-7b-instruct:free",
-    "Mythomax": "gryphe/mythomax-l2-13b:free",
-    "Gemini Flash": "google/gemini-flash-1.5",
-    "DolphinV": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
-    "Perplexity Sonar Pro": "sonar-pro",
-    "Perplexity Sonar": "sonar",
+# AI Providers
+PROVIDERS = {
+    "Groq": {
+        "base_url": "https://api.groq.com/openai/v1",
+        "env_key": "GROQ_API_KEY",
+        "models": {
+            "Llama 3.3 70B": "llama-3.3-70b-versatile",
+            "Llama 3.1 70B": "llama-3.1-70b-versatile",
+            "Llama 3.1 8B": "llama-3.1-8b-instant",
+            "Mixtral 8x7B": "mixtral-8x7b-32768",
+            "Gemma 2 9B": "gemma2-9b-it",
+        }
+    },
+    "OpenRouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "env_key": "OPENROUTER_API_KEY",
+        "models": {
+            "Dolphin": "cognitivecomputations/dolphin-mistral-24b:free",
+            "Mistral 7B": "mistralai/mistral-7b-instruct:free",
+            "Mythomax": "gryphe/mythomax-l2-13b:free",
+            "Gemini Flash": "google/gemini-flash-1.5",
+            "DolphinV": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+        }
+    },
+    "Perplexity": {
+        "base_url": "https://api.perplexity.ai",
+        "env_key": "PERPLEXITY_API_KEY",
+        "models": {
+            "Sonar Pro": "sonar-pro",
+            "Sonar": "sonar",
+        }
+    }
 }
+
+# Legacy MODELS dict for backward compatibility
+MODELS = {}
+for provider_name, provider_data in PROVIDERS.items():
+    for model_name, model_id in provider_data["models"].items():
+        MODELS[f"{provider_name}: {model_name}"] = model_id
 
 PRESETS = {
     "Fast Discord": {
         "personality": "Discord", 
         "thinking": "Off", 
+        "provider": "OpenRouter",
         "model": "DolphinV", 
         "temp": 1.3
+    },
+    "Uncensored Groq": {
+        "personality": "Discord",
+        "thinking": "Off",
+        "provider": "Groq",
+        "model": "Llama 3.3 70B",
+        "temp": 1.2
     },
     "Code": {
         "personality": "Coder", 
         "thinking": "Dynamic", 
-        "model": "Gemini Pro", 
+        "provider": "Groq",
+        "model": "Llama 3.1 70B", 
         "temp": 0.75
     },
 }
