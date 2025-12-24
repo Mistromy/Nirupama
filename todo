@@ -19,3 +19,5 @@
 # feed the display name instead of username to ship command
 
 # add update button to automatically git pull, and restart necessary cogs.
+
+# if bot is pinged with no other context. have it read previous messages 
