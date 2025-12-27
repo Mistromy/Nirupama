@@ -5,10 +5,9 @@ import sys
 import os
 from discord.ui import InputText
 import subprocess
+import time
+
 from utils.git_format import format_git_output, format_git_output_ansi
-
-
-# 1. IMPORTS (Dependencies)
 from utils.logger import bot_log
 
 
@@ -248,6 +247,36 @@ class ServersListView(discord.ui.View):
     async def back_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_message("**🎛️ Admin Control Panel**", view=AdminMainView(self.bot, self.cog), ephemeral=True)
 
+# class SendMessageModal(discord.ui.Modal):
+#     """Modal for sending a message to a specific channel"""
+#     def __init__(self, bot, cog):
+#         super().__init__(title="Send Message")
+#         self.bot = bot
+#         self.cog = cog
+
+
+
+#         self.message_content_input = InputText(
+#             label="Message Content",
+#             placeholder="Enter the message content",
+#             style=discord.InputTextStyle.long,
+#             required=True,
+#             max_length=2000
+#         )
+
+#         self.add_item(self.message_content_input)
+
+#     async def on_submit(self, interaction: discord.Interaction):
+#         message_content = self.message_content_input.value
+#         try:
+#             # Send the message to the same channel where the admin panel was invoked
+#             if interaction.channel:
+#                 await interaction.channel.send(message_content)
+#                 await interaction.response.send_message("✅ Message sent to this channel.", ephemeral=True)
+#             else:
+#                 await interaction.response.send_message("❌ Unable to resolve channel.", ephemeral=True)
+#         except Exception as e:
+#             await interaction.response.send_message(f"❌ Failed to send message: {e}", ephemeral=True)
 
 class AdminMainView(discord.ui.View):
     """Main admin panel view with all command buttons"""
@@ -255,6 +284,8 @@ class AdminMainView(discord.ui.View):
         super().__init__(timeout=300)
         self.bot = bot
         self.cog = cog
+        self.shutdown_presses = 0
+        self.last_shutdown_time = 0
 
     @discord.ui.button(label="Reload Cog", style=discord.ButtonStyle.blurple)
     async def reload_cog_button(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -320,6 +351,11 @@ class AdminMainView(discord.ui.View):
         view = CogManagementView(self.bot, "load", self.cog)
         await interaction.response.send_message(content="**Select a cog to load:**", view=view, ephemeral=True)
 
+    # @discord.ui.button(label="Send message", style=discord.ButtonStyle.blurple)
+    # async def send_message_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+    #     modal = SendMessageModal(self.bot, self.cog)
+    #     await interaction.response.send_modal(modal)
+
     @discord.ui.button(label="Fake Offline", style=discord.ButtonStyle.danger)
     async def fake_offline_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_message("Going invisible (fake offline)...", ephemeral=True)
@@ -335,10 +371,35 @@ class AdminMainView(discord.ui.View):
 
     @discord.ui.button(label="Shutdown", style=discord.ButtonStyle.danger)
     async def shutdown_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_message("🛑 Shutting down...", ephemeral=True)
-        bot_log(f"Shutdown initiated by {interaction.user.name}", level="critical")
-        self.bot.exit_code = 0
-        await self.bot.close()
+        current_time = time.time()
+        timeout = 10
+        if current_time - self.last_shutdown_time > timeout:
+            self.shutdown_presses = 0
+
+            self.shutdown_presses += 1
+            self.last_shutdown_time = current_time
+
+            if self.shutdown_presses >= 2:
+                await interaction.response.send_message("🛑 Shutting down...", ephemeral=True)
+                bot_log(f"Shutdown initiated by {interaction.user.name}", level="critical")
+                self.bot.exit_code = 0
+                await self.bot.close()
+            else:
+                await interaction.response.send_message(f"⚠️ **Safety Check:** Click again within {timeout} seconds to confirm shutdown.", ephemeral=True)
+                self.shutdown_presses += 1
+                self.last_shutdown_time = current_time
+        else:
+            remaining = int(timeout - (current_time - self.last_shutdown_time)) if self.shutdown_presses > 1 else timeout
+            if self.shutdown_presses >= 2:
+                await interaction.response.send_message("🛑 Shutting down...", ephemeral=True)
+                bot_log(f"Shutdown initiated by {interaction.user.name}", level="critical")
+                self.bot.exit_code = 0
+                await self.bot.close()
+            else:
+                await interaction.response.send_message(f"⚠️ **Safety Check:** Click again within {timeout} seconds to confirm shutdown.", ephemeral=True)
+                self.shutdown_presses += 1
+                self.last_shutdown_time = current_time
+
 
     @discord.ui.button(label="Reboot", style=discord.ButtonStyle.danger)
     async def reboot_button(self, button: discord.ui.Button, interaction: discord.Interaction):
