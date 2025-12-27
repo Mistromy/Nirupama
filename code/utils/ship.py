@@ -92,12 +92,12 @@ async def calculate_ship_percentage(user1: Member, user2: Member, guild: Guild):
     final_score = max(0, min(100, final_score))
     
     ai_comment = await query_ai(prompt = f"""
-    Write a short, funny, and edgy comment (max 20 words) for a compatibility test between {user1} and {user2}.
+    Write a very short, funny, and edgy comment (max 18 words) for a compatibility test between {user1} and {user2}.
     
     The Score: {final_score}%
     The Factors: {log}
     
-    If the score is low, be savage. If high, be hype. Mention the factors if they are funny.
+    If the score is low, be savage. If high, be hype. Mention the factors only if they are very relevant and funny.
     """)
     return final_score, log, ai_comment
     
