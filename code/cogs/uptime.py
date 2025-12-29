@@ -11,13 +11,13 @@ class uptimecronitor(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.monitor = cronitor.Monitor('discord-bot-heartbeat')
+        self.monitor = cronitor.Monitor('nirupama-heartbeat')
         self.send_uptime_ping.start()
         
     def cog_unload(self):
         self.send_uptime_ping.cancel()
 
-    @tasks.loop(minutes=360)
+    @tasks.loop(minutes=60)
     async def send_uptime_ping(self):
         self.monitor.ping(state="run")
         try:
