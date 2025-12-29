@@ -6,15 +6,15 @@
 }
 
 :root {
-    --primary-color: #5865F2;
-    --primary-hover: #4752C4;
+    --primary-color: #82b664;
+    --primary-hover: #4c7c48;
     --secondary-color: #57F287;
     --background: #0D0D0D;
     --surface: #1A1A1A;
     --surface-light: #2A2A2A;
     --text-primary: #FFFFFF;
     --text-secondary: #B9BBBE;
-    --accent: #EB459E;
+    --accent: #74a592;
     --success: #57F287;
     --warning: #FEE75C;
     --error: #ED4245;
@@ -160,7 +160,7 @@ h1, h2, h3, h4 {
 .btn-primary:hover {
     background: var(--primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(88, 101, 242, 0.4);
+    box-shadow: 0 8px 20px rgba(38, 105, 60, 0.4);
 }
 
 .btn-secondary {
@@ -204,6 +204,11 @@ h1, h2, h3, h4 {
     font-size: 150px;
     box-shadow: 0 20px 60px rgba(88, 101, 242, 0.3);
     animation: float 3s ease-in-out infinite;
+}
+.circle {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
 }
 
 @keyframes float {
