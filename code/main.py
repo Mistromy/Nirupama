@@ -37,8 +37,8 @@ async def on_guild_remove(guild):
     await bot.change_presence(status=discord.Status.idle, activity=discord.Activity(type=discord.ActivityType.watching, name=f"{len(bot.guilds)} servers"))
     bot_log(f"Removed from guild: {guild.name} (ID: {guild.id})", level="info", important=True)
 
-cogs_list = ['cogs.admin', 'cogs.commands', 'cogs.ai_settings', 'cogs.ai_core', 'cogs.tracking']
-protected_cogs = ['cogs.admin', 'cogs.tracking']  # Always-on cogs
+cogs_list = ['cogs.admin', 'cogs.commands', 'cogs.ai_settings', 'cogs.ai_core', 'cogs.tracking', 'cogs.uptime']
+protected_cogs = ['cogs.admin', 'cogs.tracking', 'cogs.uptime']  # Always-on cogs
 
 # Expose to bot for other cogs (e.g., admin) to use
 bot.cogs_to_load = cogs_list
