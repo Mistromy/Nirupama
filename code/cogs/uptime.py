@@ -21,7 +21,7 @@ class uptimecronitor(commands.Cog):
     async def send_uptime_ping(self):
         self.monitor.ping(state="run")
         try:
-            bot_log("Sent Cronitor heartbeat ping.", level="info")
+            # bot_log("Sent Cronitor heartbeat ping.", level="info")
             self.monitor.ping(state="complete")
         except Exception as e:
             bot_log(f"Cronitor ping failed: {e}", level="error")
