@@ -3,6 +3,7 @@ from discord.ext import commands
 import random
 from utils.logger import bot_log
 import utils.ship
+import cogs.uptime as uptime
 # from tracking import getgraph
 
 class commands(commands.Cog):
@@ -21,6 +22,9 @@ class commands(commands.Cog):
 
     @discord.slash_command(description="check how compatible two users are")
     async def ship(self, ctx, user1: discord.Member, user2: discord.Member):
+        uptime_cog = self.bot.get_cog("uptimecronitor")
+        if uptime_cog:
+            await uptime_cog.runping()
         await ctx.defer()
         ship_percentage, log, ai_comment, image_path = await utils.ship.process_ship(user1, user2, ctx.guild)
         if image_path:
@@ -31,6 +35,9 @@ class commands(commands.Cog):
                 await ctx.respond(file=file, content=f"Ship Result: {ship_percentage}%\n\n {log}")
         # await ctx.respond(f" 💖 The compatibility between {user1.mention} and {user2.mention} is **{ship_percentage}%**!\n\n> {ai_comment}")
         bot_log(f"/ship {user1} {user2}.{log} ran by {ctx.author.name}")
+        uptime_cog = self.bot.get_cog("uptimecronitor")
+        if uptime_cog:
+            await uptime_cog.completeping()
 
     @discord.slash_command(description="Submit a feature request or suggestion / bug report")
     async def suggest(self, ctx, suggestion: str):
