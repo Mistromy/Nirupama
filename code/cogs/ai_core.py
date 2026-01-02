@@ -9,99 +9,11 @@ import re
 # Import your existing utilities
 from utils.logger import bot_log
 from utils.discord_helpers import send_smart_message
-from utils.ai_state import ai_state
-from data.ai_data import THINKING_MODES, PROVIDERS
-
-# --- 1. THE TOOL PROCESSOR (Kept from your original code) ---
-class ToolProcessor:
-    def __init__(self, bot):
-        self.bot = bot
-
-    async def process_tools(self, text, channel, files_to_attach=None):
-        if files_to_attach is None: files_to_attach = []
-        processed_text = text
-        used_tools = []
-
-        # {code:filename}
-        matches = re.finditer(r'\{code:([^:}]+)(?::([^}]+))?\}(.*?)\{endcode\}', text, re.DOTALL)
-        for m in matches:
-            fname, retention, content = m.group(1).strip(), m.group(2), m.group(3).strip()
-            # Create file object
-            import io
-            files_to_attach.append(discord.File(fp=io.StringIO(content), filename=fname))
-            
-            replacement = f"*Code attached as {fname}*"
-            # If user wants to keep code in chat
-            if retention and retention.lower() == "keep":
-                lang = fname.split('.')[-1] if '.' in fname else 'python'
-                replacement = f"```{lang}\n{content}\n```\n" + replacement
-            
-            processed_text = processed_text.replace(m.group(0), replacement)
-            used_tools.append(f"code:{fname}")
-
-        # {react:emoji}
-        for m in re.finditer(r'\{react:([^}]+)\}', processed_text):
-            processed_text = processed_text.replace(m.group(0), "")
-            used_tools.append(f"react:{m.group(1).strip()}")
-
-        # {tenor:term}
-        for m in re.finditer(r'\{tenor:([^}]+)\}', processed_text):
-            processed_text = processed_text.replace(m.group(0), f"*[Tenor GIF: {m.group(1).strip()}]*")
-            used_tools.append(f"tenor:{m.group(1).strip()}")
-
-        # {aiimage:desc}
-        for m in re.finditer(r'\{aiimage:([^}]+)\}', processed_text):
-            processed_text = processed_text.replace(m.group(0), f"*[Image Gen: {m.group(1).strip()}]*")
-            used_tools.append(f"aiimage:{m.group(1).strip()}")
-
-        # {localimage:file}
-        for m in re.finditer(r'\{localimage:([^}]+)\}', processed_text):
-            fname = m.group(1).strip()
-            if os.path.exists(fname):
-                files_to_attach.append(discord.File(fname))
-                processed_text = processed_text.replace(m.group(0), f"*Attached: {fname}*")
-                used_tools.append(f"localimage:{fname}")
-            else:
-                processed_text = processed_text.replace(m.group(0), f"*Missing File: {fname}*")
-
-        if "{newmessage}" in processed_text: used_tools.append("newmessage")
-
-        return processed_text, files_to_attach, used_tools
-
-    async def handle_reactions(self, text, message):
-        for m in re.finditer(r'\{react:([^}]+)\}', text):
-            try: await message.add_reaction(m.group(1).strip())
-            except: pass
 
 class AICoreCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.tool_processor = ToolProcessor(bot)
-        self.clients = {}  # Cache for API clients
-        self._init_client()
-
-    def _init_client(self):
-        """Initialize or switch to the current provider's client"""
-        provider_config = ai_state.get_provider_config()
-        
-        if ai_state.current_provider not in self.clients:
-            api_key = os.getenv(provider_config["env_key"])
-            if not api_key:
-                bot_log(f"Warning: {provider_config['env_key']} not found in environment", level="warning", category="AI")
-                return
-            
-            self.clients[ai_state.current_provider] = OpenAI(
-                api_key=api_key,
-                base_url=provider_config["base_url"]
-            )
-            bot_log(f"Initialized {ai_state.current_provider} client", category="AI")
-        
-        self.client = self.clients[ai_state.current_provider]
-
-    @staticmethod
-    def remove_citations(text):
-        """Remove citation brackets like [1], [2], etc."""
-        return re.sub(r'\[\d+\]', '', text)
+        self.client = OpenAI(api_key=os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1",)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -109,56 +21,42 @@ class AICoreCog(commands.Cog):
             return
         if self.bot.user in message.mentions:
             prompt = message.content
-            # prompt = message.content.replace(f'<@!{self.bot.user.id}>', '').replace(f'<@{self.bot.user.id}>', '').strip()
-            
-            start_time = int(time.time())
-            waiting = await message.reply("<a:typing:1330966203602305035> <t:" + str(start_time) + ":R>")
-            
-            try:
-                messages = [
-                    {"role": "system", "content": ai_state.system_prompt},
-                    {"role": "user", "content": prompt}
-                ]
-            
-                # Ensure we have the right client for the current provider
-                self._init_client()
-                
-                loop = asyncio.get_running_loop()
-                
-                response = await loop.run_in_executor(None, lambda: self.client.chat.completions.create(
-                    model=ai_state.current_model,
-                    messages=messages,
-                    temperature=ai_state.temperature,
-                ))
+            user_conent = [{"type": "text", "text": prompt}]
+            if attachment in message.attachments:
+                for attachment in message.attachments:
+                    if attachment.content_type and attachment.content_type.startswith("image/"):
+                        user_conent.append({"type": "image_url", "image_url": {"url": attachment.url}})
 
-                raw_text = response.choices[0].message.content
-                raw_text = self.remove_citations(raw_text)
-                elapsed = int(time.time() - start_time)
-
-                # 3. Process Tools (Split messages, handle code blocks, etc.)
-                final_text, files, tools = await self.tool_processor.process_tools(raw_text, message.channel)
-
-                # 4. Debug Append
-                if ai_state.debug_mode:
-                    debug = (f"**Provider:** `{ai_state.current_provider}` | **Model:** `{ai_state.current_model_name}` | "
-                            f"**Temp:** `{ai_state.temperature}` | **Time:** `{elapsed}s`")
-                    final_text += f"\n\n## Debug Info\n{debug}"
-
-                # 5. Send Message
-                await send_smart_message(message, final_text, is_reply=True, files=files)
-                
-                # 6. Post-Send Actions (Reactions)
-                await self.tool_processor.handle_reactions(raw_text, message)
-                
-                bot_log(f"Replied to {message.author} using {ai_state.current_provider}/{ai_state.current_model_name}", category="AI")
-
-            except Exception as e:
-                bot_log(f"AI Error: {e}", level="error", category="AI")
-                # mabye add a rate limit handler and then update the message with (this is taking a while, please wait a bit longer)
-                await message.reply(f"**Big Oopsie** <a:Rage:923565182800769064>\nSomething went wrong. You might be rate limited or the AI quota got depleted for today.")
-            finally:
-                try: await waiting.delete()
-                except: pass
-
+                        try:
+                            response = self.client.chat.completions.create(
+                                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                                messages=[
+                                    {"role": "system", "content": "You are a helpful assistant."},
+                                    {"role": "user", "content": user_conent}
+                                ],
+                                max_tokens=500,
+                                temperature=0.7,
+                            )
+                            await send_smart_message(message.channel, response.choices[0].message.content, is_reply=True)
+                            return response.choices[0].message.content
+                        except Exception as e:
+                            bot_log(f"AI response error: {e}", level="error", important=True)
+                            await send_smart_message(message.channel, "Sorry, I encountered an error while processing your request.")
+            else:
+                try:
+                    response = self.client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant."},
+                            {"role": "user", "content": user_conent}
+                        ],
+                        max_tokens=500,
+                        temperature=0.7,
+                    )
+                    await send_smart_message(message.channel, response.choices[0].message.content, is_reply=True)
+                    return response.choices[0].message.content
+                except Exception as e:
+                    bot_log(f"AI response error: {e}", level="error", important=True)
+                    await send_smart_message(message.channel, "Sorry, I encountered an error while processing your request.")
 def setup(bot):
     bot.add_cog(AICoreCog(bot))
