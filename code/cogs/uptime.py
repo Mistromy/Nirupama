@@ -11,7 +11,8 @@ class uptimecronitor(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.monitor = cronitor.Monitor('nirupama-heartbeat')
+        self.loopmonitor = cronitor.Monitor('nirupama-heartbeat')
+        self.commandmonitor = cronitor.Monitor('nirupama-commands')
         self.send_uptime_ping.start()
         
     def cog_unload(self):
@@ -19,17 +20,21 @@ class uptimecronitor(commands.Cog):
 
     @tasks.loop(minutes=60)
     async def send_uptime_ping(self):
-        self.monitor.ping(state="run")
+        self.loopmonitor.ping(state="run")
         try:
             # bot_log("Sent Cronitor heartbeat ping.", level="info")
-            self.monitor.ping(state="complete")
+            self.loopmonitor.ping(state="complete")
         except Exception as e:
             bot_log(f"Cronitor ping failed: {e}", level="error")
-            self.monitor.ping(state='fail', message=str(e))
+            self.loopmonitor.ping(state='fail', message=str(e))
 
     @send_uptime_ping.before_loop
     async def before_ping(self):
         await self.bot.wait_until_ready()
 
+    async def runping(self):
+        self.commandmonitor.ping(state="run")
+    async def completeping(self):
+        self.commandmonitor.ping(state="complete")
 def setup(bot):
     bot.add_cog(uptimecronitor(bot))
