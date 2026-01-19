@@ -9,11 +9,13 @@ import re
 # Import your existing utilities
 from utils.logger import bot_log
 from utils.discord_helpers import send_smart_message
+from data.ai_data import PERSONALITIES
 
 class AICoreCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.client = OpenAI(api_key=os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1",)
+        self.personality = PERSONALITIES.get("Discord")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -40,7 +42,7 @@ class AICoreCog(commands.Cog):
                 response = self.client.chat.completions.create(
                     model=model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "system", "content": self.personality},
                         {"role": "user", "content": user_content}
                     ],
                     max_tokens=500,
