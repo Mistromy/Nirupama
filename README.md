@@ -64,18 +64,25 @@ A versatile Discord bot with AI capabilities, fun utilities, and server manageme
    
    Create a `.env` file in the root directory:
    ```env
-   BOT_TOKEN=your_discord_bot_token
-   GOOGLE_API_KEY=your_google_ai_api_key
+   CRASH_WEBHOOK_URL = ""
+   BOT_TOKEN = ""
+   OPENROUTER_API_KEY = ""
+   SUPABASE_URL = ""
+   SUPABASE_KEY = ""
+   PERPLEXITY_API_KEY = ""
+   GROQ_API_KEY = ""
+   CRONITOR_API_KEY = ""
    ```
 
 4. **Run the bot**
+   Linux:
    ```bash
-   python code/main.py
+   ./Nirupama
    ```
    
-   Or use the launcher:
+   Windows:
    ```bash
-   python code/launch.py
+   Nirupama.exe
    ```
 
 ---

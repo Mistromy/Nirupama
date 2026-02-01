@@ -9,8 +9,8 @@ import (
 var Locations []string = defaults()
 
 func defaults() []string {
-	botLocations := []string{"pybot/main.py", "../../pybot/main.py"}
-	return botLocations
+	locations := []string{"pybot/", "../../pybot/", "", "../../"}
+	return locations
 }
 
 func main() {
@@ -18,26 +18,44 @@ func main() {
 	// tick()
 }
 
-func findFilepath() string {
+func findFilepath(filename string) string {
 	for i := range Locations {
-		fmt.Println("Searching: " + Locations[i])
-		_, err := os.Stat(Locations[i])
+		fmt.Println("Searching: " + Locations[i] + filename)
+		_, err := os.Stat(Locations[i] + filename)
 		foundloc := Locations[i]
 		if err != nil {
 			continue
 		}
-		fmt.Println("Starting " + Locations[i])
 		return foundloc
 	}
 	return ""
 }
 
+func installDependencies() {
+	requirementsPath := findFilepath("requirements.txt")
+	if requirementsPath == "" {
+		fmt.Println("No requirements.txt found.")
+		return
+	}
+	fmt.Println("Installing dependencies from: " + requirementsPath + "requirements.txt")
+	cmd := exec.Command("pip3", "install", "-r", requirementsPath+"requirements.txt")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error installing dependencies:", err)
+		return
+	}
+}
+
 func start() {
-	filepath := findFilepath()
+	installDependencies()
+	filepath := findFilepath("main.py")
+	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
 		return
 	}
-	cmd := exec.Command("python3", filepath)
+	cmd := exec.Command("python3", filepath+"main.py")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
