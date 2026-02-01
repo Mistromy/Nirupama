@@ -34,8 +34,12 @@ func findFilepath() string {
 
 func start() {
 	filepath := findFilepath()
+	if filepath == "" {
+		return
+	}
 	cmd := exec.Command("python3", filepath)
 	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println("Error starting bot:", err)
