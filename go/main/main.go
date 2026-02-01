@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 )
 
 var Locations []string = defaults()
+var SystemSpecificTools systemSpecific
 
 func defaults() []string {
 	locations := []string{"pybot/", "../../pybot/", "", "../../"}
@@ -16,6 +18,21 @@ func defaults() []string {
 func main() {
 	start()
 	// tick()
+}
+
+type systemSpecific struct {
+	pip    string
+	python string
+}
+
+func getSystemSpecific() {
+	if runtime.GOOS == "windows" {
+		SystemSpecificTools.pip = "pip"
+		SystemSpecificTools.python = "python"
+	} else {
+		SystemSpecificTools.pip = "pip3"
+		SystemSpecificTools.python = "python3"
+	}
 }
 
 func findFilepath(filename string) string {
@@ -38,7 +55,7 @@ func installDependencies() {
 		return
 	}
 	fmt.Println("Installing dependencies from: " + requirementsPath + "requirements.txt")
-	cmd := exec.Command("pip3", "install", "-r", requirementsPath+"requirements.txt")
+	cmd := exec.Command(SystemSpecificTools.pip, "install", "-r", requirementsPath+"requirements.txt")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -49,13 +66,14 @@ func installDependencies() {
 }
 
 func start() {
+	getSystemSpecific()
 	installDependencies()
 	filepath := findFilepath("main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
 		return
 	}
-	cmd := exec.Command("python3", filepath+"main.py")
+	cmd := exec.Command(SystemSpecificTools.python, filepath+"main.py")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
