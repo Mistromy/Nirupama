@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -18,8 +19,9 @@ func main() {
 }
 
 func start() {
-	fmt.Println(Location)
+	fmt.Println("Starting bot at location: " + Location)
 	cmd := exec.Command("python3", Location)
+	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println("Error starting bot:", err)
