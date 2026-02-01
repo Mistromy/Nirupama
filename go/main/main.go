@@ -6,11 +6,11 @@ import (
 	"os/exec"
 )
 
-var Location string = defaults()
+var Locations []string = defaults()
 
-func defaults() string {
-	botLocation := "../../pybot/main.py"
-	return botLocation
+func defaults() []string {
+	botLocations := []string{"pybot/main.py", "../../pybot/main.py"}
+	return botLocations
 }
 
 func main() {
@@ -18,9 +18,23 @@ func main() {
 	// tick()
 }
 
+func findFilepath() string {
+	for i := range Locations {
+		fmt.Println("Searching: " + Locations[i])
+		_, err := os.Stat(Locations[i])
+		foundloc := Locations[i]
+		if err != nil {
+			continue
+		}
+		fmt.Println("Starting " + Locations[i])
+		return foundloc
+	}
+	return ""
+}
+
 func start() {
-	fmt.Println("Starting bot at location: " + Location)
-	cmd := exec.Command("python3", Location)
+	filepath := findFilepath()
+	cmd := exec.Command("python3", filepath)
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
