@@ -90,21 +90,26 @@ func main() {
 	}
 	gitUpdate()
 	installDependencies()
-	start()
-	// tick()
+	log := make(chan string)
+	go start(log)
+	dashboard()
 }
 
-func start() {
-	testRender()
+func start(log chan string) {
 	filepath := findFilepath("main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
 		return
 	}
 	cmd := exec.Command(SystemSpecificTools.python, filepath+"main.py")
-	cmd.Stdout = os.Stdout
+	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		log <- line
+	}
+	err := cmd.Start()
 	if err != nil {
 		fmt.Println("Error starting bot:", err)
 		return
