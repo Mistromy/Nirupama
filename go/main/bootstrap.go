@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-func CheckRequirements() []string {
+func CheckExternalDependencies() []string {
 	missing := []string{}
 	cmd := exec.Command(SystemSpecificTools.python, "--version")
 	cmd.Stdout = os.Stdout

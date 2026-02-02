@@ -15,11 +15,6 @@ func defaults() []string {
 	return locations
 }
 
-func main() {
-	start()
-	// tick()
-}
-
 type systemSpecific struct {
 	pip    string
 	python string
@@ -48,6 +43,17 @@ func findFilepath(filename string) string {
 	return ""
 }
 
+func gitUpdate() {
+	cmd := exec.Command("git", "pull")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error updating from git:", err)
+		return
+	}
+}
+
 func installDependencies() {
 	requirementsPath := findFilepath("requirements.txt")
 	if requirementsPath == "" {
@@ -65,14 +71,20 @@ func installDependencies() {
 	}
 }
 
-func start() {
+func main() {
 	getSystemSpecific()
 
-	if m := CheckRequirements(); len(m) > 0 {
+	if m := CheckExternalDependencies(); len(m) > 0 {
 		fmt.Println("The Following Requirments could not be found:", m)
 		return
 	}
+	gitUpdate()
 	installDependencies()
+	start()
+	// tick()
+}
+
+func start() {
 	filepath := findFilepath("main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
@@ -87,8 +99,3 @@ func start() {
 		return
 	}
 }
-
-// func tick() {
-// 	for {
-// 	}
-// }
