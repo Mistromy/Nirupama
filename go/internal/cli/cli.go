@@ -1,21 +1,17 @@
-package main
+package cli
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type model struct {
-	focus    window
-	log      []string
-	sub      chan string
-	viewport viewport.Model
+	focus window
+	log   []string
 }
-type logMsg string
+
 type window int
 
 const (
@@ -26,6 +22,7 @@ const (
 func initialModel() model {
 	return model{
 		focus: 0,
+		log:   []string{},
 	}
 }
 
@@ -34,21 +31,11 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case logMsg:
-		m.log = append(m.log, string(msg))
-		logs := strings.Join(m.log, "\n")
-		m.viewport.SetContent(logs)
-		m.viewport.GotoBottom()
-		return m, waitForActivity(m.sub)
-	}
 	return m, nil
 }
 
 func (m model) View() string {
-
-	return style.Render(m.viewport.View())
-
+	return ""
 }
 
 var style = lipgloss.NewStyle().
@@ -58,16 +45,9 @@ var style = lipgloss.NewStyle().
 	Border(lipgloss.RoundedBorder()).
 	BorderForeground(lipgloss.Color("#7D6EAA"))
 
-func waitForActivity(sub chan string) tea.Cmd {
-	return func() tea.Msg {
-		return logMsg(<-sub)
-	}
-}
-
-func dashboard() {
+func StartDashboard() {
 	prg := tea.NewProgram(initialModel())
 	if _, err := prg.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 	}
-	// Further CLI implementation would go here
 }
