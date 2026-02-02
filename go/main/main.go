@@ -67,6 +67,11 @@ func installDependencies() {
 
 func start() {
 	getSystemSpecific()
+
+	if m := CheckRequirements(); len(m) > 0 {
+		fmt.Println("The Following Requirments could not be found:", m)
+		return
+	}
 	installDependencies()
 	filepath := findFilepath("main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
