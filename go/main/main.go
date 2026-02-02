@@ -95,6 +95,7 @@ func main() {
 }
 
 func start() {
+	testRender()
 	filepath := findFilepath("main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
