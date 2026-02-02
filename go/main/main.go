@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 )
 
 var Locations []string = defaults()
@@ -62,9 +64,17 @@ func installDependencies() {
 	}
 	fmt.Println("Installing dependencies from: " + requirementsPath + "requirements.txt")
 	cmd := exec.Command(SystemSpecificTools.pip, "install", "-r", requirementsPath+"requirements.txt")
-	cmd.Stdout = os.Stdout
+	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err := cmd.Start()
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "Requirement already satisfied:") {
+			continue
+		}
+	}
+	err = cmd.Wait()
 	if err != nil {
 		fmt.Println("Error installing dependencies:", err)
 		return
