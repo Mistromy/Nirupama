@@ -4,13 +4,7 @@ Pillow
 openai
 python-dotenv
 requests
-rich
-typing 
 supabase
 matplotlib
-
-
-
-# html2image
-# -q -U google-genai
-# google-genai
+numpy
+cronitor
