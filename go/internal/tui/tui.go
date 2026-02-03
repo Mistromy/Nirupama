@@ -1,10 +1,9 @@
-package cli
+package tui
 
 import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type model struct {
@@ -37,13 +36,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	return ""
 }
-
-var style = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("#FAFAFA")).
-	Background(lipgloss.Color("#443c5e")).
-	Padding(0, 1).
-	Border(lipgloss.RoundedBorder()).
-	BorderForeground(lipgloss.Color("#7D6EAA"))
 
 func StartDashboard() {
 	prg := tea.NewProgram(initialModel())

@@ -3,13 +3,13 @@ package main
 import (
 	"github.com/mistromy/Nirupama/internal/bootstrap"
 	"github.com/mistromy/Nirupama/internal/bot"
-	"github.com/mistromy/Nirupama/internal/cli"
+	"github.com/mistromy/Nirupama/internal/tui"
 )
 
 var systemspcifics bootstrap.SystemSpecific = bootstrap.GetSystemSpecific()
 
 func main() {
-	cli.StartDashboard()
+	tui.StartDashboard()
 	bootstrap.CheckExternalDependencies()
 	bot.GitUpdate()
 	bot.InstallDependencies(systemspcifics)
