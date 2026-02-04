@@ -46,7 +46,7 @@ class AICoreCog(commands.Cog):
                         {"role": "user", "content": user_content}
                     ],
                     max_tokens=500,
-                    temperature=0.7,
+                    temperature=1.6,
                 )
                 await send_smart_message(message.channel, response.choices[0].message.content, is_reply=True)
                 return response.choices[0].message.content
