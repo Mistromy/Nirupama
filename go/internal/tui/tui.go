@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mistromy/Nirupama/internal/tui/components/viewport"
 )
 
 type model struct {
-	focus window
-	log   []string
+	focus    window
+	viewport viewport.Model
 }
 
 type window int
@@ -20,8 +21,8 @@ const (
 
 func initialModel() model {
 	return model{
-		focus: 0,
-		log:   []string{},
+		focus:    0,
+		viewport: viewport.Model{},
 	}
 }
 
@@ -29,12 +30,14 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.viewport, cmd = m.viewport.Update(msg)
+	return m, cmd
 }
 
 func (m model) View() string {
-	return ""
+	return m.viewport.View()
 }
 
 func StartDashboard() {
