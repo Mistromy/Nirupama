@@ -24,7 +24,7 @@ func GitUpdate() {
 func InstallDependencies(paths bootstrap.SystemSpecific) {
 	requirementsPath := findFilepath("requirements.txt")
 	if requirementsPath == "" {
-		fmt.Println("No requirements.txt found.")
+		fmt.Println("No requirements.txt found.\n ")
 		return
 	}
 	fmt.Println("Installing dependencies from: " + requirementsPath + "requirements.txt")

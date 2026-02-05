@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var Locations []string = []string{"pybot/", "../../pybot/", "", "../../"}
+var Locations []string = []string{"../../pybot/", "../../../pybot/", "../../", "../../../"}
 
 func findFilepath(filename string) string {
 	for i := range Locations {

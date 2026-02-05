@@ -30,9 +30,19 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.viewport, cmd = m.viewport.Update(msg)
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.viewport, cmd = m.viewport.Update(msg)
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+	}
 	return m, cmd
 }
 

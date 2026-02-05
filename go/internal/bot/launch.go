@@ -9,7 +9,7 @@ import (
 	"github.com/mistromy/Nirupama/internal/bootstrap"
 )
 
-func Start(log chan string) {
+func Start() {
 	systemSpecificTools := bootstrap.GetSystemSpecific()
 	filepath := findFilepath("main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
@@ -22,7 +22,7 @@ func Start(log chan string) {
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		line := scanner.Text()
-		log <- line
+		fmt.Println(line)
 	}
 	err := cmd.Start()
 	if err != nil {
