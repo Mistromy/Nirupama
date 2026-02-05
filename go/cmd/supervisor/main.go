@@ -13,5 +13,5 @@ func main() {
 	bootstrap.CheckExternalDependencies()
 	bot.GitUpdate()
 	bot.InstallDependencies(systemSpecifics)
-	bot.Start()
+	bot.Start() //TODO: Capture logs, and read the close signal to gracefully shutdown the bot
 }
