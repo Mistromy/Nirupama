@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/mistromy/Nirupama/internal/bootstrap"
 	"github.com/mistromy/Nirupama/internal/bot"
 	"github.com/mistromy/Nirupama/internal/utils/paths"
@@ -9,6 +11,7 @@ import (
 var systemSpecifics bootstrap.SystemSpecific = bootstrap.GetSystemSpecific()
 
 func main() {
+	log.SetFlags(0)
 	// tui.StartDashboard() // Start the TUI dashboard in a separate goroutine
 
 	paths.FindRoot() // Find the root directory of the project and set it in the paths package. To be used by other packages that need to find a specific file.
@@ -18,5 +21,5 @@ func main() {
 	bot.GitUpdate()                          // Update the bot from git.
 	bot.InstallDependencies(systemSpecifics) // Install the dependencies from requirements.txt. If it doesn't exist, print a warning and continue.
 
-	// bot.Start() //TODO: Capture logs, and read the close signal to gracefully shutdown the bot
+	bot.Start()
 }

@@ -1,7 +1,7 @@
 package paths
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -22,7 +22,7 @@ func FindRoot() (string, error) {
 		}
 		temppath = filepath.Dir(temppath)
 	}
-	fmt.Println(RootLocation)
+	log.Println(RootLocation)
 	return RootLocation, nil
 }
 
