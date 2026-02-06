@@ -7,11 +7,12 @@ import (
 	"os/exec"
 
 	"github.com/mistromy/Nirupama/internal/bootstrap"
+	"github.com/mistromy/Nirupama/internal/utils/paths"
 )
 
 func Start() {
 	systemSpecificTools := bootstrap.GetSystemSpecific()
-	filepath := GetPath("pybot", "main.py")
+	filepath := paths.GetPath("pybot", "main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
 		return

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/mistromy/Nirupama/internal/bootstrap"
+	"github.com/mistromy/Nirupama/internal/utils/paths"
 )
 
 func GitUpdate() {
@@ -21,14 +22,14 @@ func GitUpdate() {
 	}
 }
 
-func InstallDependencies(paths bootstrap.SystemSpecific) {
-	requirementsPath := GetPath("requirements.txt")
+func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
+	requirementsPath := paths.GetPath("requirements.txt")
 	if requirementsPath == "" {
 		fmt.Println("No requirements.txt found.\n ")
 		return
 	}
 	fmt.Println("Installing dependencies from: " + requirementsPath + "requirements.txt")
-	cmd := exec.Command(paths.Pip, "install", "-r", requirementsPath+"requirements.txt")
+	cmd := exec.Command(cmdpaths.Pip, "install", "-r", requirementsPath+"requirements.txt")
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()

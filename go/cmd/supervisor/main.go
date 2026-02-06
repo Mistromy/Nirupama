@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/mistromy/Nirupama/internal/bootstrap"
-	"github.com/mistromy/Nirupama/internal/bot"
+	"github.com/mistromy/Nirupama/internal/utils/paths"
 )
 
 var systemSpecifics bootstrap.SystemSpecific = bootstrap.GetSystemSpecific()
 
 func main() {
-	bot.FindRoot()
+	paths.FindRoot()
 
 	// tui.StartDashboard()
 	// bootstrap.CheckExternalDependencies()

@@ -1,9 +1,13 @@
 package bot
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/mistromy/Nirupama/internal/utils/paths"
+)
 
 func TestFindRoot(t *testing.T) {
-	result, err := FindRoot() // <--- We just CALL it. We don't define it here.
+	result, err := paths.FindRoot() // <--- We just CALL it. We don't define it here.
 
 	// C. ASSERT (Check if it worked)
 	if err != nil {
