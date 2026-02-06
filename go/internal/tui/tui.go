@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"fmt"
+	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mistromy/Nirupama/internal/tui/components/viewport"
@@ -53,6 +53,6 @@ func (m model) View() string {
 func StartDashboard() {
 	prg := tea.NewProgram(initialModel())
 	if _, err := prg.Run(); err != nil {
-		fmt.Println("Error running program:", err)
+		log.Println("Error running program:", err)
 	}
 }

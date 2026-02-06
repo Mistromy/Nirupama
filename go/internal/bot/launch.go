@@ -2,7 +2,7 @@ package bot
 
 import (
 	"bufio"
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -13,7 +13,7 @@ import (
 func Start() {
 	systemSpecificTools := bootstrap.GetSystemSpecific()
 	filepath := paths.GetPath("pybot", "main.py")
-	fmt.Println("Starting bot from: " + filepath + "main.py")
+	log.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
 		return
 	}
@@ -23,11 +23,11 @@ func Start() {
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
+		log.Println(line)
 	}
 	err := cmd.Start()
 	if err != nil {
-		fmt.Println("Error starting bot:", err)
+		log.Println("Error starting bot:", err)
 		return
 	}
 }
