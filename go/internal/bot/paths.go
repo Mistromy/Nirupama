@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 var Locations []string = []string{"../../pybot/", "../../../pybot/", "../../", "../../../"}
@@ -10,25 +11,22 @@ var RootLocation string = ""
 
 // #TODO: Finish Refactoring this thing
 func FindRoot() (string, error) {
+	exepath, _ := os.Executable()
+	temppath := filepath.Dir(exepath)
 	for {
-		_, err := os.Stat("pybot")
-		RootLocation = ""
-		if err != nil {
+		testpath := filepath.Join(temppath, "pybot")
+		osstat, _ := os.Stat(testpath)
+		if osstat != nil {
+			RootLocation = temppath
 			break
 		}
+		temppath = filepath.Dir(temppath)
 	}
+	fmt.Println(RootLocation)
 	return RootLocation, nil
 }
 
-func findFilepath(filename string) string {
-	for i := range Locations {
-		fmt.Println("Searching: " + Locations[i] + filename)
-		_, err := os.Stat(Locations[i] + filename)
-		foundloc := Locations[i]
-		if err != nil {
-			continue
-		}
-		return foundloc
-	}
-	return ""
+func GetPath(file ...string) string {
+	filepath := filepath.Join(RootLocation, filepath.Join(file...))
+	return filepath
 }

@@ -11,7 +11,7 @@ import (
 
 func Start() {
 	systemSpecificTools := bootstrap.GetSystemSpecific()
-	filepath := findFilepath("main.py")
+	filepath := GetPath("pybot", "main.py")
 	fmt.Println("Starting bot from: " + filepath + "main.py")
 	if filepath == "" {
 		return

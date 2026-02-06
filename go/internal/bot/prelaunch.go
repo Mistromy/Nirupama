@@ -22,7 +22,7 @@ func GitUpdate() {
 }
 
 func InstallDependencies(paths bootstrap.SystemSpecific) {
-	requirementsPath := findFilepath("requirements.txt")
+	requirementsPath := GetPath("requirements.txt")
 	if requirementsPath == "" {
 		fmt.Println("No requirements.txt found.\n ")
 		return
