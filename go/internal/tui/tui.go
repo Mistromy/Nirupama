@@ -49,6 +49,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
+
+	case string:
+		m.viewport, cmd = m.viewport.Update(msg)
+		return m, cmd
 	}
 	return m, cmd
 }
@@ -63,6 +67,8 @@ type LogWriter struct {
 
 func (lw *LogWriter) Write(p []byte) (n int, err error) {
 	logMessage := string(p)
+	lw.Program.Send(logMessage)
+	return len(p), nil
 }
 
 func StartDashboard(startFunctions func()) {
