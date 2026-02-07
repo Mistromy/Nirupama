@@ -9,7 +9,6 @@ import (
 var Locations []string = []string{"../../pybot/", "../../../pybot/", "../../", "../../../"}
 var RootLocation string = ""
 
-// #TODO: Finish Refactoring this thing
 func FindRoot() (string, error) {
 	exepath, _ := os.Executable()
 	temppath := filepath.Dir(exepath)

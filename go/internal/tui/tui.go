@@ -4,12 +4,12 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mistromy/Nirupama/internal/tui/components/viewport"
+	"github.com/mistromy/Nirupama/internal/tui/components/console"
 )
 
 type model struct {
 	focus    window
-	viewport viewport.Model
+	viewport console.Model
 }
 
 type window int
@@ -22,7 +22,7 @@ const (
 func initialModel() model {
 	return model{
 		focus:    0,
-		viewport: viewport.Model{},
+		viewport: console.Model{},
 	}
 }
 
@@ -35,7 +35,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport, cmd = m.viewport.Update(msg)
+		consoleWidth := int(float64(msg.Width) * 0.65)
+		consoleHeight := msg.Height
+		consoleMsg := tea.WindowSizeMsg{
+			Width:  consoleWidth,
+			Height: consoleHeight,
+		}
+		m.viewport, cmd = m.viewport.Update(consoleMsg)
+		return m, cmd
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -50,8 +57,21 @@ func (m model) View() string {
 	return m.viewport.View()
 }
 
-func StartDashboard() {
-	prg := tea.NewProgram(initialModel())
+type LogWriter struct {
+	Program *tea.Program
+}
+
+func (lw *LogWriter) Write(p []byte) (n int, err error) {
+	logMessage := string(p)
+}
+
+func StartDashboard(startFunctions func()) {
+	prg := tea.NewProgram(initialModel()) // Define bubble tea program
+
+	log.SetOutput(&LogWriter{Program: prg})
+
+	go startFunctions()
+
 	if _, err := prg.Run(); err != nil {
 		log.Println("Error running program:", err)
 	}
