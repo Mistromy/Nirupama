@@ -2,7 +2,6 @@ package bot
 
 import (
 	"log"
-	"os"
 	"os/exec"
 
 	"github.com/mistromy/Nirupama/internal/bootstrap"
@@ -16,9 +15,9 @@ func Start() {
 	if filepath == "" {
 		return
 	}
-	cmd := exec.Command(systemSpecificTools.Python, filepath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := exec.Command(systemSpecificTools.Python, "-u", filepath)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 
 	err := cmd.Run()
 	if err != nil {

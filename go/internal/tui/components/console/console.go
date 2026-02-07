@@ -32,9 +32,18 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		w := msg.Width - 2
 		h := msg.Height - 2
-		m.Viewport = viewport.New(w, h)
+		if !m.Ready {
+			m.Viewport = viewport.New(w, h)
+			m.Viewport.SetContent(m.Content)
+			m.Ready = true
+		} else {
+			m.Viewport.Width = w
+			m.Viewport.Height = h
+		}
+	case string:
+		m.Content += msg
 		m.Viewport.SetContent(m.Content)
-		m.Ready = true
+		m.Viewport.GotoBottom()
 	}
 	m.Viewport, cmd = m.Viewport.Update(msg)
 	cmds = append(cmds, cmd)
