@@ -3,7 +3,6 @@ package bot
 import (
 	"bufio"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -13,8 +12,8 @@ import (
 
 func GitUpdate() {
 	cmd := exec.Command("git", "pull")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	err := cmd.Run()
 	if err != nil {
 		log.Println("Error updating from git:", err)
@@ -31,7 +30,7 @@ func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
 	log.Println("Installing dependencies from: " + requirementsPath)
 	cmd := exec.Command(cmdpaths.Pip, "install", "-r", requirementsPath)
 	stdout, _ := cmd.StdoutPipe()
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = log.Writer()
 	err := cmd.Start()
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {

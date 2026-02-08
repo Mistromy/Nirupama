@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"log"
-	"os"
 	"os/exec"
 	"runtime"
 )
@@ -29,24 +28,24 @@ func CheckExternalDependencies() []string {
 	systemSpecificTools := GetSystemSpecific()
 
 	cmd := exec.Command(systemSpecificTools.Python, "--version")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	err := cmd.Run()
 	if err != nil {
 		log.Println("Error checking Python version:", err)
 		missing = append(missing, "python")
 	}
 	cmd = exec.Command(systemSpecificTools.Pip, "--version")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	err = cmd.Run()
 	if err != nil {
 		log.Println("Error checking pip version:", err)
 		missing = append(missing, "pip")
 	}
 	cmd = exec.Command("git", "--version")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	err = cmd.Run()
 	if err != nil {
 		log.Println("Error checking git version:", err)

@@ -39,11 +39,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else {
 			m.Viewport.Width = w
 			m.Viewport.Height = h
+			m.Viewport.GotoBottom()
 		}
 	case string:
 		m.Content += msg
 		m.Viewport.SetContent(m.Content)
 		m.Viewport.GotoBottom()
+	case tea.MouseMsg:
+
 	}
 	m.Viewport, cmd = m.Viewport.Update(msg)
 	cmds = append(cmds, cmd)
