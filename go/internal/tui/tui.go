@@ -49,6 +49,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
+	case tea.MouseMsg:
+		m.viewport, cmd = m.viewport.Update(msg)
+		return m, cmd
 
 	case string:
 		m.viewport, cmd = m.viewport.Update(msg)
@@ -72,7 +75,7 @@ func (lw *LogWriter) Write(p []byte) (n int, err error) {
 }
 
 func StartDashboard(startFunctions func()) {
-	prg := tea.NewProgram(initialModel()) // Define bubble tea program
+	prg := tea.NewProgram(initialModel(), tea.WithMouseCellMotion()) // Define bubble tea program
 
 	log.SetOutput(&LogWriter{Program: prg})
 
