@@ -51,6 +51,5 @@ func CheckExternalDependencies() []string {
 		log.Println("Error checking git version:", err)
 		missing = append(missing, "git")
 	}
-	log.Println("\n ")
 	return missing
 }
