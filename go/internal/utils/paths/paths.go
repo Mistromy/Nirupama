@@ -21,7 +21,7 @@ func FindRoot() (string, error) {
 		}
 		temppath = filepath.Dir(temppath)
 	}
-	log.Println(RootLocation)
+	log.Println("Root Location: " + RootLocation + "\n")
 	return RootLocation, nil
 }
 

@@ -12,6 +12,7 @@ import (
 
 func GitUpdate() {
 	cmd := exec.Command("git", "pull")
+	log.Println("Updating from git...")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
 	err := cmd.Run()
@@ -19,6 +20,7 @@ func GitUpdate() {
 		log.Println("Error updating from git:", err)
 		return
 	}
+	log.Println("")
 }
 
 func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
@@ -27,7 +29,7 @@ func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
 		log.Println("No requirements.txt found.\n ")
 		return
 	}
-	log.Println("Installing dependencies from: " + requirementsPath)
+	log.Println("Checking dependencies from: " + requirementsPath + "")
 	cmd := exec.Command(cmdpaths.Pip, "install", "--progress-bar", "off", "-r", requirementsPath)
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = log.Writer()
@@ -39,10 +41,12 @@ func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
 			continue
 		}
 		line = strings.ReplaceAll(line, "\r", "")
+		log.Println(line)
 	}
 	err = cmd.Wait()
 	if err != nil {
 		log.Println("Error installing dependencies:", err)
 		return
 	}
+	log.Println("")
 }

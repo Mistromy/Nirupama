@@ -46,6 +46,7 @@ func CheckExternalDependencies() []string {
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.ReplaceAll(line, "\r", "")
+		log.Println(line)
 	}
 	err = cmd.Wait()
 	if err != nil {
@@ -61,5 +62,6 @@ func CheckExternalDependencies() []string {
 		log.Println("Error checking git version:", err)
 		missing = append(missing, "git")
 	}
+	log.Println("")
 	return missing
 }
