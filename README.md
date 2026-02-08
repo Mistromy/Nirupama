@@ -69,7 +69,6 @@ A versatile Discord bot with AI capabilities, fun utilities, and server manageme
    OPENROUTER_API_KEY = ""
    SUPABASE_URL = ""
    SUPABASE_KEY = ""
-   PERPLEXITY_API_KEY = ""
    GROQ_API_KEY = ""
    CRONITOR_API_KEY = ""
    ```
