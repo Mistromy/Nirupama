@@ -1,7 +1,7 @@
 # Nirupama Discord Bot
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)
-![GitHub go.mod Go version (branch)](https://img.shields.io/github/go-mod/go-version/mistromy/Nirupama/go?filename=go%2Fmain%2Fgo.mod&style=flat&logo=go)
+![GitHub go.mod Go version (branch)](https://img.shields.io/github/go-mod/go-version/mistromy/Nirupama/go?filename=go%2Fgo.mod&logo=go)
 ![Issues](https://img.shields.io/github/issues/Mistromy/Nirupama)
 ![Last Commit](https://img.shields.io/github/last-commit/Mistromy/Nirupama)
 

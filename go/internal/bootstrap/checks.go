@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -33,7 +33,7 @@ func CheckExternalDependencies() []string {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Error checking Python version:", err)
+		log.Println("Error checking Python version:", err)
 		missing = append(missing, "python")
 	}
 	cmd = exec.Command(systemSpecificTools.Pip, "--version")
@@ -41,7 +41,7 @@ func CheckExternalDependencies() []string {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Println("Error checking pip version:", err)
+		log.Println("Error checking pip version:", err)
 		missing = append(missing, "pip")
 	}
 	cmd = exec.Command("git", "--version")
@@ -49,8 +49,9 @@ func CheckExternalDependencies() []string {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Println("Error checking git version:", err)
+		log.Println("Error checking git version:", err)
 		missing = append(missing, "git")
 	}
+	log.Println("\n ")
 	return missing
 }

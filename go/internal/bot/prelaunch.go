@@ -2,12 +2,13 @@ package bot
 
 import (
 	"bufio"
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/mistromy/Nirupama/internal/bootstrap"
+	"github.com/mistromy/Nirupama/internal/utils/paths"
 )
 
 func GitUpdate() {
@@ -16,19 +17,19 @@ func GitUpdate() {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Error updating from git:", err)
+		log.Println("Error updating from git:", err)
 		return
 	}
 }
 
-func InstallDependencies(paths bootstrap.SystemSpecific) {
-	requirementsPath := findFilepath("requirements.txt")
+func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
+	requirementsPath := paths.GetPath("requirements.txt")
 	if requirementsPath == "" {
-		fmt.Println("No requirements.txt found.")
+		log.Println("No requirements.txt found.\n ")
 		return
 	}
-	fmt.Println("Installing dependencies from: " + requirementsPath + "requirements.txt")
-	cmd := exec.Command(paths.Pip, "install", "-r", requirementsPath+"requirements.txt")
+	log.Println("Installing dependencies from: " + requirementsPath)
+	cmd := exec.Command(cmdpaths.Pip, "install", "-r", requirementsPath)
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
@@ -41,7 +42,7 @@ func InstallDependencies(paths bootstrap.SystemSpecific) {
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Println("Error installing dependencies:", err)
+		log.Println("Error installing dependencies:", err)
 		return
 	}
 }
