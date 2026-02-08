@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"log"
+	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mistromy/Nirupama/internal/bootstrap"
@@ -11,6 +14,51 @@ import (
 )
 
 var systemSpecifics bootstrap.SystemSpecific = bootstrap.GetSystemSpecific()
+
+func maintest() {
+	paths.FindRoot()
+	// requirementsPath := paths.GetPath("requirements.txt")
+	// 1. Setup the command exactly as you run it
+	// NOTE: Change "pip" to "pip3" if you are on Linux/Mac and need to
+	cmd := exec.Command("pip", "--version")
+
+	// 2. We need to hijack the output pipes before starting
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	// Redirect stderr to the same place so we catch everything
+	cmd.Stderr = cmd.Stdout
+
+	// 3. Start the process
+	fmt.Println("--- STARTING RAW CAPTURE ---")
+	if err := cmd.Start(); err != nil {
+		panic(err)
+	}
+
+	// 4. Read raw bytes directly.
+	// Do not use Scanner here, because Scanner automatically removes \r and \n!
+	buf := make([]byte, 1024)
+	for {
+		n, err := stdout.Read(buf)
+		if n > 0 {
+			chunk := buf[:n]
+			// %q is the Go syntax for "Quoted String".
+			// It turns invisible chars into visible codes (e.g. it prints '\r' instead of moving the cursor).
+			fmt.Printf("%q\n", chunk)
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			panic(err)
+		}
+	}
+
+	cmd.Wait()
+	fmt.Println("--- END CAPTURE ---")
+}
 
 func main() {
 	log.SetFlags(0) // Remove timestamp from log output for cleaner TUI display

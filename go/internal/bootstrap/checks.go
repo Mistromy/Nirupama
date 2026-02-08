@@ -1,9 +1,11 @@
 package bootstrap
 
 import (
+	"bufio"
 	"log"
 	"os/exec"
 	"runtime"
+	"strings"
 )
 
 type SystemSpecific struct {
@@ -35,14 +37,22 @@ func CheckExternalDependencies() []string {
 		log.Println("Error checking Python version:", err)
 		missing = append(missing, "python")
 	}
+
 	cmd = exec.Command(systemSpecificTools.Pip, "--version")
-	cmd.Stdout = log.Writer()
+	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = log.Writer()
-	err = cmd.Run()
+	err = cmd.Start()
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		line = strings.ReplaceAll(line, "\r", "")
+	}
+	err = cmd.Wait()
 	if err != nil {
 		log.Println("Error checking pip version:", err)
 		missing = append(missing, "pip")
 	}
+
 	cmd = exec.Command("git", "--version")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()

@@ -28,7 +28,7 @@ func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
 		return
 	}
 	log.Println("Installing dependencies from: " + requirementsPath)
-	cmd := exec.Command(cmdpaths.Pip, "install", "-r", requirementsPath)
+	cmd := exec.Command(cmdpaths.Pip, "install", "--progress-bar", "off", "-r", requirementsPath)
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Stderr = log.Writer()
 	err := cmd.Start()
@@ -38,6 +38,7 @@ func InstallDependencies(cmdpaths bootstrap.SystemSpecific) {
 		if strings.HasPrefix(line, "Requirement already satisfied:") {
 			continue
 		}
+		line = strings.ReplaceAll(line, "\r", "")
 	}
 	err = cmd.Wait()
 	if err != nil {

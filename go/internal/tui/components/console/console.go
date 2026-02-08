@@ -30,20 +30,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		w := msg.Width - 2
-		h := msg.Height - 2
+		w := msg.Width - style.GetHorizontalFrameSize()
+		h := msg.Height - style.GetVerticalFrameSize()
+		wrapper := lipgloss.NewStyle().Width(w)
+		wrappedContent := wrapper.Render(m.Content)
 		if !m.Ready {
 			m.Viewport = viewport.New(w, h)
-			m.Viewport.SetContent(m.Content)
+			m.Viewport.SetContent(wrappedContent)
 			m.Ready = true
 		} else {
 			m.Viewport.Width = w
 			m.Viewport.Height = h
+			m.Viewport.SetContent(wrappedContent)
 			m.Viewport.GotoBottom()
 		}
 	case string:
 		m.Content += msg
-		m.Viewport.SetContent(m.Content)
+		wrapper := lipgloss.NewStyle().Width(m.Viewport.Width)
+		wrappedContent := wrapper.Render(m.Content)
+		m.Viewport.SetContent(wrappedContent)
 		m.Viewport.GotoBottom()
 	}
 	m.Viewport, cmd = m.Viewport.Update(msg)
