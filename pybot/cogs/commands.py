@@ -4,12 +4,15 @@ import random
 from utils.logger import bot_log
 import utils.ship
 import cogs.uptime as uptime
+import cogs.tracking as tracking
 # from tracking import getgraph
+
 
 class commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  
         
+    
     @discord.slash_command(description="ask the 8ball a question")
     async def eightball(self, ctx, question: str):   
         await ctx.respond(f'-# "{question}"\n**Never!**')     
@@ -57,6 +60,18 @@ class commands(commands.Cog):
         result = random.randint(1, 6)
         await ctx.respond(f"🎲 You rolled a **{result}**!")
         bot_log(f"/roll rolled a {result} by {ctx.author.name}")
+
+    @commands.slash_command(description="Generate activity graph for a user")
+    async def graph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
+        tracker_cog = self.bot.get_cog("tracker")
+        await ctx.defer()
+        await tracker_cog.getgraph(ctx, user, guild)
+
+    @commands.slash_command(description="Get your total message count")
+    async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
+        tracker_cog = self.bot.get_cog("tracker")
+        await ctx.defer()
+        await tracker_cog.getgraph(ctx, user, guild)
 
     # @discord.slash_command(description="check how many messages you or someone has sent in this server")
     # async def messagecount(self, ctx, user: discord.Member = None):
