@@ -49,9 +49,10 @@ class tracker(commands.Cog):
         except Exception as e:
             bot_log(f"Activity log failed: {e}", level="error")
 
-    @commands.slash_command(description="Generate activity graph for a user")
+    
     async def getgraph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         user_id = user.id if user else ctx.author.id
+        nick = user.nick if user else ctx.author.nick
         guild = guild or ctx.guild
         guild_id = guild.id if guild else ctx.guild.id
         try:
@@ -101,7 +102,7 @@ class tracker(commands.Cog):
             fig, ax = plt.subplots(figsize=(10, 4))
             ax.plot(xs, ys, color="#5865F2", linewidth=2)
             ax.fill_between(xs, ys, color="#5865F2", alpha=0.2)
-            ax.set_title(f"{user}'s Activity in {guild}")
+            ax.set_title(f"{nick}'s Activity in {guild}")
             ax.set_ylabel("Messages per hour")
             ax.grid(True, alpha=0.3)
 
@@ -121,7 +122,7 @@ class tracker(commands.Cog):
             bot_log(f"Graph failed: {e}", level="error")
             await ctx.respond("Error generating graph.", ephemeral=True)
 
-    @commands.slash_command(description="Get your total message count")
+    
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         user_id = user.id if user else ctx.author.id
         user = user or ctx.author

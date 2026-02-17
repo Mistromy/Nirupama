@@ -321,7 +321,7 @@ class AdminMainView(discord.ui.View):
 
     @discord.ui.button(label="Git Pull", style=discord.ButtonStyle.green)
     async def git_pull_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        result = subprocess.run(["git", "pull"], capture_output=True, text=True)
+        result = subprocess.run(["gitpull"], capture_output=True, text=True)
         formatted = format_git_output_ansi(result.stdout + result.stderr)
         await interaction.response.send_message(
             content=f"**Git Pull Result:**\n```ansi\n{formatted}\n```",
