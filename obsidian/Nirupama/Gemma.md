@@ -1,0 +1,2 @@
+-  Use Gemma 4 for the Nirupama's ai
+- Gemma E4B
