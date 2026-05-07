@@ -8,3 +8,4 @@ supabase
 matplotlib
 numpy
 cronitor
+pynacl
