@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime, timezone
 import io
+import matplotlib.dates as mdates
 
 from utils.logger import bot_log
 plt.rcParams.update({
@@ -53,63 +54,71 @@ class tracker(commands.Cog):
             bot_log(f"Activity log failed: {e}", level="error")
 
     async def getgraph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
-        user_id = user.id if user else ctx.author.id
-        nick = (user.nick or user.name) if user else (ctx.author.nick or ctx.author.name)
-        guild = guild or ctx.guild
-        guild_id = guild.id
+        user_id = (user or ctx.author).id
+        nick = (user or ctx.author).display_name # Fixes the "None" issue
+        guild_obj = guild or ctx.guild
         
         try:
-            # RENAMED: message_activity -> hourly_activity
-            response = self.supabase.table("hourly_activity").select(
-                "bucket_time, message_count"
-            ).eq("user_id", user_id).eq("guild_id", guild_id).order(
-                "bucket_time", desc=True
-            ).limit(168).execute()  # Last 7 days
+            # 1. Get the current Anchor (Total)
+            stats = self.supabase.table("user_stats").select("total_messages")\
+                .eq("user_id", user_id).eq("guild_id", guild_obj.id).maybe_single().execute()
+            
+            current_total = stats.data["total_messages"] if stats.data else 0
+
+            # 2. Get the Deltas (Last 7 days = 168 hours)
+            response = self.supabase.table("hourly_activity").select("bucket_time, message_count")\
+                .eq("user_id", user_id).eq("guild_id", guild_obj.id)\
+                .order("bucket_time", desc=True).limit(168).execute()
 
             rows = response.data
             if not rows:
-                await ctx.respond("No message data found for this user in the last 7 days.", ephemeral=True)
+                await ctx.respond("No activity recorded for this timeframe.", ephemeral=True)
                 return
-            
-            bucket_times = [r["bucket_time"] for r in rows]
-            message_counts = [r["message_count"] for r in rows]
-            bucket_times.reverse()
-            message_counts.reverse()
 
-            # Gap filling logic
-            data_dict = {bucket_times[i]: message_counts[i] for i in range(len(bucket_times))}
-            min_bucket, max_bucket = min(bucket_times), max(bucket_times)
+            # Reverse to get chronological order
+            rows.reverse()
             
-            all_buckets, all_counts = [], []
-            current_bucket = min_bucket
-            while current_bucket <= max_bucket:
-                all_buckets.append(current_bucket)
-                all_counts.append(data_dict.get(current_bucket, 0))
-                current_bucket += 3600 
+            # Calculate starting point for the graph
+            period_sum = sum(r["message_count"] for r in rows)
+            starting_total = current_total - period_sum
+
+            # Prepare Data
+            times = [datetime.fromtimestamp(r["bucket_time"]) for r in rows]
+            deltas = [r["message_count"] for r in rows]
             
-            xs = [datetime.fromtimestamp(t) for t in all_buckets]
-            ys = all_counts
+            # Cumulative growth logic: Start at 'starting_total', then add each delta
+            y_values = [starting_total + sum(deltas[:i+1]) for i in range(len(deltas))]
 
-            fig, ax = plt.subplots(figsize=(10, 4))
-            ax.plot(xs, ys, color="#5865F2", linewidth=2)
-            ax.fill_between(xs, ys, color="#5865F2", alpha=0.2)
-            ax.set_title(f"{nick}'s Hourly Activity in {guild.name}")
-            ax.set_ylabel("Messages per hour")
-            ax.grid(True, alpha=0.3)
+            # --- Plotting ---
+            fig, ax = plt.subplots(figsize=(12, 5))
+            
+            # Main Line
+            ax.plot(times, y_values, color="#5865F2", linewidth=3, antialiased=True)
+            # Area Fill
+            ax.fill_between(times, y_values, starting_total, color="#5865F2", alpha=0.1)
 
-            for spine in ax.spines.values():
-                spine.set_color("#555")
+            # Fix overlapping dates with AutoDateLocator
+            ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d %H:%M'))
+            plt.xticks(rotation=25, ha='right') # Rotate for readability
+
+            ax.set_title(f"{nick}'s messages over time", pad=20, fontsize=14)
+            ax.set_ylabel("Total Messages")
+            
+            # Aesthetics
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.grid(True, axis='y', alpha=0.1)
 
             buf = io.BytesIO()
-            fig.savefig(buf, format="png", dpi=100, bbox_inches="tight", facecolor="#2b2d31")
+            fig.savefig(buf, format="png", dpi=120, bbox_inches="tight", facecolor="#2b2d31")
             buf.seek(0)
             plt.close(fig)
 
-            await ctx.respond(file=discord.File(buf, "activity.png"))
+            await ctx.respond(file=discord.File(buf, "graph.png"))
 
         except Exception as e:
-            bot_log(f"Graph failed: {e}", level="error")
-            await ctx.respond("Error generating graph.", ephemeral=True)
+            bot_log(f"Graph Error: {e}", level="error")
 
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         user_id = user.id if user else ctx.author.id
