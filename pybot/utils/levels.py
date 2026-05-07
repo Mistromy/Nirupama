@@ -1,34 +1,25 @@
 import discord
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.patches import Rectangle
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import io
-import numpy as np
 from utils.logger import bot_log
 
-# Configure matplotlib with modern Discord theme
+# Configure matplotlib with a cleaner modern theme
 plt.rcParams.update({
-    "figure.facecolor": "#1e1f22",
-    "axes.facecolor":   "#2c2f33",
-    "axes.edgecolor":   "none",
-    "axes.labelcolor":  "#dbdee1",
-    "xtick.color":      "#949ba4",
-    "ytick.color":      "#949ba4",
-    "text.color":       "#dbdee1",
-    "grid.color":       "#404249",
-    "grid.linestyle":   ":",
-    "grid.alpha":       0.3,
-    "font.size":        9,
-    "axes.titleweight": "bold",
-    "figure.frameon":   False,
+    "figure.facecolor": "#0e141b",
+    "axes.facecolor":   "#111b24",
+    "axes.edgecolor":   "#22303f",
+    "axes.labelcolor":  "#dbe7f2",
+    "xtick.color":      "#dbe7f2",
+    "ytick.color":      "#dbe7f2",
+    "text.color":       "#e5edf5",
+    "grid.color":       "#2dd4bf",
+    "grid.linestyle":   "-",
+    "grid.alpha":       0.12,
+    "font.size":        10,
+    "axes.titleweight": "semibold",
 })
-
-# Create a modern gradient colormap
-colors_gradient = ['#404dff', '#5865f2', '#7c8df2']  # Modern blue gradient
-n_bins = 256
-cmap = LinearSegmentedColormap.from_list('modern_blue', colors_gradient, N=n_bins)
 
 
 async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Guild = None):
@@ -61,46 +52,57 @@ async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Gu
         period_sum = sum(r["message_count"] for r in rows)
         starting_total = current_total - period_sum
 
-        # Prepare Data
-        times = [datetime.fromtimestamp(r["bucket_time"]) for r in rows]
+        # Use timezone-aware datetimes so date boundaries (e.g., Jan 1) render consistently.
+        times = [datetime.fromtimestamp(r["bucket_time"], tz=timezone.utc).astimezone() for r in rows]
         deltas = [r["message_count"] for r in rows]
         
         # Cumulative growth logic: Start at 'starting_total', then add each delta
         y_values = [starting_total + sum(deltas[:i+1]) for i in range(len(deltas))]
 
-        # --- Plotting (Modern Styling) ---
-        fig, ax = plt.subplots(figsize=(14, 3.2), dpi=110)
-        fig.subplots_adjust(left=0.08, right=0.98, top=0.92, bottom=0.15)
-        
-        # Modern gradient fill with multiple layers for depth
-        y_array = np.array(y_values)
-        ax.fill_between(times, y_array, starting_total, color="#5865f2", alpha=0.15, label="Activity Zone")
-        ax.fill_between(times, y_array, starting_total, color="#7c8df2", alpha=0.08)
-        
-        # Smooth main line with glow effect
-        ax.plot(times, y_values, color="#5865f2", linewidth=2.5, antialiased=True, zorder=3)
-        ax.plot(times, y_values, color="#404dff", linewidth=0.8, antialiased=True, alpha=0.4, zorder=2)
+        # --- Plotting ---
+        fig, ax = plt.subplots(figsize=(12, 3.6), constrained_layout=True)
 
-        # Fix overlapping dates with AutoDateLocator
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d %H:%M'))
-        plt.xticks(rotation=25, ha='right', fontsize=8)  # Rotate for readability
+        line_color = "#2dd4bf"
+        glow_color = "#5eead4"
+        accent_color = "#f59e0b"
 
-        ax.set_title(f"{nick}'s messages over time", pad=15, fontsize=12, color="#dbdee1", loc='left')
-        ax.set_ylabel("Total Messages", fontsize=9)
-        
-        # Modern aesthetics - clean and minimal
+        # Soft glow under the main line for a sleek look.
+        ax.plot(times, y_values, color=glow_color, linewidth=7, alpha=0.08, solid_capstyle="round")
+        ax.plot(times, y_values, color=line_color, linewidth=2.4, solid_capstyle="round")
+
+        # Layered translucent fill to mimic a vertical gradient.
+        fill_layers = [(0.35, 0.03), (0.65, 0.06), (1.0, 0.10)]
+        for scale, alpha in fill_layers:
+            scaled_values = [starting_total + ((y - starting_total) * scale) for y in y_values]
+            ax.fill_between(times, scaled_values, starting_total, color="#14b8a6", alpha=alpha)
+
+        # Highlight latest value.
+        ax.scatter(times[-1], y_values[-1], s=42, color=accent_color, edgecolors="#fff7e0", linewidths=0.7, zorder=4)
+
+        # Better date formatting across month/year boundaries.
+        locator = mdates.AutoDateLocator(minticks=5, maxticks=9)
+        formatter = mdates.ConciseDateFormatter(locator)
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(formatter)
+
+        # Add a little horizontal padding so first/last labels and points are not clipped.
+        x_min, x_max = min(times), max(times)
+        x_pad = (x_max - x_min) * 0.02 if x_max > x_min else timedelta(hours=1)
+        ax.set_xlim(x_min - x_pad, x_max + x_pad)
+
+        ax.tick_params(axis="x", rotation=15)
+        ax.set_title(f"{nick}'s Messages Over Time", pad=12, fontsize=12)
+        ax.set_ylabel("Total Messages")
+
+        # Aesthetics
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_color('#404249')
-        ax.spines['bottom'].set_color('#404249')
-        ax.spines['left'].set_linewidth(0.8)
-        ax.spines['bottom'].set_linewidth(0.8)
-        ax.grid(True, axis='y', alpha=0.2, linewidth=0.6)
-        ax.set_axisbelow(True)
+        ax.spines['left'].set_color("#2b3d4f")
+        ax.spines['bottom'].set_color("#2b3d4f")
+        ax.grid(True, axis='y')
 
         buf = io.BytesIO()
-        fig.savefig(buf, format="png", dpi=110, bbox_inches="tight", facecolor="#1e1f22", edgecolor="none")
+        fig.savefig(buf, format="png", dpi=140, bbox_inches="tight", facecolor="#0e141b")
         buf.seek(0)
         plt.close(fig)
 
