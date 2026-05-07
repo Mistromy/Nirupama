@@ -37,8 +37,11 @@ class tracker(commands.Cog):
         user_id = message.author.id
         user_name = str(message.author)
         guild_id = message.guild.id
-        bucket=(int(time.time()) // 3600) * 3600
+        # Round down to the nearest hour for the bucket
+        bucket = (int(time.time()) // 3600) * 3600
+        
         try:
+            # This RPC now triggers the sync_user_totals() function in SQL automatically
             self.supabase.rpc("increment_message_activity", {
                 "p_user_id": user_id,
                 "p_guild_id": guild_id,
@@ -49,116 +52,95 @@ class tracker(commands.Cog):
         except Exception as e:
             bot_log(f"Activity log failed: {e}", level="error")
 
-    
     async def getgraph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         user_id = user.id if user else ctx.author.id
-        nick = user.nick if user else ctx.author.nick
+        nick = (user.nick or user.name) if user else (ctx.author.nick or ctx.author.name)
         guild = guild or ctx.guild
-        guild_id = guild.id if guild else ctx.guild.id
+        guild_id = guild.id
+        
         try:
-            response = self.supabase.table("message_activity").select(
+            # RENAMED: message_activity -> hourly_activity
+            response = self.supabase.table("hourly_activity").select(
                 "bucket_time, message_count"
             ).eq("user_id", user_id).eq("guild_id", guild_id).order(
                 "bucket_time", desc=True
-            ).limit(168).execute()  # last 7 days
+            ).limit(168).execute()  # Last 7 days
 
             rows = response.data
             if not rows:
-                await ctx.send_followup("No message data found for this user.", ephemeral=True)
+                await ctx.respond("No message data found for this user in the last 7 days.", ephemeral=True)
                 return
             
-             # Extract and reverse
             bucket_times = [r["bucket_time"] for r in rows]
             message_counts = [r["message_count"] for r in rows]
             bucket_times.reverse()
             message_counts.reverse()
 
-            # Fill gaps with zeros
-            # Create a dictionary for fast lookup
+            # Gap filling logic
             data_dict = {bucket_times[i]: message_counts[i] for i in range(len(bucket_times))}
+            min_bucket, max_bucket = min(bucket_times), max(bucket_times)
             
-            # Find the time range
-            min_bucket = min(bucket_times)
-            max_bucket = max(bucket_times)
-            
-            # Generate all hourly buckets in range
-            all_buckets = []
-            all_counts = []
+            all_buckets, all_counts = [], []
             current_bucket = min_bucket
             while current_bucket <= max_bucket:
                 all_buckets.append(current_bucket)
-                all_counts.append(data_dict.get(current_bucket, 0))  # Use 0 if bucket not found
-                current_bucket += 3600  # Add 1 hour
+                all_counts.append(data_dict.get(current_bucket, 0))
+                current_bucket += 3600 
             
-            # Use the complete data for plotting
-            bucket_times = all_buckets
-            message_counts = all_counts
+            xs = [datetime.fromtimestamp(t) for t in all_buckets]
+            ys = all_counts
 
-            # Convert to datetime
-            xs = [datetime.fromtimestamp(t) for t in bucket_times]
-            ys = message_counts
-
-            # Plot
             fig, ax = plt.subplots(figsize=(10, 4))
             ax.plot(xs, ys, color="#5865F2", linewidth=2)
             ax.fill_between(xs, ys, color="#5865F2", alpha=0.2)
-            ax.set_title(f"{nick}'s Activity in {guild}")
+            ax.set_title(f"{nick}'s Hourly Activity in {guild.name}")
             ax.set_ylabel("Messages per hour")
             ax.grid(True, alpha=0.3)
 
             for spine in ax.spines.values():
                 spine.set_color("#555")
 
-            # Save to buffer
             buf = io.BytesIO()
             fig.savefig(buf, format="png", dpi=100, bbox_inches="tight", facecolor="#2b2d31")
             buf.seek(0)
             plt.close(fig)
 
-            # Send
             await ctx.respond(file=discord.File(buf, "activity.png"))
 
         except Exception as e:
             bot_log(f"Graph failed: {e}", level="error")
             await ctx.respond("Error generating graph.", ephemeral=True)
 
-    
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         user_id = user.id if user else ctx.author.id
-        user = user or ctx.author
-        guild_id = guild.id if guild else ctx.guild.id
-        member_join_epoch = int(user.joined_at.timestamp())
-
-        response = self.supabase.table("message_activity").select(
-            "bucket_time"
-        ).eq("guild_id", guild_id).order(
-            "bucket_time"
-        ).limit(1).execute()  # just get the first one
-        rows = response.data
-        if rows:
-            guild_added_epoch = rows[0]["bucket_time"]  # Extract the timestamp
-        else:
-            guild_added_epoch = None
-
+        user_obj = user or ctx.author
+        guild_obj = guild or ctx.guild
+        guild_id = guild_obj.id
+        member_join_epoch = int(user_obj.joined_at.timestamp())
 
         try:
-            response = self.supabase.table("message_activity").select(
-                "message_count"
-            ).eq("user_id", user_id).eq("guild_id", guild_id).execute()
+            # OPTIMIZED: Fetch total directly from user_stats (O(1) query)
+            stats_response = self.supabase.table("user_stats").select("total_messages")\
+                .eq("user_id", user_id).eq("guild_id", guild_id).maybe_single().execute()
+            
+            total_messages = stats_response.data["total_messages"] if stats_response.data else 0
 
-            rows = response.data
-            total_messages = sum(r["message_count"] for r in rows) if rows else 0
+            # Check the earliest tracked data for this guild to see if they are a "Legacy" member
+            guild_start_response = self.supabase.table("daily_activity").select("day_bucket")\
+                .eq("guild_id", guild_id).order("day_bucket", desc=False).limit(1).execute()
+            
+            guild_added_epoch = guild_start_response.data[0]["day_bucket"] if guild_start_response.data else None
 
-            await ctx.respond(f"User <@{user_id}> has sent a total of {total_messages} messages in {guild.name if guild else ctx.guild.name}.")
-            member_has_updaetd_stats = False
-            bot_log(f"Set member_has_updaetd_stats to False for debugging", level="info")
-            if member_join_epoch < guild_added_epoch and member_has_updaetd_stats == False:
-                await ctx.send_followup(f"Looks like you have joined this server before the bot started tracking levels. You can use the search feature to find your total message count. if you believe that the bot's message count is incorrect, you may request an update with updatemystats. a mod will then be able to assign you the correct amount of leves", ephemeral=True)
+            await ctx.respond(f"User <@{user_id}> has sent a total of **{total_messages:,}** messages in **{guild_obj.name}**.")
+
+            if guild_added_epoch and member_join_epoch < guild_added_epoch:
+                await ctx.send_followup(
+                    f"⚠️ Note: You joined this server before the bot started tracking activity. "
+                    f"Your total might be higher than what is shown here.", ephemeral=True
+                )
         except Exception as e:
             bot_log(f"Message count failed: {e}", level="error")
             await ctx.respond("Error retrieving message count.", ephemeral=True)
-    
-            
 
 def setup(bot):
     bot.add_cog(tracker(bot))
