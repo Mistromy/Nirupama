@@ -113,17 +113,29 @@ class tracker(commands.Cog):
 
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         user_id = user.id if user else ctx.author.id
+        guild_id = (guild or ctx.guild).id
+        
+        # DEBUG LOG: Check exactly what IDs are being sent to Supabase
+        bot_log(f"Fetching stats for User:{user_id} Guild:{guild_id}", level="info")
+        
         user_obj = user or ctx.author
         guild_obj = guild or ctx.guild
-        guild_id = guild_obj.id
         member_join_epoch = int(user_obj.joined_at.timestamp())
 
         try:
             # OPTIMIZED: Fetch total directly from user_stats (O(1) query)
-            stats_response = self.supabase.table("user_stats").select("total_messages")\
-                .eq("user_id", user_id).eq("guild_id", guild_id).maybe_single().execute()
+            response = self.supabase.table("user_stats") \
+                .select("total_messages") \
+                .eq("user_id", user_id) \
+                .eq("guild_id", guild_id) \
+                .maybe_single().execute()
             
-            total_messages = stats_response.data["total_messages"] if stats_response.data else 0
+            if response.data:
+                total = response.data["total_messages"]
+                await ctx.respond(f"{user_obj.nick} has {total:,} messages in {guild_obj.name}")
+            else:
+                await ctx.respond("Database returned NO data. Check if your IDs match the Supabase table.", ephemeral=True)
+                return
 
             # Check the earliest tracked data for this guild to see if they are a "Legacy" member
             guild_start_response = self.supabase.table("daily_activity").select("day_bucket")\
@@ -131,15 +143,13 @@ class tracker(commands.Cog):
             
             guild_added_epoch = guild_start_response.data[0]["day_bucket"] if guild_start_response.data else None
 
-            await ctx.respond(f"User <@{user_id}> has sent a total of **{total_messages:,}** messages in **{guild_obj.name}**.")
-
             if guild_added_epoch and member_join_epoch < guild_added_epoch:
                 await ctx.send_followup(
                     f"⚠️ Note: You joined this server before the bot started tracking activity. "
                     f"Your total might be higher than what is shown here.", ephemeral=True
                 )
         except Exception as e:
-            bot_log(f"Message count failed: {e}", level="error")
+            bot_log(f"Query Error: {e}", level="error")
             await ctx.respond("Error retrieving message count.", ephemeral=True)
 
 def setup(bot):
