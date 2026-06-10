@@ -1,6 +1,6 @@
 import discord
 
-async def send_smart_message(destination, text, files=None, is_reply=False):
+async def send_smart_message(destination, text, files=None, is_reply=True):
     """
     Intelligent message sender.
     """
