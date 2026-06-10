@@ -69,7 +69,7 @@ class AICoreCog(commands.Cog):
                 async with self.history_lock:
                     self.shared_history.append(ai_entry)
 
-                await send_smart_message(message.channel, ai_reply, is_reply=True)
+                await message.reply(message.channel, ai_reply, is_reply=True)
                 return ai_reply
             except Exception as e:
                 bot_log(f"AI response error: {e}", level="error", important=True)
