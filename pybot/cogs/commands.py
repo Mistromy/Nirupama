@@ -73,7 +73,7 @@ class commands(commands.Cog):
         await ctx.defer()
         await tracker_cog.messagecount(ctx, user, guild)
 
-    @commands.slash_command(description="Update user's total message count")
+    @commands.slash_command(description="Update user's total message count", default_member_permissions=discord.Permissions(administrator=True))
     async def updatemessagecount(self, ctx, user: discord.Member = None, count: int = None):
         guild = ctx.guild
         tracker_cog = self.bot.get_cog("tracker")
