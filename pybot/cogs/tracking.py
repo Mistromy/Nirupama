@@ -41,5 +41,8 @@ class tracker(commands.Cog):
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         await levels.messagecount(self.supabase, ctx, user, guild)
 
+    async def updatemessagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None, count: int = None):
+        await levels.updatemessagecount(self.supabase, ctx, user, guild, count)
+
 def setup(bot):
     bot.add_cog(tracker(bot))

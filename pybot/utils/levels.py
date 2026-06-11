@@ -153,3 +153,11 @@ async def messagecount(supabase, ctx, user: discord.Member = None, guild: discor
     except Exception as e:
         bot_log(f"Query Error: {e}", level="error")
         await ctx.respond("Error retrieving message count.", ephemeral=True)
+
+async def updatemessagecount(supabase, ctx, user: discord.Member = None, guild: discord.Guild = None, count: int = None):
+    supabase.table("user_stats") \
+        .update({"total_messages": count}) \
+        .eq("user_id", user.id) \
+        .eq("guild_id", guild.id) \
+        .execute()
+    await ctx.respond(f"{user.display_name}'s message count set to {count}")
