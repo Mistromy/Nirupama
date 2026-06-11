@@ -35,8 +35,8 @@ class tracker(commands.Cog):
         except Exception as e:
             bot_log(f"Activity log failed: {e}", level="error")
 
-    async def getgraph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
-        await levels.getgraph(self.supabase, ctx, user, guild)
+    async def getgraph(self, ctx, user: discord.Member = None, guild: discord.Guild = None, days: int = 7):
+        await levels.getgraph(self.supabase, ctx, user, guild, days)
 
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         await levels.messagecount(self.supabase, ctx, user, guild)
