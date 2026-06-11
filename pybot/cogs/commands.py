@@ -62,16 +62,23 @@ class commands(commands.Cog):
         bot_log(f"/roll rolled a {result} by {ctx.author.name}")
 
     @commands.slash_command(description="Generate activity graph for a user")
-    async def graph(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
+    async def graph(self, ctx, user: discord.Member = None, guild: discord.Guild = None, days: int = 7):
         tracker_cog = self.bot.get_cog("tracker")
         await ctx.defer()
-        await tracker_cog.getgraph(ctx, user, guild)
+        await tracker_cog.getgraph(ctx, user, guild, days)
 
     @commands.slash_command(description="Get your total message count")
     async def messagecount(self, ctx, user: discord.Member = None, guild: discord.Guild = None):
         tracker_cog = self.bot.get_cog("tracker")
         await ctx.defer()
         await tracker_cog.messagecount(ctx, user, guild)
+
+    @commands.slash_command(description="Update user's total message count", default_member_permissions=discord.Permissions(administrator=True))
+    async def updatemessagecount(self, ctx, user: discord.Member, count: int):
+        guild = ctx.guild
+        tracker_cog = self.bot.get_cog("tracker")
+        await ctx.defer()
+        await tracker_cog.updatemessagecount(ctx, user, guild, count)
 
     # @discord.slash_command(description="check how many messages you or someone has sent in this server")
     # async def messagecount(self, ctx, user: discord.Member = None):

@@ -22,10 +22,10 @@ plt.rcParams.update({
 })
 
 
-async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Guild = None):
+async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Guild = None, days: int = 7):
     """Generate and display a message activity graph for a user."""
     user_id = (user or ctx.author).id
-    nick = (user or ctx.author).display_name  # Fixes the "None" issue
+    nick = (user or ctx.author).display_name 
     guild_obj = guild or ctx.guild
     
     try:
@@ -35,10 +35,24 @@ async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Gu
         
         current_total = stats.data["total_messages"] if stats.data else 0
 
-        # 2. Get the Deltas (Last 7 days = 168 hours)
-        response = supabase.table("hourly_activity").select("bucket_time, message_count")\
+        # 2. Dynamically choose table strategy based on requested timeframe
+        if days <= 7:
+            table_name = "hourly_activity"
+            time_col = "bucket_time"
+            limit = days * 24
+        elif days <= 365:
+            table_name = "daily_activity"
+            time_col = "day_bucket"
+            limit = days
+        else:
+            table_name = "weekly_activity"
+            time_col = "week_bucket"
+            limit = (days // 7) + 2  # Small buffer for partial weeks
+
+        # 3. Get the Deltas from the chosen table
+        response = supabase.table(table_name).select(f"{time_col}, message_count")\
             .eq("user_id", user_id).eq("guild_id", guild_obj.id)\
-            .order("bucket_time", desc=True).limit(168).execute()
+            .order(time_col, desc=True).limit(limit).execute()
 
         rows = response.data
         if not rows:
@@ -52,11 +66,11 @@ async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Gu
         period_sum = sum(r["message_count"] for r in rows)
         starting_total = current_total - period_sum
 
-        # Use timezone-aware datetimes so date boundaries (e.g., Jan 1) render consistently.
-        times = [datetime.fromtimestamp(r["bucket_time"], tz=timezone.utc).astimezone() for r in rows]
+        # Use timezone-aware datetimes with dynamic column target
+        times = [datetime.fromtimestamp(r[time_col], tz=timezone.utc).astimezone() for r in rows]
         deltas = [r["message_count"] for r in rows]
         
-        # Cumulative growth logic: Start at 'starting_total', then add each delta
+        # Cumulative growth logic
         y_values = [starting_total + sum(deltas[:i+1]) for i in range(len(deltas))]
 
         # --- Plotting ---
@@ -66,26 +80,21 @@ async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Gu
         glow_color = "#5eead4"
         accent_color = "#f59e0b"
 
-        # Soft glow under the main line for a sleek look.
         ax.plot(times, y_values, color=glow_color, linewidth=7, alpha=0.08, solid_capstyle="round")
         ax.plot(times, y_values, color=line_color, linewidth=2.4, solid_capstyle="round")
 
-        # Layered translucent fill to mimic a vertical gradient.
         fill_layers = [(0.35, 0.03), (0.65, 0.06), (1.0, 0.10)]
         for scale, alpha in fill_layers:
             scaled_values = [starting_total + ((y - starting_total) * scale) for y in y_values]
             ax.fill_between(times, scaled_values, starting_total, color="#14b8a6", alpha=alpha)
 
-        # Highlight latest value.
         ax.scatter(times[-1], y_values[-1], s=42, color=accent_color, edgecolors="#fff7e0", linewidths=0.7, zorder=4)
 
-        # Better date formatting across month/year boundaries.
         locator = mdates.AutoDateLocator(minticks=5, maxticks=9)
         formatter = mdates.ConciseDateFormatter(locator)
         ax.xaxis.set_major_locator(locator)
         ax.xaxis.set_major_formatter(formatter)
 
-        # Add a little horizontal padding so first/last labels and points are not clipped.
         x_min, x_max = min(times), max(times)
         x_pad = (x_max - x_min) * 0.02 if x_max > x_min else timedelta(hours=1)
         ax.set_xlim(x_min - x_pad, x_max + x_pad)
@@ -94,7 +103,6 @@ async def getgraph(supabase, ctx, user: discord.Member = None, guild: discord.Gu
         ax.set_title(f"{nick}'s Messages Over Time", pad=12, fontsize=12)
         ax.set_ylabel("Total Messages")
 
-        # Aesthetics
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_color("#2b3d4f")
@@ -153,3 +161,11 @@ async def messagecount(supabase, ctx, user: discord.Member = None, guild: discor
     except Exception as e:
         bot_log(f"Query Error: {e}", level="error")
         await ctx.respond("Error retrieving message count.", ephemeral=True)
+
+async def updatemessagecount(supabase, ctx, user: discord.Member = None, guild: discord.Guild = None, count: int = None):
+    supabase.table("user_stats") \
+        .update({"total_messages": count}) \
+        .eq("user_id", user.id) \
+        .eq("guild_id", guild.id) \
+        .execute()
+    await ctx.respond(f"{user.display_name}'s message count set to {count}")
