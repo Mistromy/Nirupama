@@ -71,7 +71,7 @@ async def calculate_ship_percentage(user1: Member, user2: Member, guild: Guild):
         log.append("Power Couple (Both Admins)")
     elif (u1_admin and not u2_admin) or (u2_admin and not u1_admin):
         modifiers -= 10
-        log.append("Boss/Employee Dynamic (Scandalous!)")
+        log.append("Discord mod & e kitten (cringe)")
 
     # --- 6. Nitro/Booster Status ---
     if user1.premium_since and user2.premium_since:
