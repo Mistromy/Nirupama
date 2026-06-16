@@ -7,10 +7,14 @@ import cogs.uptime as uptime
 import cogs.tracking as tracking
 # from tracking import getgraph
 
+blacklist = [875102125120704532]
 
 class commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  
+    
+    def cog_check(self, ctx):
+        return ctx.channel.id not in blacklist
         
     
     @discord.slash_command(description="ask the 8ball a question")
