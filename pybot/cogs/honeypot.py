@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from utils.logger import bot_log
 
-honeypot_ids = {1522156724746715146, 1209888005829955624}
+honeypot_ids = {1522156724746715146}
 
 class HoneyPot(commands.Cog):
     def __init__(self, bot):
