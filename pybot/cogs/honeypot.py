@@ -13,9 +13,14 @@ class HoneyPot(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.channel.id in honeypot_ids:
-            await message.delete()
-            await message.author.send("You have been banned for sending messages in the autoban channel.")
-            await message.author.ban(reason="Suspected spambot", delete_message_seconds=86400)
-            bot_log(f"Banned user {message.author}", level="info")
+            try:
+                await message.author.send("You have been banned for sending messages in the autoban channel.")
+            except discord.Forbidden:
+                bot_log("Failed to send ban message.", level="error")
+            try:
+                await message.author.ban(reason="Suspected spambot", delete_message_seconds=86400)
+                bot_log(f"Banned user {message.author}", level="info")
+            except discord.Forbidden:
+                bot_log("Failed to ban user.", level="error")
 def setup(bot):
     bot.add_cog(HoneyPot(bot))
