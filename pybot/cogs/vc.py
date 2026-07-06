@@ -4,7 +4,7 @@ import asyncio
 from utils.logger import bot_log
 
 
-class MyNewCog(commands.Cog):
+class vc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -46,4 +46,4 @@ class MyNewCog(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(MyNewCog(bot))
+    bot.add_cog(vc(bot))

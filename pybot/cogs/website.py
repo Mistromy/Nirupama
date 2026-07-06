@@ -46,13 +46,14 @@ class websitestats(commands.Cog):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.patch(url, headers=headers, json=gist_payload) as response:
-                    if response.status == 200:
-                        bot_log("Website stats successfully pushed to GitHub Gist.", level="info")
-                    else:
+                    if response.status != 200:
                         err_response = await response.text()
                         bot_log(f"Failed to update Gist. Status: {response.status}. Error: {err_response}", level="error")
         except Exception as e:
             bot_log(f"Network error trying to update website stats Gist: {e}", level="error")
+    @update_website_stats.before_loop
+    async def before_update_website_stats(self):
+        await self.bot.wait_until_ready()
 
 def setup(bot):
     bot.add_cog(websitestats(bot))
