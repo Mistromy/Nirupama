@@ -1139,6 +1139,177 @@ h3 {
 }
 
 /* ============================================================
+   TERMS GATE MODAL
+============================================================ */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(10, 9, 14, 0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.modal-backdrop[hidden] {
+    display: none;
+}
+
+.modal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    max-width: 580px;
+    width: 100%;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-shadow:
+        -8px 8px 0 rgba(199, 59, 110, 0.18),
+        8px -8px 0 rgba(63, 216, 194, 0.12);
+    animation: modal-in 0.25s ease;
+}
+
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+}
+
+.modal-header-title {
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* the modal's dot warns regardless of bot status */
+.modal-header .pulse-dot {
+    background: var(--amber) !important;
+    animation: blink 1.4s steps(2, start) infinite !important;
+}
+
+.modal-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+    color: var(--paper);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.modal-body > p {
+    color: var(--dim);
+    font-size: 0.98rem;
+}
+
+.clause {
+    border: 1px solid rgba(217, 166, 72, 0.35);
+    border-left: 3px solid var(--amber);
+    background: rgba(217, 166, 72, 0.06);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.2rem;
+    margin: 1.25rem 0;
+}
+
+.clause-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--amber);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+}
+
+.clause p:not(.clause-label) {
+    color: var(--paper);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.modal-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    color: var(--dim);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.modal-check input {
+    margin-top: 0.25em;
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    accent-color: var(--signal);
+    cursor: pointer;
+}
+
+.modal-check:hover {
+    color: var(--paper);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0 1.5rem 1.25rem;
+}
+
+.btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.modal-footnote {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--faint);
+    text-align: center;
+    padding: 0 1.5rem 1.1rem;
+    letter-spacing: 0.04em;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* ============================================================
    RESPONSIVE
 ============================================================ */
 @media (max-width: 968px) {
@@ -1287,7 +1458,8 @@ h3 {
     .pulse-dot,
     .status-dot,
     .ticker-track,
-    .glitch {
+    .glitch,
+    .modal {
         animation: none !important;
     }
 

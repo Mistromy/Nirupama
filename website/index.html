@@ -498,6 +498,9 @@
                     <li><a href="https://github.com/mistromy/Nirupama">GitHub</a></li>
                     <li><a href="https://ko-fi.com/mistromy">Ko-fi</a></li>
                     <li><a href="https://nirupama.mista.tech/privacy.md">Privacy policy</a></li>
+                    <!-- TODO: write these two documents — the terms gate links to them -->
+                    <li><a href="https://nirupama.mista.tech/terms.md">Terms of service</a></li>
+                    <li><a href="https://nirupama.mista.tech/eula.md">EULA</a></li>
                 </ul>
             </div>
         </div>
@@ -506,6 +509,60 @@
         </div>
     </div>
 </footer>
+
+<!-- ============================================================
+     TERMS GATE — intercepts every "Add to Discord" link.
+     script.js remembers acceptance per browser (localStorage);
+     bump TERMS_VERSION in script.js when the documents change
+     to re-prompt everyone.
+============================================================ -->
+<div class="modal-backdrop" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle" hidden>
+    <div class="modal">
+        <div class="modal-header">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <span class="modal-header-title">SYS_PROMPT // authorization required</span>
+            <button class="modal-close" id="termsClose" aria-label="Close dialog">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <h3 id="termsTitle">Before the bot moves in</h3>
+            <p>
+                Adding Nirupama to a server means agreeing to the
+                <!-- TODO: terms.md and eula.md don't exist yet — write them.
+                     privacy.md is already live. -->
+                <a href="https://nirupama.mista.tech/terms.md" class="inline-link" target="_blank" rel="noopener">Terms of Service</a>,
+                <a href="https://nirupama.mista.tech/eula.md" class="inline-link" target="_blank" rel="noopener">EULA</a> and
+                <a href="https://nirupama.mista.tech/privacy.md" class="inline-link" target="_blank" rel="noopener">Privacy Policy</a>.
+                The part people actually need to know:
+            </p>
+
+            <div class="clause">
+                <p class="clause-label">// responsibility clause</p>
+                <p>
+                    Whoever adds Nirupama to a server &mdash; owner, admin, or the
+                    person holding the button &mdash; is responsible for ensuring
+                    that server's members can read the EULA. By participating in
+                    a server where Nirupama is present, users agree to it.
+                </p>
+            </div>
+
+            <label class="modal-check" for="termsCheckbox">
+                <input type="checkbox" id="termsCheckbox">
+                <span>
+                    I've read and agree to the Terms of Service, EULA and Privacy
+                    Policy, and I accept the responsibility clause above.
+                </span>
+            </label>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="termsCancel" type="button">Not now</button>
+            <button class="btn btn-primary" id="termsAgree" type="button" disabled>Agree &amp; continue to Discord</button>
+        </div>
+
+        <p class="modal-footnote">accepted once per browser // if the terms change, you'll be asked again</p>
+    </div>
+</div>
 
 <script src="script.js"></script>
 </body>
