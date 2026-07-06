@@ -137,6 +137,15 @@
 
                 <div class="command-card">
                     <div class="command-header">
+                        <span class="command-name">/graph</span>
+                        <span class="command-tag">Utility</span>
+                    </div>
+                    <p>Get a graph of a user's activity over time.</p>
+                    <code>/graph @user days</code>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-header">
                         <span class="command-name">/eightball</span>
                         <span class="command-tag">Fun</span>
                     </div>
@@ -164,30 +173,13 @@
 
                 <div class="command-card">
                     <div class="command-header">
-                        <span class="command-name">/set_ai_personality</span>
+                        <span class="command-name">/setmessagecount</span>
                         <span class="command-tag">Admin</span>
                     </div>
-                    <p>Customize the AI's personality and behavior in your server.</p>
-                    <code>/set_ai_personality</code>
+                    <p>Update the message count for a specific user, to have correct values in /graph. (use the search feature with from:user search filter to get total messages).</p>
+                    <code>/setmessagecount count</code>
                 </div>
 
-                <div class="command-card">
-                    <div class="command-header">
-                        <span class="command-name">/set_thinking_mode</span>
-                        <span class="command-tag">Admin</span>
-                    </div>
-                    <p>Choose how the AI processes and responds to messages.</p>
-                    <code>/set_thinking_mode mode</code>
-                </div>
-
-                <div class="command-card">
-                    <div class="command-header">
-                        <span class="command-name">/ai_toggle</span>
-                        <span class="command-tag">Admin</span>
-                    </div>
-                    <p>Enable or disable AI responses in channels or for the entire server.</p>
-                    <code>/ai_toggle</code>
-                </div>
             </div>
         </div>
     </section>
@@ -198,7 +190,6 @@
             <h2 class="section-title">📊 Live Stats</h2>
             <p class="stats-subtitle">Real-time statistics from the bot</p>
             <a href="https://nirupama.cronitorstatus.com"><img src="https://cronitor.io/badges/statuspage/24a86ff28b65e205/dark.svg" alt="System Status" /></a>
-            <a href="https://nirupama.cronitorstatus.com"><img src="https://cronitor.io/badges/1l8Gxe/production/GH04eoTILY9VNkxeNbEaBkKNDPA/detailed.svg" width="100%" alt="nirupamaheartbeat" /></a>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">🖥️</div>
@@ -210,11 +201,13 @@
                     <div class="stat-value" id="userCount">---</div>
                     <div class="stat-label">Users</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-value" id="uptime">---</div>
-                    <div class="stat-label">Uptime</div>
-                </div>
+                <a href="https://nirupama.cronitorstatus.com">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="uptime">---</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </a>
                 <div class="stat-card">
                     <div class="stat-icon">🔄</div>
                     <div class="stat-value" id="updates">---</div>
