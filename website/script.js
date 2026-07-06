@@ -5,7 +5,7 @@ const GIST_RAW_URL = 'https://gist.githubusercontent.com/Mistromy/cdb82a1247ae60
 let statsData = {
     serverCount: null,
     userCount: null,
-    uptime: null,    // Hardcoded mock value for metrics not in the Gist
+    uptime: null,    // Pulled dynamically from Gist data
     updates: null    // Successfully mapped to Shields.io commit count
 };
 
@@ -38,10 +38,13 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // ===== ANIMATED COUNTERS FOR STATS =====
-function animateCounter(element, target, duration = 800) {
+function animateCounter(element, target, duration = 800, suffix = '') {
     const start = 0;
     const increment = target / (duration / 16); // ~60fps
     let current = start;
+    
+    // Check if the value is a floating number (e.g. 99.9)
+    const isFloat = target % 1 !== 0;
     
     const timer = setInterval(() => {
         current += increment;
@@ -50,8 +53,9 @@ function animateCounter(element, target, duration = 800) {
             clearInterval(timer);
         }
         
-        // Format numbers with commas (e.g., 1,000)
-        element.textContent = Math.floor(current).toLocaleString();
+        // Format floats with 1 decimal place, integers with locale commas
+        const formatted = isFloat ? current.toFixed(1) : Math.floor(current).toLocaleString();
+        element.textContent = formatted + suffix;
     }, 16);
 }
 
@@ -72,7 +76,8 @@ function startObservingStats() {
                         if (statsData[key] === null || statsData[key] === undefined) {
                             element.textContent = '---';
                         } else {
-                            animateCounter(element, statsData[key]);
+                            const suffix = key === 'uptime' ? '%' : '';
+                            animateCounter(element, statsData[key], 800, suffix);
                         }
                     }
                 });
@@ -88,7 +93,7 @@ function startObservingStats() {
 
 // ===== FETCH LIVE STATS FROM GIST & SHIELDS.IO (RUNS ONCE) =====
 async function fetchLiveStats() {
-    // 1. Fetch Server and User counts from your Gist
+    // 1. Fetch Server, User counts, and Uptime from your Gist
     try {
         // Appending `?_=${Date.now()}` bypasses aggressive browser/CDN caching
         const response = await fetch(`${GIST_RAW_URL}?_=${Date.now()}`);
@@ -102,6 +107,7 @@ async function fetchLiveStats() {
         // Map Gist keys safely
         if (data.guild_count !== undefined) statsData.serverCount = data.guild_count;
         if (data.user_count !== undefined) statsData.userCount = data.user_count;
+        if (data.uptime !== undefined) statsData.uptime = data.uptime;
         
         console.log('✅ Nirupama live stats loaded successfully from Gist.');
         
@@ -109,6 +115,7 @@ async function fetchLiveStats() {
         console.error('⚠️ Could not load live stats, keeping "---" placeholders.', error);
         statsData.serverCount = null;
         statsData.userCount = null;
+        statsData.uptime = null;
     }
 
     // 2. Fetch total commits from Shields.io and map to the "updates" element
