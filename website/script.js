@@ -1,14 +1,28 @@
+// ===== CONFIGURATION =====
+const GIST_RAW_URL = 'https://gist.githubusercontent.com/Mistromy/cdb82a1247ae6095f5d43098eb074dba/raw/stats.json';
+
+// Global stats object - Initialized to null to represent the "loading" state
+let statsData = {
+    serverCount: null,
+    userCount: null,
+    commandCount: 12847, // Hardcoded mock value for metrics not in the Gist
+    aiResponses: 8934    // Hardcoded mock value for metrics not in the Gist
+};
+
+// ===== INITIALIZE PLACEHOLDERS IMMEDIATELY =====
+// This forces elements to display "---" out of the gate so old placeholder numbers don't flash
+function initPlaceholders() {
+    ['serverCount', 'userCount'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = '---';
+    });
+}
+initPlaceholders();
+
 // ===== SMOOTH SCROLLING FOR NAVIGATION LINKS =====
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         const href = this.getAttribute('href');
-        
-        // Don't prevent default for placeholder links
-        if (href === '#invite-link') {
-            e.preventDefault();
-            alert('Please replace #invite-link with your actual Discord bot invite URL!\n\nTo get your invite link:\n1. Go to Discord Developer Portal\n2. Select your bot application\n3. Go to OAuth2 > URL Generator\n4. Select "bot" and "applications.commands" scopes\n5. Select the permissions your bot needs\n6. Copy the generated URL');
-            return;
-        }
         
         if (href.startsWith('#') && href !== '#') {
             e.preventDefault();
@@ -24,9 +38,9 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // ===== ANIMATED COUNTERS FOR STATS =====
-function animateCounter(element, target, duration = 2000) {
+function animateCounter(element, target, duration = 800) {
     const start = 0;
-    const increment = target / (duration / 16); // 60fps
+    const increment = target / (duration / 16); // ~60fps
     let current = start;
     
     const timer = setInterval(() => {
@@ -36,38 +50,74 @@ function animateCounter(element, target, duration = 2000) {
             clearInterval(timer);
         }
         
-        // Format numbers with commas
+        // Format numbers with commas (e.g., 1,000)
         element.textContent = Math.floor(current).toLocaleString();
     }, 16);
 }
 
-// ===== INTERSECTION OBSERVER FOR STATS ANIMATION =====
-const statsObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting && entry.target.textContent === '---') {
-            // These are placeholder values - will be replaced with real API data
-            const statsData = {
-                serverCount: 150,
-                userCount: 5420,
-                commandCount: 12847,
-                aiResponses: 8934
-            };
-            
-            Object.keys(statsData).forEach(key => {
-                const element = document.getElementById(key);
-                if (element && element.textContent === '---') {
-                    animateCounter(element, statsData[key]);
-                }
-            });
-        }
-    });
-}, { threshold: 0.5 });
+// ===== INTERSECTION OBSERVER SETUP =====
+// Wrapped in a function so we can cleanly fire it ONLY after data resolves
+function startObservingStats() {
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Disconnect immediately so it only triggers ONCE ever
+                statsObserver.disconnect();
+                
+                // Run counter animations using the final resolved statsData
+                Object.keys(statsData).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        // If data loading failed or returned null, preserve the "---" state
+                        if (statsData[key] === null || statsData[key] === undefined) {
+                            element.textContent = '---';
+                        } else {
+                            animateCounter(element, statsData[key]);
+                        }
+                    }
+                });
+            }
+        });
+    }, { threshold: 0.3 });
 
-// Observe stats section
-const statsSection = document.querySelector('.stats');
-if (statsSection) {
-    statsObserver.observe(statsSection);
+    const statsSection = document.querySelector('.stats');
+    if (statsSection) {
+        statsObserver.observe(statsSection);
+    }
 }
+
+// ===== FETCH LIVE STATS FROM GIST (RUNS ONCE) =====
+async function fetchLiveStats() {
+    try {
+        // Appending `?_=${Date.now()}` bypasses aggressive browser/CDN caching
+        const response = await fetch(`${GIST_RAW_URL}?_=${Date.now()}`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch from Gist');
+        }
+        
+        const data = await response.json();
+        
+        // Map Gist keys safely
+        if (data.guild_count !== undefined) statsData.serverCount = data.guild_count;
+        if (data.user_count !== undefined) statsData.userCount = data.user_count;
+        
+        console.log('✅ Nirupama live stats loaded successfully from Gist.');
+        
+    } catch (error) {
+        console.error('⚠️ Could not load live stats, keeping "---" placeholders.', error);
+        
+        // Explicitly force null values on failure so the UI knows to render "---"
+        statsData.serverCount = null;
+        statsData.userCount = null;
+    } finally {
+        // Regardless of success or failure, we now kick off the scroll observer safely
+        startObservingStats();
+    }
+}
+
+// Fire the network fetch on execution
+fetchLiveStats();
 
 // ===== NAVBAR BACKGROUND ON SCROLL =====
 window.addEventListener('scroll', () => {
@@ -96,7 +146,6 @@ const fadeInObserver = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe all cards
 document.querySelectorAll('.feature-card, .command-card, .roadmap-item').forEach(card => {
     card.style.opacity = '0';
     card.style.transform = 'translateY(20px)';
@@ -104,58 +153,9 @@ document.querySelectorAll('.feature-card, .command-card, .roadmap-item').forEach
     fadeInObserver.observe(card);
 });
 
-// ===== FETCH LIVE STATS FROM API (PLACEHOLDER) =====
-// This function will be used when you implement the backend API
-async function fetchLiveStats() {
-    try {
-        // Replace with your actual API endpoint
-        const response = await fetch('/api/stats');
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch stats');
-        }
-        
-        const data = await response.json();
-        
-        // Update stat values
-        if (data.servers) {
-            const serverElement = document.getElementById('serverCount');
-            if (serverElement) animateCounter(serverElement, data.servers);
-        }
-        
-        if (data.users) {
-            const userElement = document.getElementById('userCount');
-            if (userElement) animateCounter(userElement, data.users);
-        }
-        
-        if (data.commands) {
-            const commandElement = document.getElementById('commandCount');
-            if (commandElement) animateCounter(commandElement, data.commands);
-        }
-        
-        if (data.aiResponses) {
-            const aiElement = document.getElementById('aiResponses');
-            if (aiElement) animateCounter(aiElement, data.aiResponses);
-        }
-        
-    } catch (error) {
-        console.log('Stats API not yet implemented - using placeholder data');
-    }
-}
-
-// ===== CONSOLE EASTER EGG =====
-console.log('%c🤖 Nirupama Bot Website', 'font-size: 24px; font-weight: bold; color: #5865F2;');
-console.log('%cHey there, curious developer! 👀', 'font-size: 16px; color: #57F287;');
-console.log('%cLike what you see? Check out the code on GitHub:', 'font-size: 14px;');
-console.log('%chttps://github.com/mistromy/Nirupama', 'font-size: 14px; color: #EB459E;');
-
-// ===== LIVE STATS REFRESH (UNCOMMENT WHEN API IS READY) =====
-// Refresh stats every 30 seconds
-// setInterval(fetchLiveStats, 30000);
-
 // ===== COMMAND TAG COLORS =====
 document.querySelectorAll('.command-tag').forEach(tag => {
-    const tagText = tag.textContent.toLowerCase();
+    const tagText = tag.textContent.toLowerCase().trim();
     if (tagText === 'admin') {
         tag.style.background = '#ED4245';
     } else if (tagText === 'fun') {
@@ -171,8 +171,7 @@ document.querySelectorAll('.command-tag').forEach(tag => {
     }
 });
 
-// ===== MOBILE MENU TOGGLE (if needed) =====
-// Add this if you want a hamburger menu for mobile
+// ===== MOBILE MENU TOGGLE =====
 const createMobileMenu = () => {
     const nav = document.querySelector('.nav-menu');
     const navbar = document.querySelector('.navbar .container');
@@ -198,6 +197,5 @@ const createMobileMenu = () => {
     }
 };
 
-// Check on load and resize
 window.addEventListener('load', createMobileMenu);
 window.addEventListener('resize', createMobileMenu);

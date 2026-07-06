@@ -70,8 +70,9 @@ cogs_list = [
     "cogs.uptime",
     "cogs.vc",
     "cogs.honeypot",
+    "cogs.website",
 ]
-protected_cogs = ["cogs.admin", "cogs.tracking", "cogs.uptime", "cogs.honeypot"]  # Always-on cogs
+protected_cogs = ["cogs.admin", "cogs.tracking", "cogs.uptime", "cogs.honeypot", "cogs.website"]  # Always-on cogs
 
 # Expose to bot for other cogs (e.g., admin) to use
 bot.cogs_to_load = cogs_list
