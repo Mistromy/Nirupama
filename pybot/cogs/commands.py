@@ -84,6 +84,10 @@ class commands(commands.Cog):
         await ctx.defer()
         await tracker_cog.updatemessagecount(ctx, user, guild, count)
 
+    @commands.slash_command(description="See the bot's privacy policy")
+    async def privacy(self, ctx):
+        await ctx.respond("This bot collects minimal data for operational purposes. See our privacy policy for more information.\nhttps://Nirupama.mista.tech/privacy", ephemeral=True)
+
     # @discord.slash_command(description="check how many messages you or someone has sent in this server")
     # async def messagecount(self, ctx, user: discord.Member = None):
     #     await getgraph(self, ctx, user)
