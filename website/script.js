@@ -292,6 +292,115 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+// ============================================================
+// TERMS GATE
+// Every invite link runs through the SYS_PROMPT modal until the
+// visitor accepts. Acceptance is remembered per browser; bump
+// TERMS_VERSION when the documents change to re-prompt everyone.
+// ============================================================
+const TERMS_VERSION = '2026-07-06'; // <- change this date when ToS/EULA/privacy change
+const TERMS_STORAGE_KEY = 'nirupama_terms_accepted';
+
+const termsModal = document.getElementById('termsModal');
+const termsCheckbox = document.getElementById('termsCheckbox');
+const termsAgree = document.getElementById('termsAgree');
+const termsCancel = document.getElementById('termsCancel');
+const termsClose = document.getElementById('termsClose');
+
+let pendingInviteUrl = null;
+let lastFocusedElement = null;
+
+function hasAcceptedTerms() {
+    try {
+        return localStorage.getItem(TERMS_STORAGE_KEY) === TERMS_VERSION;
+    } catch (e) {
+        return false; // private browsing etc. — just show the modal
+    }
+}
+
+function rememberAcceptance() {
+    try {
+        localStorage.setItem(TERMS_STORAGE_KEY, TERMS_VERSION);
+    } catch (e) {
+        // storage unavailable — they'll see the modal again next time, fine
+    }
+}
+
+function openTermsModal(inviteUrl) {
+    pendingInviteUrl = inviteUrl;
+    lastFocusedElement = document.activeElement;
+    termsCheckbox.checked = false;
+    termsAgree.disabled = true;
+    termsModal.hidden = false;
+    document.body.classList.add('modal-open');
+    termsCheckbox.focus();
+}
+
+function closeTermsModal() {
+    termsModal.hidden = true;
+    document.body.classList.remove('modal-open');
+    pendingInviteUrl = null;
+    if (lastFocusedElement) lastFocusedElement.focus();
+}
+
+if (termsModal) {
+    // intercept every invite link on the page
+    document.querySelectorAll('a[href*="discord.com/oauth2/authorize"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (hasAcceptedTerms()) return; // already agreed — sail through
+            e.preventDefault();
+            openTermsModal(link.href);
+        });
+    });
+
+    termsCheckbox.addEventListener('change', () => {
+        termsAgree.disabled = !termsCheckbox.checked;
+    });
+
+    termsAgree.addEventListener('click', () => {
+        if (!termsCheckbox.checked) return;
+        rememberAcceptance();
+        const url = pendingInviteUrl;
+        closeTermsModal();
+        if (url) window.location.href = url;
+    });
+
+    termsCancel.addEventListener('click', closeTermsModal);
+    termsClose.addEventListener('click', closeTermsModal);
+
+    // click the backdrop (not the panel) to dismiss
+    termsModal.addEventListener('click', (e) => {
+        if (e.target === termsModal) closeTermsModal();
+    });
+
+    // Esc to dismiss, Tab stays inside the dialog
+    document.addEventListener('keydown', (e) => {
+        if (termsModal.hidden) return;
+
+        if (e.key === 'Escape') {
+            closeTermsModal();
+            return;
+        }
+
+        if (e.key === 'Tab') {
+            const focusables = termsModal.querySelectorAll(
+                'button:not(:disabled), input, a[href]'
+            );
+            if (!focusables.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
+    });
+}
+
 // ===== REVEAL-ON-SCROLL =====
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
