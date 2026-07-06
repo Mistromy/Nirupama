@@ -20,13 +20,12 @@
     <!-- ===== FONTS ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Poppins:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="bot_icon.png">
 </head>
-<!-- data-bot-status is set by script.js: online | offline | unknown -->
-<body data-bot-status="unknown">
+<body>
 
 <!-- ============================================================
      NAV
@@ -37,11 +36,6 @@
             <img src="bot_icon.png" alt="" class="nav-brand-icon">
             <span>Nirupama</span>
         </a>
-
-        <span class="status-pill">
-            <span class="pulse-dot" aria-hidden="true"></span>
-            <span data-status-text>checking…</span>
-        </span>
 
         <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
             <span></span><span></span><span></span>
@@ -63,18 +57,10 @@
      HERO
 ============================================================ -->
 <section class="hero">
-    <!-- binary gutters — decoration, spells "nirupama" if you're the kind of
-         person who decodes binary gutters -->
-    <div class="binary-col binary-left" aria-hidden="true">01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001</div>
-    <div class="binary-col binary-right" aria-hidden="true">01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001</div>
-
     <div class="container hero-content">
         <div class="hero-text">
-            <p class="eyebrow">
-                <span class="pulse-dot" aria-hidden="true"></span>
-                sys.status: <span data-status-text>checking…</span> // one developer
-            </p>
-            <h1>One bot.<br>A bit of <em class="glitch" data-text="everything.">everything.</em></h1>
+            <p class="eyebrow"><span class="pulse-dot" aria-hidden="true"></span> online &middot; discord bot &middot; one developer</p>
+            <h1>One bot.<br>A bit of <em>everything</em>.</h1>
             <p class="hero-sub">
                 AI conversations, ship math that actually looks at your data,
                 activity graphs, dice, an 8-ball &mdash; built, broken, and fixed
@@ -90,11 +76,9 @@
         <div class="hero-visual">
             <div class="avatar-frame">
                 <img src="bot_icon.png" alt="Nirupama's avatar">
-                <span class="status-dot" title="Bot status"></span>
-                <span class="frame-tag" aria-hidden="true">IMG_0001 // SUBJECT</span>
+                <span class="status-dot" title="Online"></span>
             </div>
-            <p class="avatar-caption">nirupama &middot; <span data-status-text>checking…</span></p>
-            <!-- TODO: swap bot_icon.png when the new pfp lands -->
+            <p class="avatar-caption">nirupama &middot; probably online</p>
         </div>
     </div>
 
@@ -103,7 +87,6 @@
         <div class="ticker-track" id="tickerTrack">
             <span>/ship</span><span>/graph</span><span>/eightball</span><span>/diceroll</span>
             <span>/tone</span><span>/suggest</span><span>AI chat</span><span>/setmessagecount</span>
-            <span class="ticker-ghost">please, wake up</span>
         </div>
     </div>
 </section>
@@ -130,9 +113,9 @@
                 <!-- TODO: adjust this copy to match the current state of the AI rewrite -->
             </div>
             <div class="feature-media">
-                <!-- TODO: drop in a real screenshot — the orb dealer conversation
-                     is genuinely the best ad this bot could have. Replace with:
-                     <img src="assets/orbs.png" alt="Nirupama discussing orb dealers"> -->
+                <!-- TODO: drop in a real screenshot. orbs.png from the repo works well here.
+                     Replace the placeholder div with:
+                     <img src="assets/orbs.png" alt="Nirupama chatting"> -->
                 <div class="media-placeholder">
                     <span class="media-label">screenshot slot</span>
                     <span class="media-hint">chat demo &middot; e.g. orbs.png</span>
@@ -206,69 +189,63 @@
         <p class="section-eyebrow">// the numbers</p>
         <h2 class="section-title">Live, unrounded, occasionally humbling</h2>
         <p class="section-sub">
-            The bot phones home every five minutes. If it stops, this page is
-            the first to know. If a number looks small, that's because it is.
+            Pulled from the bot every five minutes. If a number looks small,
+            that's because it is.
         </p>
 
         <div class="stats-board reveal">
             <div class="stats-board-header">
                 <span class="pulse-dot" aria-hidden="true"></span>
-                <span class="stats-board-title" data-board-status>establishing link…</span>
+                <span class="stats-board-title">telemetry</span>
                 <a href="https://nirupama.cronitorstatus.com" class="stats-board-link">status page ↗</a>
             </div>
 
             <div class="stats-grid">
                 <!-- LIVE STATS — fed by stats.json gist -->
                 <div class="stat-cell">
-                    <span class="stat-value" data-stat="serverCount">░░░</span>
+                    <span class="stat-value" data-stat="serverCount">---</span>
                     <span class="stat-label">servers</span>
                     <span class="stat-note">yes, that's live</span>
                 </div>
                 <div class="stat-cell">
-                    <span class="stat-value" data-stat="userCount">░░░</span>
+                    <span class="stat-value" data-stat="userCount">---</span>
                     <span class="stat-label">members reached</span>
                     <span class="stat-note">bots included &mdash; they count too</span>
                 </div>
                 <div class="stat-cell">
-                    <span class="stat-value" data-stat="uptime" data-suffix="%">░░░</span>
+                    <span class="stat-value" data-stat="uptime" data-suffix="%">---</span>
                     <span class="stat-label">uptime, 30 days</span>
                     <span class="stat-note">monitored by Cronitor</span>
                 </div>
                 <div class="stat-cell">
-                    <span class="stat-value" data-stat="updates">░░░</span>
+                    <span class="stat-value" data-stat="updates">---</span>
                     <span class="stat-label">commits shipped</span>
                     <span class="stat-note">one repo, one dev</span>
                 </div>
 
-                <!-- FUTURE STATS — already wired in script.js; they stay masked
+                <!-- FUTURE STATS — already wired in script.js; they show "---"
                      until website.py starts writing these keys to the gist:
                      messages_tracked, ships_calculated, ai_replies, dice_rolled -->
                 <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="messagesTracked">░░░</span>
+                    <span class="stat-value" data-stat="messagesTracked">---</span>
                     <span class="stat-label">messages tracked</span>
                     <span class="soon-tag">soon</span>
                 </div>
                 <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="shipsCalculated">░░░</span>
+                    <span class="stat-value" data-stat="shipsCalculated">---</span>
                     <span class="stat-label">ships calculated</span>
                     <span class="soon-tag">soon</span>
                 </div>
                 <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="aiReplies">░░░</span>
+                    <span class="stat-value" data-stat="aiReplies">---</span>
                     <span class="stat-label">AI replies sent</span>
                     <span class="soon-tag">soon</span>
                 </div>
                 <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="diceRolled">░░░</span>
+                    <span class="stat-value" data-stat="diceRolled">---</span>
                     <span class="stat-label">dice rolled</span>
                     <span class="soon-tag">soon</span>
                 </div>
-            </div>
-
-            <!-- board footer — heartbeat readout -->
-            <div class="stats-board-footer">
-                <span>SYS_EPOCH // <span data-epoch>——————</span></span>
-                <span>last heartbeat: <span data-heartbeat>———</span></span>
             </div>
         </div>
     </div>
@@ -498,9 +475,6 @@
                     <li><a href="https://github.com/mistromy/Nirupama">GitHub</a></li>
                     <li><a href="https://ko-fi.com/mistromy">Ko-fi</a></li>
                     <li><a href="https://nirupama.mista.tech/privacy.md">Privacy policy</a></li>
-                    <!-- TODO: write these two documents — the terms gate links to them -->
-                    <li><a href="https://nirupama.mista.tech/terms.md">Terms of service</a></li>
-                    <li><a href="https://nirupama.mista.tech/eula.md">EULA</a></li>
                 </ul>
             </div>
         </div>
@@ -509,60 +483,6 @@
         </div>
     </div>
 </footer>
-
-<!-- ============================================================
-     TERMS GATE — intercepts every "Add to Discord" link.
-     script.js remembers acceptance per browser (localStorage);
-     bump TERMS_VERSION in script.js when the documents change
-     to re-prompt everyone.
-============================================================ -->
-<div class="modal-backdrop" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle" hidden>
-    <div class="modal">
-        <div class="modal-header">
-            <span class="pulse-dot" aria-hidden="true"></span>
-            <span class="modal-header-title">SYS_PROMPT // authorization required</span>
-            <button class="modal-close" id="termsClose" aria-label="Close dialog">✕</button>
-        </div>
-
-        <div class="modal-body">
-            <h3 id="termsTitle">Before the bot moves in</h3>
-            <p>
-                Adding Nirupama to a server means agreeing to the
-                <!-- TODO: terms.md and eula.md don't exist yet — write them.
-                     privacy.md is already live. -->
-                <a href="https://nirupama.mista.tech/terms.md" class="inline-link" target="_blank" rel="noopener">Terms of Service</a>,
-                <a href="https://nirupama.mista.tech/eula.md" class="inline-link" target="_blank" rel="noopener">EULA</a> and
-                <a href="https://nirupama.mista.tech/privacy.md" class="inline-link" target="_blank" rel="noopener">Privacy Policy</a>.
-                The part people actually need to know:
-            </p>
-
-            <div class="clause">
-                <p class="clause-label">// responsibility clause</p>
-                <p>
-                    Whoever adds Nirupama to a server &mdash; owner, admin, or the
-                    person holding the button &mdash; is responsible for ensuring
-                    that server's members can read the EULA. By participating in
-                    a server where Nirupama is present, users agree to it.
-                </p>
-            </div>
-
-            <label class="modal-check" for="termsCheckbox">
-                <input type="checkbox" id="termsCheckbox">
-                <span>
-                    I've read and agree to the Terms of Service, EULA and Privacy
-                    Policy, and I accept the responsibility clause above.
-                </span>
-            </label>
-        </div>
-
-        <div class="modal-actions">
-            <button class="btn btn-secondary" id="termsCancel" type="button">Not now</button>
-            <button class="btn btn-primary" id="termsAgree" type="button" disabled>Agree &amp; continue to Discord</button>
-        </div>
-
-        <p class="modal-footnote">accepted once per browser // if the terms change, you'll be asked again</p>
-    </div>
-</div>
 
 <script src="script.js"></script>
 </body>

@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands, tasks
 import os
 import json
+import time
 import aiohttp
 
 from utils.logger import bot_log
@@ -46,7 +47,24 @@ class websitestats(commands.Cog):
         stats = {
             "guild_count": len(self.bot.guilds),
             "user_count": sum(guild.member_count for guild in self.bot.guilds),
-            "uptime": cronitor_uptime
+            "uptime": cronitor_uptime,
+
+            # Heartbeat: the website compares this against the visitor's clock.
+            # If it's older than ~7 minutes, the site flips to "system offline…
+            # running diagnostic". No key needed on the site side — it reads
+            # this straight out of stats.json.
+            "last_updated": int(time.time()),
+
+            # ------------------------------------------------------------------
+            # FUTURE STATS — the website already has cards wired for these.
+            # They render masked with a "soon" tag until a key appears here.
+            # Uncomment and hook each one up to a real counter when ready, e.g.
+            # a SELECT COUNT(*) from Supabase, or in-memory counters on the bot.
+            # ------------------------------------------------------------------
+            # "messages_tracked": await self.get_total_tracked_messages(),  # e.g. SUM of message counts in the DB
+            # "ships_calculated": self.bot.ship_counter,                    # increment in the /ship command
+            # "ai_replies": self.bot.ai_reply_counter,                      # increment when the AI responds
+            # "dice_rolled": self.bot.dice_counter,                         # increment in /diceroll
         }
 
         gist_payload = {

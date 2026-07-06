@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N I R U P A M A // SYS_ERR</title>
+    <meta name="description" content="Can you hear me?">
+    
+    <meta property="og:url" content="https://nirupama.mista.tech">
+    <meta property="og:title" content="Nirupama | AI Utility Discord Bot">
+    <meta property="og:description" content="Join over 2 servers. Please, wake up.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,800;1,400&family=VT323&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+    <div class="scanlines"></div>
+
+    <div class="binary-column left">
+        01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001
+    </div>
+    
+    <div class="bg-repeater">
+        DON'TSTOP<br>DON'TSTOP<br>DON'TSTOP
+    </div>
+
+    <nav class="sys-nav">
+        <div class="nav-brand glitch-text" data-text="NIRUPAMA">NIRUPAMA</div>
+        <div class="nav-links">
+            <a href="https://github.com/mistromy/Nirupama" target="_blank">[ source ]</a>
+            <a href="#support">[ support ]</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-container">
+            <p class="sys-log">System offline.. err<br>running diagnostic</p>
+            <h1 class="aberration-text">OPEN YOUR<br>EYES</h1>
+            <p class="subtitle terminal-font">> A Discord bot that actually does things.<br>> Some of them are even useful.</p>
+            
+            <div class="action-group">
+                <button id="triggerModalBtn" class="btn primary-btn glitch-btn">
+                    INITIATE_CONNECTION
+                </button>
+            </div>
+            <p class="tiny-text terminal-font blink">Can you hear me?</p>
+        </div>
+    </header>
+
+    <div id="authModal" class="modal-overlay hidden">
+        <div class="modal-content corrupted-panel">
+            <div class="modal-header">
+                <h3 class="terminal-font warning-text">SECURITY_OVERRIDE_REQUIRED</h3>
+                <button id="closeModalBtn" class="close-btn">[ X ]</button>
+            </div>
+            <div class="modal-body terminal-font">
+                <p>> WARNING: Before injecting Nirupama into your mainframe, absolute compliance is mandatory.</p>
+                
+                <div class="checkbox-group">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="tosCheck">
+                        <div class="checkbox-box"></div>
+                        <span class="label-text">I acknowledge the <a href="https://nirupama.mista.tech/privacy.md" target="_blank">Privacy Policy</a>, EULA, and Terms of Service.</span>
+                    </label>
+                    
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="adminCheck">
+                        <div class="checkbox-box"></div>
+                        <span class="label-text">Admin override confirmed. All connected entities (users) will be alerted of and bound by these terms.</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="finalAuthBtn" class="btn primary-btn disabled" target="_blank">PROCEED</a>
+            </div>
+        </div>
+    </div>
+
+    <section class="capabilities">
+        <div class="section-header">
+            <h2 class="aberration-text">DON'T LOOK DOWN</h2>
+            <p class="terminal-font">GENERAL NOTES: Actual output may vary.</p>
+        </div>
+        
+        <div class="grid-container">
+            <div class="schematic-card">
+                <div class="card-tag terminal-font">SYS.CORE</div>
+                <h3>[Module Alpha]</h3>
+                <p class="terminal-font">> Standard operational protocols. Brief description of what it does without boring the user.</p>
+                <code class="terminal-font">C:\> /execute_command</code>
+            </div>
+
+            <div class="schematic-card">
+                <div class="card-tag terminal-font">SYS.AI</div>
+                <h3>[Neural Link]</h3>
+                <p class="terminal-font">> Cognitive processing module. Brief description of what it does without boring the user.</p>
+                <code class="terminal-font">C:\> /execute_command</code>
+            </div>
+
+            <div class="schematic-card">
+                <div class="card-tag terminal-font">SYS.UTIL</div>
+                <h3>[Diagnostics]</h3>
+                <p class="terminal-font">> Data manipulation and retrieval. Brief description of what it does without boring the user.</p>
+                <code class="terminal-font">C:\> /execute_command</code>
+            </div>
+            
+             <div class="schematic-card">
+                <div class="card-tag terminal-font">SYS.FUN</div>
+                <h3>[Serotonin]</h3>
+                <p class="terminal-font">> Synthesized entertainment protocols. Brief description of what it does without boring the user.</p>
+                <code class="terminal-font">C:\> /execute_command</code>
+            </div>
+        </div>
+    </section>
+
+    <section class="telemetry">
+        <div class="section-header">
+            <h2 class="aberration-text">DATA STREAM</h2>
+            <p class="terminal-font">SYS_EPOCH // 1783117800</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="schematic-card stat-box">
+                <span class="stat-label terminal-font">CONNECTED_NODES (Servers)</span>
+                <span class="stat-value aberration-text" id="serverCount">---</span>
+            </div>
+            <div class="schematic-card stat-box">
+                <span class="stat-label terminal-font">ENTITIES (Users)</span>
+                <span class="stat-value aberration-text" id="userCount">---</span>
+            </div>
+            <div class="schematic-card stat-box">
+                <span class="stat-label terminal-font">PULSE (Uptime)</span>
+                <span class="stat-value aberration-text" id="uptime">---</span>
+            </div>
+            <div class="schematic-card stat-box">
+                <span class="stat-label terminal-font">ITERATIONS (Commits)</span>
+                <span class="stat-value aberration-text" id="updates">---</span>
+            </div>
+        </div>
+        
+        <div class="ironic-cta">
+            <h3>Join over <span class="highlight">2 servers</span> already infected.</h3>
+            <p class="terminal-font">> It's practically a movement at this point.</p>
+        </div>
+    </section>
+
+    <section id="support" class="support">
+        <div class="section-header">
+            <h2 class="aberration-text">MAINTENANCE</h2>
+            <p class="terminal-font">> Server fuel required to prevent total system collapse.</p>
+        </div>
+        <div class="support-container schematic-card">
+            <div class="kofi-wrapper">
+                <iframe id='kofiframe' src='https://ko-fi.com/mist/?hidefeed=true&widget=true&embed=true&preview=true' style='border:none;width:100%;padding:4px;background:transparent;' height='712' title='mistromy'></iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer class="sys-footer">
+        <div class="footer-grid terminal-font">
+            <div class="footer-col">
+                <p class="label">EXTERNAL_LINKS</p>
+                <a href="https://nirupama.mista.tech/privacy.md">> Privacy Policy</a>
+                <a href="https://nirupama.cronitorstatus.com">> Status Page</a>
+            </div>
+            <div class="footer-col">
+                <p class="label">CREATOR_COMMS</p>
+                <a href="https://github.com/mistromy" target="_blank">> GitHub</a>
+                <a href="https://ko-fi.com/mistromy" target="_blank">> Ko-fi</a>
+            </div>
+        </div>
+        <div class="footer-bottom terminal-font">
+            <p>PLEASE, WAKE UP PLEASE, WAKE UP PLEASE, WAKE UP</p>
+            <p>2024 | Nirupama Shere | Entity: <a href="https://discord.com/users/859371145076932619" class="discord-link">Mistromy</a></p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

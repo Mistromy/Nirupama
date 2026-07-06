@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nirupama | Discord Bot</title>
+    <meta name="description" content="Nirupama - A utility Discord bot with AI capabilities.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="brand">Nirupama</div>
+            <div class="nav-links">
+                <a href="https://github.com/mistromy/Nirupama" target="_blank">GitHub</a>
+                <a href="https://ko-fi.com/mistromy" target="_blank">Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1>A Discord bot that actually does things.</h1>
+            <p class="subtitle">General-purpose utility, adaptive AI, and a hint of irony. Currently serving an overwhelming 2+ servers.</p>
+            <div class="hero-actions">
+                <button id="open-modal-btn" class="btn btn-primary">Add to Server</button>
+                <a href="#overview" class="btn btn-secondary">See What It Does</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="stats border-top">
+        <div class="container stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="serverCount">---</div>
+                <div class="stat-label">Servers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="userCount">---</div>
+                <div class="stat-label">Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="uptime">---</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="updates">---</div>
+                <div class="stat-label">Commits</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="overview" class="overview border-top">
+        <div class="container">
+            <h2>Capabilities</h2>
+            <p class="section-desc">Everything you need, and a few things you probably don't. Here is what Nirupama handles.</p>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>AI Conversations</h3>
+                    <p>Unfiltered AI interactions. Talk to the bot, ask questions, or just let it adapt to your server's distinct atmosphere over time.</p>
+                    <code>@Nirupama [your message]</code>
+                </div>
+
+                <div class="card">
+                    <h3>Ship Calculator</h3>
+                    <p>Because calculating relationship compatibility via an arbitrary algorithm is essential for server morale.</p>
+                    <code>/ship @user1 @user2</code>
+                </div>
+
+                <div class="card">
+                    <h3>Data Tracking</h3>
+                    <p>Track message counts, plot activity graphs, and monitor server engagement without the bloated dashboards.</p>
+                    <code>/graph @user [days]</code>
+                </div>
+
+                <div class="card">
+                    <h3>Utility & Fun</h3>
+                    <p>Analyze text tones, roll dice, consult an 8-ball, and submit feature requests. The standard required bot fare, but refined.</p>
+                    <code>/tone [text]</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer border-top">
+        <div class="container footer-container">
+            <div class="footer-info">
+                <p>&copy; 2024 Nirupama Bot. Developed by <a href="https://discord.com/users/859371145076932619" target="_blank">Mistromy</a>.</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://Nirupama.mista.tech/privacy.md">Privacy Policy</a>
+                <a href="https://github.com/mistromy/Nirupama" target="_blank">Source Code</a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="invite-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Hold Up.</h2>
+                <button id="close-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Before adding Nirupama to your server, we need to do the legal dance. Please confirm the following:</p>
+                
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="tos-cb">
+                        <span class="custom-checkbox"></span>
+                        I have read and agree to the EULA, Terms of Service, and Privacy Policy.
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="admin-cb">
+                        <span class="custom-checkbox"></span>
+                        As a server admin, I confirm I will notify my users about these terms and ensure they comply.
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="proceed-btn" class="btn btn-primary disabled">Proceed to Discord</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
