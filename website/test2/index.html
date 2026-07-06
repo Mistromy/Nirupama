@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nirupama - Discord Bot</title>
+    <meta name="description" content="Nirupama - A utility Discord bot with AI capabilities.">
+    
+    <meta property="og:url" content="https://nirupama.mista.tech">
+    <meta property="og:title" content="Nirupama | AI Utility Discord Bot">
+    <meta property="og:description" content="Join over 2 servers.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="bg-pattern"></div>
+
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <span class="pulse-dot"></span> Nirupama
+        </div>
+        <div class="nav-links">
+            <a href="https://github.com/mistromy/Nirupama" target="_blank">GitHub</a>
+            <a href="#support">Support</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-container">
+            <div class="badge">v2.0 // Active</div>
+            <h1 class="gradient-text">Nirupama Shere</h1>
+            <p class="subtitle">A Discord bot that actually does things. <br>Some of them are even useful.</p>
+            
+            <div class="action-group">
+                <button id="triggerModalBtn" class="btn primary-btn">
+                    <span class="btn-text">Add to Server</span>
+                </button>
+                <a href="https://github.com/mistromy/Nirupama" target="_blank" class="btn secondary-btn">View Source</a>
+            </div>
+        </div>
+    </header>
+
+    <div id="authModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Hold up.</h3>
+                <button id="closeModalBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Before throwing Nirupama into your server, we need to do the legal handshake.</p>
+                
+                <div class="checkbox-group">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="tosCheck">
+                        <div class="checkbox-box"></div>
+                        <span class="label-text">I have read and agree to the <a href="https://nirupama.mista.tech/privacy.md" target="_blank">Privacy Policy</a>, EULA, and Terms of Service.</span>
+                    </label>
+                    
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="adminCheck">
+                        <div class="checkbox-box"></div>
+                        <span class="label-text">As a server admin, I confirm that all users in this server will be alerted of and agree to these terms.</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="finalAuthBtn" class="btn primary-btn disabled" target="_blank">Take me to Discord</a>
+            </div>
+        </div>
+    </div>
+
+    <section class="capabilities">
+        <div class="section-header">
+            <h2>Under the Hood</h2>
+            <p class="code-font">// What it actually does</p>
+        </div>
+        
+        <div class="grid-container">
+            <div class="glass-card feature-card">
+                <div class="card-glow"></div>
+                <div class="card-tag code-font">Core</div>
+                <h3>[Feature Name]</h3>
+                <p>[Brief, engaging description of the feature. Explain what it does without boring the reader. Keep it punchy.]</p>
+                <code class="code-font">/example_command</code>
+            </div>
+
+            <div class="glass-card feature-card">
+                <div class="card-glow"></div>
+                <div class="card-tag code-font">AI</div>
+                <h3>[Feature Name]</h3>
+                <p>[Brief, engaging description of the feature. Explain what it does without boring the reader. Keep it punchy.]</p>
+                <code class="code-font">/example_command</code>
+            </div>
+
+            <div class="glass-card feature-card">
+                <div class="card-glow"></div>
+                <div class="card-tag code-font">Utility</div>
+                <h3>[Feature Name]</h3>
+                <p>[Brief, engaging description of the feature. Explain what it does without boring the reader. Keep it punchy.]</p>
+                <code class="code-font">/example_command</code>
+            </div>
+            
+             <div class="glass-card feature-card">
+                <div class="card-glow"></div>
+                <div class="card-tag code-font">Fun</div>
+                <h3>[Feature Name]</h3>
+                <p>[Brief, engaging description of the feature. Explain what it does without boring the reader. Keep it punchy.]</p>
+                <code class="code-font">/example_command</code>
+            </div>
+        </div>
+    </section>
+
+    <section class="telemetry">
+        <div class="section-header">
+            <h2>Live Telemetry</h2>
+            <p class="code-font">// Straight from the API</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="glass-card stat-box">
+                <span class="stat-label code-font">Servers</span>
+                <span class="stat-value gradient-text-alt" id="serverCount">---</span>
+            </div>
+            <div class="glass-card stat-box">
+                <span class="stat-label code-font">Users</span>
+                <span class="stat-value gradient-text-alt" id="userCount">---</span>
+            </div>
+            <div class="glass-card stat-box">
+                <span class="stat-label code-font">Uptime</span>
+                <span class="stat-value gradient-text-alt" id="uptime">---</span>
+            </div>
+            <div class="glass-card stat-box">
+                <span class="stat-label code-font">Commits</span>
+                <span class="stat-value gradient-text-alt" id="updates">---</span>
+            </div>
+        </div>
+        
+        <div class="ironic-cta">
+            <h3>Join over <span class="highlight">2 servers</span> already enjoying Nirupama.</h3>
+            <p>It's practically a movement at this point.</p>
+        </div>
+    </section>
+
+    <section id="support" class="support">
+        <div class="section-header">
+            <h2>Server Fuel</h2>
+            <p class="code-font">// APIs aren't free, sadly.</p>
+        </div>
+        <div class="support-container glass-card">
+            <div class="kofi-wrapper">
+                <iframe id='kofiframe' src='https://ko-fi.com/mist/?hidefeed=true&widget=true&embed=true&preview=true' style='border:none;width:100%;padding:4px;background:transparent;' height='712' title='mistromy'></iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer glass-panel">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Resources</h4>
+                <a href="https://nirupama.mista.tech/privacy.md">Privacy Policy</a>
+                <a href="https://nirupama.cronitorstatus.com">Status Page</a>
+            </div>
+            <div class="footer-col">
+                <h4>Connect</h4>
+                <a href="https://github.com/mistromy" target="_blank">Mistromy GitHub</a>
+                <a href="https://ko-fi.com/mistromy" target="_blank">Ko-fi</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>2024 | Nirupama Shere | Made by <a href="https://discord.com/users/859371145076932619" class="discord-link">Mistromy</a></p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
