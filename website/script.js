@@ -5,14 +5,14 @@ const GIST_RAW_URL = 'https://gist.githubusercontent.com/Mistromy/cdb82a1247ae60
 let statsData = {
     serverCount: null,
     userCount: null,
-    commandCount: 12847, // Hardcoded mock value for metrics not in the Gist
-    aiResponses: 8934    // Hardcoded mock value for metrics not in the Gist
+    uptime: null,    // Hardcoded mock value for metrics not in the Gist
+    updates: null    // Successfully mapped to Shields.io commit count
 };
 
 // ===== INITIALIZE PLACEHOLDERS IMMEDIATELY =====
 // This forces elements to display "---" out of the gate so old placeholder numbers don't flash
 function initPlaceholders() {
-    ['serverCount', 'userCount'].forEach(id => {
+    ['serverCount', 'userCount', 'uptime', 'updates'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.textContent = '---';
     });
@@ -86,8 +86,9 @@ function startObservingStats() {
     }
 }
 
-// ===== FETCH LIVE STATS FROM GIST (RUNS ONCE) =====
+// ===== FETCH LIVE STATS FROM GIST & SHIELDS.IO (RUNS ONCE) =====
 async function fetchLiveStats() {
+    // 1. Fetch Server and User counts from your Gist
     try {
         // Appending `?_=${Date.now()}` bypasses aggressive browser/CDN caching
         const response = await fetch(`${GIST_RAW_URL}?_=${Date.now()}`);
@@ -106,12 +107,31 @@ async function fetchLiveStats() {
         
     } catch (error) {
         console.error('⚠️ Could not load live stats, keeping "---" placeholders.', error);
-        
-        // Explicitly force null values on failure so the UI knows to render "---"
         statsData.serverCount = null;
         statsData.userCount = null;
+    }
+
+    // 2. Fetch total commits from Shields.io and map to the "updates" element
+    try {
+        const commitsUrl = 'https://img.shields.io/github/commit-activity/t/Mistromy/NIrupama.json';
+        const response = await fetch(commitsUrl);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch from Shields.io');
+        }
+        
+        const data = await response.json();
+        
+        // Extract commit payload value string and turn it into a parseable math integer
+        if (data.value !== undefined) {
+            statsData.updates = parseInt(data.value, 10);
+            console.log(`✅ Total commits loaded successfully: ${statsData.updates}`);
+        }
+    } catch (error) {
+        console.error('⚠️ Could not load commit stats, keeping "---" placeholder.', error);
+        statsData.updates = null;
     } finally {
-        // Regardless of success or failure, we now kick off the scroll observer safely
+        // 3. Regardless of success or failure, kick off the scroll observer safely
         startObservingStats();
     }
 }
