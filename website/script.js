@@ -311,20 +311,27 @@ let pendingInviteUrl = null;
 let lastFocusedElement = null;
 
 function hasAcceptedTerms() {
-    try {
-        return localStorage.getItem(TERMS_STORAGE_KEY) === TERMS_VERSION;
-    } catch (e) {
-        return false; // private browsing etc. — just show the modal
-    }
+    return false;
 }
 
 function rememberAcceptance() {
-    try {
-        localStorage.setItem(TERMS_STORAGE_KEY, TERMS_VERSION);
-    } catch (e) {
-        // storage unavailable — they'll see the modal again next time, fine
-    }
 }
+
+// function hasAcceptedTerms() {
+//     try {
+//         return localStorage.getItem(TERMS_STORAGE_KEY) === TERMS_VERSION;
+//     } catch (e) {
+//         return false; // private browsing etc. — just show the modal
+//     }
+// }
+
+// function rememberAcceptance() {
+//     try {
+//         localStorage.setItem(TERMS_STORAGE_KEY, TERMS_VERSION);
+//     } catch (e) {
+//         // storage unavailable — they'll see the modal again next time, fine
+//     }
+// }
 
 function openTermsModal(inviteUrl) {
     pendingInviteUrl = inviteUrl;
