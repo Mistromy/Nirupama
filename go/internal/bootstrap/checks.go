@@ -12,55 +12,57 @@ type SystemSpecific struct {
 }
 
 type EnvInfo struct {
-	GitExists     bool
-	PipExists     bool
-	PythonExists  bool
-	CondaExists   bool
-	PythonVersion string
-	PipVersion    string
-	EnvType       string
+	GitExists      bool
+	PipExists      bool
+	PythonExists   bool
+	CondaExists    bool
+	PythonVersion  string
+	PipVersion     string
+	PackageManager string
 }
+
+var Info EnvInfo
 
 func IsFirstStart() bool {
 	_, err := os.Stat("pybot/main.py")
 	return err != nil
 }
 
-func CheckEnvironment() EnvInfo {
+func CheckEnvironment() {
 	pythonCmd := "python3"
 	pipCmd := "pip3"
-	if os.Getenv("OS") == "Windows_NT" {
-		pythonCmd = "python"
-		pipCmd = "pip"
-	}
-
-	info := EnvInfo{EnvType: "global"}
 
 	_, err := exec.LookPath("git")
-	info.GitExists = (err == nil)
+	Info.GitExists = (err == nil)
 	_, err = exec.LookPath(pipCmd)
-	info.PipExists = (err == nil)
+	Info.PipExists = (err == nil)
 	_, err = exec.LookPath(pythonCmd)
-	info.PythonExists = (err == nil)
+	Info.PythonExists = (err == nil)
 	_, err = exec.LookPath("conda")
-	info.CondaExists = (err == nil)
+	Info.CondaExists = (err == nil)
 
-	if info.PythonExists {
+	_, err = exec.LookPath("apt")
+	if err == nil {
+		Info.PackageManager = "apt"
+	} else if _, err = exec.LookPath("yum"); err == nil {
+		Info.PackageManager = "yum"
+	}
+
+	if Info.PythonExists {
 		out, err := exec.Command(pythonCmd, "--version").CombinedOutput()
 		if err == nil {
-			info.PythonVersion = strings.TrimSpace(string(out))
+			Info.PythonVersion = strings.TrimSpace(string(out))
 		}
 	}
-	if info.PipExists {
+	if Info.PipExists {
 		out, err := exec.Command(pipCmd, "--version").CombinedOutput()
 		if err == nil {
 			parts := strings.Split(strings.TrimSpace(string(out)), " ")
 			if len(parts) >= 2 {
-				info.PipVersion = parts[0] + " " + parts[1]
+				Info.PipVersion = parts[0] + " " + parts[1]
 			} else {
-				info.PipVersion = strings.TrimSpace(string(out))
+				Info.PipVersion = strings.TrimSpace(string(out))
 			}
 		}
 	}
-	return info
 }
