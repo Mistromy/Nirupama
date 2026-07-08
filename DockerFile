@@ -1,0 +1,21 @@
+# 1. Use an official, modern Python base image built for Linux
+FROM python:3.10-slim
+
+# 2. Set the working directory inside the container box
+WORKDIR /app
+
+# 3. Install system utilities if your bot requires them
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copy your requirements and run an optimized pip sync
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 5. Copy your local app files into the container
+COPY . .
+
+# 6. Execute the bot process with unbuffered output (-u) so logs stream instantly
+CMD ["python", "-u", "pybot/main.py"]

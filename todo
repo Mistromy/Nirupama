@@ -24,3 +24,22 @@
 
 # fix ship command in other servers
 # make nirupama randomly send a random message
+
+
+BOOTSTRAPPER sequence
+check is first start? check for pybot/main.py
+check for python version, git & pip
+check is conda installed
+ig git not installer, apt or yum install git
+if python is more than 3.10 and pip more than 22 create native venv
+upgrade pip
+disable sudo
+install bot
+prune
+pip install -r requirements.txt
+start bot
+if python is too low level
+check if miniconda3 is present
+else install miniconda
+setup venv with modern python
+upgrade pip and do all the same
