@@ -1,10 +1,8 @@
 package bootstrap
 
 import (
-	"bufio"
-	"log"
+	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -13,55 +11,56 @@ type SystemSpecific struct {
 	Python string
 }
 
-func GetSystemSpecific() SystemSpecific {
-	var systemSpecificTools SystemSpecific
-	if runtime.GOOS == "windows" {
-		systemSpecificTools.Pip = "pip"
-		systemSpecificTools.Python = "python"
-	} else {
-		systemSpecificTools.Pip = "pip3"
-		systemSpecificTools.Python = "python3"
-	}
-	return systemSpecificTools
+type EnvInfo struct {
+	GitExists     bool
+	PipExists     bool
+	PythonExists  bool
+	CondaExists   bool
+	PythonVersion string
+	PipVersion    string
+	EnvType       string
 }
 
-func CheckExternalDependencies() []string {
-	missing := []string{}
-	systemSpecificTools := GetSystemSpecific()
+func IsFirstStart() bool {
+	_, err := os.Stat("pybot/main.py")
+	return err != nil
+}
 
-	cmd := exec.Command(systemSpecificTools.Python, "--version")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
-	err := cmd.Run()
-	if err != nil {
-		log.Println("Error checking Python version:", err)
-		missing = append(missing, "python")
-	}
-
-	cmd = exec.Command(systemSpecificTools.Pip, "--version")
-	stdout, _ := cmd.StdoutPipe()
-	cmd.Stderr = log.Writer()
-	err = cmd.Start()
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
-		line = strings.ReplaceAll(line, "\r", "")
-		log.Println(line)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		log.Println("Error checking pip version:", err)
-		missing = append(missing, "pip")
+func CheckEnvironment() EnvInfo {
+	pythonCmd := "python3"
+	pipCmd := "pip3"
+	if os.Getenv("OS") == "Windows_NT" {
+		pythonCmd = "python"
+		pipCmd = "pip"
 	}
 
-	cmd = exec.Command("git", "--version")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
-	err = cmd.Run()
-	if err != nil {
-		log.Println("Error checking git version:", err)
-		missing = append(missing, "git")
+	info := EnvInfo{EnvType: "global"}
+
+	_, err := exec.LookPath("git")
+	info.GitExists = (err == nil)
+	_, err = exec.LookPath(pipCmd)
+	info.PipExists = (err == nil)
+	_, err = exec.LookPath(pythonCmd)
+	info.PythonExists = (err == nil)
+	_, err = exec.LookPath("conda")
+	info.CondaExists = (err == nil)
+
+	if info.PythonExists {
+		out, err := exec.Command(pythonCmd, "--version").CombinedOutput()
+		if err == nil {
+			info.PythonVersion = strings.TrimSpace(string(out))
+		}
 	}
-	log.Println("")
-	return missing
+	if info.PipExists {
+		out, err := exec.Command(pipCmd, "--version").CombinedOutput()
+		if err == nil {
+			parts := strings.Split(strings.TrimSpace(string(out)), " ")
+			if len(parts) >= 2 {
+				info.PipVersion = parts[0] + " " + parts[1]
+			} else {
+				info.PipVersion = strings.TrimSpace(string(out))
+			}
+		}
+	}
+	return info
 }
