@@ -18,12 +18,12 @@ A versatile Discord bot with AI capabilities, fun utilities, and server manageme
 # Features:
 ## Ai chatbot
 <p align="center">
-  <img src="orbs.png" alt="Nirupama chatbot interaction example" width="66%">
+  <img src="assets/orbs.png" alt="Nirupama chatbot interaction example" width="66%">
 </p>
 
 ## Activity Tracking
 <p align="center">
-  <img src="graph.png" alt="Nirupama's /graph command showing user's messages over time" width="66%">
+  <img src="assets/graph.png" alt="Nirupama's /graph command showing user's messages over time" width="66%">
 </p>
 
 ## Uptime monitoring via Cronitor
