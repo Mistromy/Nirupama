@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -9,7 +8,7 @@ import (
 )
 
 func RunAndLog(name string, args ...string) {
-	fmt.Println(name, strings.Join(args, " "))
+	CyanLog(name, strings.Join(args, " "))
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 )
@@ -13,7 +12,7 @@ func AskYesNo(question string) bool {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Printf("%s (y/n): ", question)
+		CyanLog("%s (y/n): ", question)
 
 		// Read text until the user hits Enter
 		input, err := reader.ReadString('\n')
@@ -32,6 +31,6 @@ func AskYesNo(question string) bool {
 		}
 
 		// If they typed junk, the loop repeats until they give a valid answer
-		fmt.Println("Invalid input. Please type 'y' or 'n'.")
+		CyanLog("Invalid input. Please type 'y' or 'n'.")
 	}
 }
