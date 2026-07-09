@@ -3,10 +3,13 @@ package bot
 import (
 	"log"
 	"os/exec"
+
+	"github.com/mistromy/Nirupama/internal/utils"
 )
 
 func Start() *exec.Cmd {
-	cmd := exec.Command("python3", "pybot/main.py")
+	utils.CyanLog("Starting bot...")
+	cmd := exec.Command(utils.Python, "pybot/main.py")
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
 
