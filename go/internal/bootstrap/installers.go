@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-func InstallGit() {
+func installGit() {
 
 	cmd := exec.Command("sudo", Info.PackageManager, "install", "-y", "git")
 	cmd.Run()
@@ -23,7 +23,7 @@ const (
 )
 
 // InstallCondaFlow handles the entire downloading and installation lifecycle
-func InstallCondaFlow() error {
+func installCondaFlow() error {
 	// 1. Detect Architecture and Pick URL
 	url := "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" // Default Intel/AMD
 	if runtime.GOARCH == "arm64" {
@@ -82,4 +82,20 @@ func downloadFile(filepath string, url string) error {
 
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+func installRepo() {
+	repoURL := "https://github.com/mistromy/Nirupama.git"
+
+	fmt.Println("Initializing git and fetching latest deployment layer...")
+	RunAndLog("git", "init")
+
+	exec.Command("git", "remote", "add", "origin", repoURL).Run()
+	exec.Command("git", "remote", "set-url", "origin", repoURL).Run()
+
+	RunAndLog("git", "fetch", "--depth=1", "origin", "main")
+
+	RunAndLog("git", "reset", "--hard", "origin/main")
+
+	fmt.Println("Git Repo Installed")
 }
