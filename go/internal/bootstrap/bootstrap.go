@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"os"
+
 	"github.com/mistromy/Nirupama/internal/utils"
 )
 
@@ -14,6 +16,7 @@ func Bootstrap() {
 		setupEnvironment()
 		utils.CheckPaths() // set Pip and Python paths
 		installBot()
+		os.Exit(0)
 	}
 }
 
@@ -27,6 +30,9 @@ func setupEnvironment() {
 		utils.CyanLog("Git is not installed")
 		if utils.AskYesNo("Do you want to install Git?") {
 			installGit()
+		} else {
+			utils.CyanLog("Git is required to continue. Exiting.")
+			os.Exit(1)
 		}
 	}
 
@@ -38,6 +44,9 @@ func setupEnvironment() {
 			utils.CyanLog("Conda is not installed")
 			if utils.AskYesNo("Do you want to install Conda?") {
 				installCondaFlow()
+			} else {
+				utils.CyanLog("Conda is required to continue. Exiting.")
+				os.Exit(1)
 			}
 		}
 	} else {
@@ -49,5 +58,4 @@ func setupEnvironment() {
 func installBot() {
 	installRepo()
 	RunAsUserAndLog(utils.Pip, "install", "-r", "requirements.txt")
-
 }

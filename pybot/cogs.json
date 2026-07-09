@@ -1,0 +1,18 @@
+{
+    "cogs": [
+        "cogs.admin",
+        "cogs.commands",
+        "cogs.ai_core",
+        "cogs.tracking",
+        "cogs.uptime",
+        "cogs.vc",
+        "cogs.honeypot",
+        "cogs.website"
+    ],
+    "protectedCogs": [
+        "cogs.admin",
+        "cogs.tracking",
+        "cogs.uptime",
+        "cogs.honeypot"
+    ]
+}
