@@ -1,555 +1,580 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nirupama — the do-a-bit-of-everything Discord bot</title>
 
     <!-- ===== SEO / SOCIAL ===== -->
-    <meta name="description" content="Nirupama — AI chat, data-backed ship math, activity graphs and a growing pile of commands. Built and run by one person.">
+    <meta name="description"
+        content="Nirupama — AI chat, data-backed ship math, activity graphs and a growing pile of commands. Built and run by one person.">
     <meta property="og:title" content="Nirupama — Discord Bot">
-    <meta property="og:description" content="AI chat, data-backed /ship, activity graphs and more. A one-person project.">
+    <meta property="og:description"
+        content="AI chat, data-backed /ship, activity graphs and more. A one-person project.">
     <meta property="og:image" content="https://nirupama.mista.tech/nirupamabanner.png">
     <meta property="og:url" content="https://nirupama.mista.tech">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Nirupama — Discord Bot">
-    <meta name="twitter:description" content="AI chat, data-backed /ship, activity graphs and more. A one-person project.">
+    <meta name="twitter:description"
+        content="AI chat, data-backed /ship, activity graphs and more. A one-person project.">
     <meta name="twitter:image" content="https://nirupama.mista.tech/nirupamabanner.png">
 
     <!-- ===== FONTS ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="bot_icon.png">
 </head>
 <!-- data-bot-status is set by script.js: online | offline | unknown -->
+
 <body data-bot-status="unknown">
 
-<!-- ============================================================
+    <!-- ============================================================
      NAV
 ============================================================ -->
-<header class="navbar" id="top">
-    <div class="container nav-inner">
-        <a href="#top" class="nav-brand">
-            <img src="bot_icon.png" alt="" class="nav-brand-icon">
-            <span>Nirupama</span>
-        </a>
+    <header class="navbar" id="top">
+        <div class="container nav-inner">
+            <a href="#top" class="nav-brand">
+                <img src="bot_icon.png" alt="" class="nav-brand-icon">
+                <span>Nirupama</span>
+            </a>
 
-        <span class="status-pill">
-            <span class="pulse-dot" aria-hidden="true"></span>
-            <span data-status-text>checking…</span>
-        </span>
+            <span class="status-pill">
+                <span class="pulse-dot" aria-hidden="true"></span>
+                <span data-status-text>checking…</span>
+            </span>
 
-        <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
-            <span></span><span></span><span></span>
-        </button>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
 
-        <nav class="nav-menu" id="navMenu">
-            <a href="#features">What it does</a>
-            <a href="#stats">The numbers</a>
-            <a href="#commands">Commands</a>
-            <a href="#roadmap">What's next</a>
-            <a href="#about">About</a>
-            <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot"
-               class="btn btn-primary btn-nav">Add to Discord</a>
-        </nav>
-    </div>
-</header>
+            <nav class="nav-menu" id="navMenu">
+                <a href="#features">What it does</a>
+                <a href="#stats">The numbers</a>
+                <a href="#commands">Commands</a>
+                <a href="#roadmap">What's next</a>
+                <a href="#about">About</a>
+                <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot"
+                    class="btn btn-primary btn-nav">Add to Discord</a>
+            </nav>
+        </div>
+    </header>
 
-<!-- ============================================================
+    <!-- ============================================================
      HERO
 ============================================================ -->
-<section class="hero">
-    <!-- binary gutters — decoration, spells "nirupama" if you're the kind of
+    <section class="hero">
+        <!-- binary gutters — decoration, spells "nirupama" if you're the kind of
          person who decodes binary gutters -->
-    <div class="binary-col binary-left" aria-hidden="true">01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001</div>
-    <div class="binary-col binary-right" aria-hidden="true">01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001</div>
+        <div class="binary-col binary-left" aria-hidden="true">
+            01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001</div>
+        <div class="binary-col binary-right" aria-hidden="true">
+            01101110<br>01101001<br>01110010<br>01110101<br>01110000<br>01100001<br>01101101<br>01100001</div>
 
-    <div class="container hero-content">
-        <div class="hero-text">
-            <p class="eyebrow">
-                <span class="pulse-dot" aria-hidden="true"></span>
-                sys.status: <span data-status-text>checking…</span> // one developer
-            </p>
-            <h1>One bot.<br>A bit of <em class="glitch" data-text="everything.">everything.</em></h1>
-            <p class="hero-sub">
-                AI conversations, ship math that actually looks at your data,
-                activity graphs, dice, an 8-ball &mdash; built, broken, and fixed
-                by one person.
-            </p>
-            <div class="cta-buttons">
-                <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot"
-                   class="btn btn-primary btn-large">Add to Discord</a>
-                <a href="https://github.com/mistromy/Nirupama" class="btn btn-secondary btn-large">Read the source</a>
+        <div class="container hero-content">
+            <div class="hero-text">
+                <p class="eyebrow">
+                    <span class="pulse-dot" aria-hidden="true"></span>
+                    sys.status: <span data-status-text>checking…</span> // one developer
+                </p>
+                <h1>One bot.<br>A bit of <em class="glitch" data-text="everything.">everything.</em></h1>
+                <p class="hero-sub">
+                    AI conversations, ship math that actually looks at your data,
+                    activity graphs, dice, an 8-ball &mdash; built, broken, and fixed
+                    by one person.
+                </p>
+                <div class="cta-buttons">
+                    <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot"
+                        class="btn btn-primary btn-large">Add to Discord</a>
+                    <a href="https://github.com/mistromy/Nirupama" class="btn btn-secondary btn-large">Read the
+                        source</a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="avatar-frame">
+                    <img src="bot_icon.png" alt="Nirupama's avatar">
+                    <span class="status-dot" title="Bot status"></span>
+                    <span class="frame-tag" aria-hidden="true">IMG_0001 // SUBJECT</span>
+                </div>
+                <p class="avatar-caption">nirupama &middot; <span data-status-text>checking…</span></p>
+                <!-- TODO: swap bot_icon.png when the new pfp lands -->
             </div>
         </div>
 
-        <div class="hero-visual">
-            <div class="avatar-frame">
-                <img src="bot_icon.png" alt="Nirupama's avatar">
-                <span class="status-dot" title="Bot status"></span>
-                <span class="frame-tag" aria-hidden="true">IMG_0001 // SUBJECT</span>
+        <!-- Command ticker — content is duplicated by script.js for the loop -->
+        <div class="ticker" aria-hidden="true">
+            <div class="ticker-track" id="tickerTrack">
+                <span>/ship</span><span>/graph</span><span>/eightball</span><span>/diceroll</span>
+                <span>/tone</span><span>/suggest</span><span>AI chat</span><span>/setmessagecount</span>
+                <span class="ticker-ghost">please, wake up</span>
             </div>
-            <p class="avatar-caption">nirupama &middot; <span data-status-text>checking…</span></p>
-            <!-- TODO: swap bot_icon.png when the new pfp lands -->
         </div>
-    </div>
+    </section>
 
-    <!-- Command ticker — content is duplicated by script.js for the loop -->
-    <div class="ticker" aria-hidden="true">
-        <div class="ticker-track" id="tickerTrack">
-            <span>/ship</span><span>/graph</span><span>/eightball</span><span>/diceroll</span>
-            <span>/tone</span><span>/suggest</span><span>AI chat</span><span>/setmessagecount</span>
-            <span class="ticker-ghost">please, wake up</span>
-        </div>
-    </div>
-</section>
-
-<!-- ============================================================
+    <!-- ============================================================
      WHAT IT DOES
 ============================================================ -->
-<section class="features" id="features">
-    <div class="container">
-        <p class="section-eyebrow">// what it does</p>
-        <h2 class="section-title">The main acts</h2>
-        <p class="section-sub">Three things Nirupama takes seriously. Everything else is in the toolbox below.</p>
+    <section class="features" id="features">
+        <div class="container">
+            <p class="section-eyebrow">// what it does</p>
+            <h2 class="section-title">The main acts</h2>
+            <p class="section-sub">Three things Nirupama takes seriously. Everything else is in the toolbox below.</p>
 
-        <!-- FEATURE ROW: AI chat -->
-        <article class="feature-row reveal">
-            <div class="feature-copy">
-                <p class="feature-cmd">@Nirupama</p>
-                <h3>An AI with opinions</h3>
-                <p>
-                    Mention the bot and talk. It keeps a personality you can tune per
-                    server &mdash; or let it adapt to your channel's vibe on its own.
-                    It can generate code, react to messages, and dig up GIFs mid-conversation.
-                </p>
-                <!-- TODO: adjust this copy to match the current state of the AI rewrite -->
-            </div>
-            <div class="feature-media">
-                    <img src="https://raw.githubusercontent.com/Mistromy/Nirupama/refs/heads/main/assets/orbs.png" alt="Nirupama discussing orb dealers">
-            </div>
-        </article>
+            <!-- FEATURE ROW: AI chat -->
+            <article class="feature-row reveal">
+                <div class="feature-copy">
+                    <p class="feature-cmd">@Nirupama</p>
+                    <h3>An AI with opinions</h3>
+                    <p>
+                        Mention the bot and talk. It keeps a personality you can tune per
+                        server &mdash; or let it adapt to your channel's vibe on its own.
+                        It can generate code, react to messages, and dig up GIFs mid-conversation.
+                    </p>
+                    <!-- TODO: adjust this copy to match the current state of the AI rewrite -->
+                </div>
+                <div class="feature-media">
+                    <img src="https://raw.githubusercontent.com/Mistromy/Nirupama/refs/heads/main/assets/orbs.png"
+                        alt="Nirupama discussing orb dealers">
+                </div>
+            </article>
 
-        <!-- FEATURE ROW: /ship -->
-        <article class="feature-row reveal">
-            <div class="feature-copy">
-                <p class="feature-cmd">/ship</p>
-                <h3>Ship math with receipts</h3>
-                <p>
-                    Most ship commands roll a random number. This one reads actual
-                    user data to compute compatibility, then writes you an
-                    AI-generated analysis of the result. Destiny, but auditable.
-                </p>
-                <!-- TODO: mention the upcoming factors (activity, join dates, roles) once shipped -->
-            </div>
-            <div class="feature-media">
-                <img src="https://raw.githubusercontent.com/Mistromy/Nirupama/refs/heads/main/assets/ship.png" alt="/ship command result">
-            </div>
-        </article>
+            <!-- FEATURE ROW: /ship -->
+            <article class="feature-row reveal">
+                <div class="feature-copy">
+                    <p class="feature-cmd">/ship</p>
+                    <h3>Ship math with receipts</h3>
+                    <p>
+                        Most ship commands roll a random number. This one reads actual
+                        user data to compute compatibility, then writes you an
+                        AI-generated analysis of the result. Destiny, but auditable.
+                    </p>
+                    <!-- TODO: mention the upcoming factors (activity, join dates, roles) once shipped -->
+                </div>
+                <div class="feature-media">
+                    <img src="https://raw.githubusercontent.com/Mistromy/Nirupama/refs/heads/main/assets/ship.png"
+                        alt="/ship command result">
+                </div>
+            </article>
 
-        <!-- FEATURE ROW: /graph -->
-        <article class="feature-row reveal">
-            <div class="feature-copy">
-                <p class="feature-cmd">/graph</p>
-                <h3>Activity, plotted</h3>
-                <p>
-                    Message counts tracked per user over time, stored properly in
-                    Postgres, and rendered as a clean graph on demand. The
-                    groundwork for the leveling system that's on the way.
-                    Soon going to feature a learderboard and more competition!
-                </p>
-            </div>
-            <div class="feature-media">
-                <img src="https://raw.githubusercontent.com/Mistromy/Nirupama/refs/heads/main/assets/graph.png" alt="/graph command output">
-            </div>
-        </article>
+            <!-- FEATURE ROW: /graph -->
+            <article class="feature-row reveal">
+                <div class="feature-copy">
+                    <p class="feature-cmd">/graph</p>
+                    <h3>Activity, plotted</h3>
+                    <p>
+                        Message counts tracked per user over time, stored properly in
+                        Postgres, and rendered as a clean graph on demand. The
+                        groundwork for the leveling system that's on the way.
+                        Soon going to feature a learderboard and more competition!
+                    </p>
+                </div>
+                <div class="feature-media">
+                    <img src="https://raw.githubusercontent.com/Mistromy/Nirupama/refs/heads/main/assets/graph.png"
+                        alt="/graph command output">
+                </div>
+            </article>
 
-        <!-- ALSO IN THE TOOLBOX -->
-        <div class="toolbox reveal">
-            <p class="toolbox-title">Also in the toolbox</p>
-            <div class="toolbox-chips">
-                <span class="chip">🎲 dice rolls</span>
-                <span class="chip">🎱 magic 8-ball</span>
-                <span class="chip">🎭 tone analysis</span>
-                <span class="chip">💡 in-Discord suggestions</span>
-                <span class="chip">⚙️ tunable AI personality</span>
-                <!-- TODO: add chips as features ship -->
+            <!-- ALSO IN THE TOOLBOX -->
+            <div class="toolbox reveal">
+                <p class="toolbox-title">Also in the toolbox</p>
+                <div class="toolbox-chips">
+                    <span class="chip">🎲 dice rolls</span>
+                    <span class="chip">🎱 magic 8-ball</span>
+                    <span class="chip">🎭 tone analysis</span>
+                    <span class="chip">💡 in-Discord suggestions</span>
+                    <span class="chip">⚙️ tunable AI personality</span>
+                    <!-- TODO: add chips as features ship -->
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- ============================================================
+    <!-- ============================================================
      THE NUMBERS  (live telemetry board)
 ============================================================ -->
-<section class="stats" id="stats">
-    <div class="container">
-        <p class="section-eyebrow">// the numbers</p>
-        <h2 class="section-title">Live, unrounded, occasionally humbling</h2>
-        <p class="section-sub">
-            The bot phones home every five minutes. If it stops, this page is
-            the first to know. If a number looks small, that's because it is.
-        </p>
+    <section class="stats" id="stats">
+        <div class="container">
+            <p class="section-eyebrow">// the numbers</p>
+            <h2 class="section-title">Live, unrounded, occasionally humbling</h2>
+            <p class="section-sub">
+                The bot phones home every five minutes. If it stops, this page is
+                the first to know. If a number looks small, that's because it is.
+            </p>
 
-        <div class="stats-board reveal">
-            <div class="stats-board-header">
-                <span class="pulse-dot" aria-hidden="true"></span>
-                <span class="stats-board-title" data-board-status>establishing link…</span>
-                <a href="https://nirupama.cronitorstatus.com" class="stats-board-link">status page ↗</a>
-            </div>
-
-            <div class="stats-grid">
-                <!-- LIVE STATS — fed by stats.json gist -->
-                <div class="stat-cell">
-                    <span class="stat-value" data-stat="serverCount">░░░</span>
-                    <span class="stat-label">servers</span>
-                    <span class="stat-note">yes, that's live</span>
-                </div>
-                <div class="stat-cell">
-                    <span class="stat-value" data-stat="userCount">░░░</span>
-                    <span class="stat-label">members reached</span>
-                    <span class="stat-note">bots included &mdash; they count too</span>
-                </div>
-                <div class="stat-cell">
-                    <span class="stat-value" data-stat="uptime" data-suffix="%">░░░</span>
-                    <span class="stat-label">uptime, 30 days</span>
-                    <span class="stat-note">monitored by Cronitor</span>
-                </div>
-                <div class="stat-cell">
-                    <span class="stat-value" data-stat="updates">░░░</span>
-                    <span class="stat-label">commits shipped</span>
-                    <span class="stat-note">one repo, one dev</span>
+            <div class="stats-board reveal">
+                <div class="stats-board-header">
+                    <span class="pulse-dot" aria-hidden="true"></span>
+                    <span class="stats-board-title" data-board-status>establishing link…</span>
+                    <a href="https://nirupama.cronitorstatus.com" class="stats-board-link">status page ↗</a>
                 </div>
 
-                <!-- FUTURE STATS — already wired in script.js; they stay masked
+                <div class="stats-grid">
+                    <!-- LIVE STATS — fed by stats.json gist -->
+                    <div class="stat-cell">
+                        <span class="stat-value" data-stat="serverCount">░░░</span>
+                        <span class="stat-label">servers</span>
+                        <span class="stat-note">yes, that's live</span>
+                    </div>
+                    <div class="stat-cell">
+                        <span class="stat-value" data-stat="userCount">░░░</span>
+                        <span class="stat-label">members reached</span>
+                        <span class="stat-note">bots included &mdash; they count too</span>
+                    </div>
+                    <div class="stat-cell">
+                        <span class="stat-value" data-stat="uptime" data-suffix="%">░░░</span>
+                        <span class="stat-label">uptime, 30 days</span>
+                        <span class="stat-note">monitored by Cronitor</span>
+                    </div>
+                    <div class="stat-cell">
+                        <span class="stat-value" data-stat="updates">░░░</span>
+                        <span class="stat-label">commits shipped</span>
+                        <span class="stat-note">one repo, one dev</span>
+                    </div>
+
+                    <!-- FUTURE STATS — already wired in script.js; they stay masked
                      until website.py starts writing these keys to the gist:
                      messages_tracked, ships_calculated, ai_replies, dice_rolled -->
-                <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="messagesTracked">░░░</span>
-                    <span class="stat-label">messages tracked</span>
-                    <span class="soon-tag">soon</span>
-                </div>
-                <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="shipsCalculated">░░░</span>
-                    <span class="stat-label">ships calculated</span>
-                    <span class="soon-tag">soon</span>
-                </div>
-                <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="aiReplies">░░░</span>
-                    <span class="stat-label">AI replies sent</span>
-                    <span class="soon-tag">soon</span>
-                </div>
-                <div class="stat-cell stat-soon">
-                    <span class="stat-value" data-stat="diceRolled">░░░</span>
-                    <span class="stat-label">dice rolled</span>
-                    <span class="soon-tag">soon</span>
-                </div>
-            </div>
+                    <div class="stat-cell stat-soon">
+                        <span class="stat-value" data-stat="lastUpdate">░░░</span>
+                        <span class="stat-label">last update</span>
+                        <span class="soon-tag">soon</span>
+                    </div>
+                    <div class="stat-cell stat-soon">
+                        <span class="stat-value" data-stat="messagesTracked">░░░</span>
+                        <span class="stat-label">messages tracked</span>
+                        <span class="soon-tag">soon</span>
+                    </div>
+                    <div class="stat-cell stat-soon">
+                        <span class="stat-value" data-stat="shipsCalculated">░░░</span>
+                        <span class="stat-label">ships calculated</span>
+                        <span class="soon-tag">soon</span>
+                    </div>
+                    <div class="stat-cell stat-soon">
+                        <span class="stat-value" data-stat="aiReplies">░░░</span>
+                        <span class="stat-label">AI replies sent</span>
+                        <span class="soon-tag">soon</span>
+                    </div>
 
-            <!-- board footer — heartbeat readout -->
-            <div class="stats-board-footer">
-                <span>SYS_EPOCH // <span data-epoch>——————</span></span>
-                <span>last heartbeat: <span data-heartbeat>———</span></span>
+                </div>
+
+                <!-- board footer — heartbeat readout -->
+                <div class="stats-board-footer">
+                    <span>SYS_EPOCH // <span data-epoch>——————</span></span>
+                    <span>last heartbeat: <span data-heartbeat>———</span></span>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- ============================================================
+    <!-- ============================================================
      COMMANDS
 ============================================================ -->
-<section class="commands" id="commands">
-    <div class="container">
-        <p class="section-eyebrow">// commands</p>
-        <h2 class="section-title">The command reference</h2>
-        <p class="section-sub">Everything currently slash-able. The list grows; check back.</p>
+    <section class="commands" id="commands">
+        <div class="container">
+            <p class="section-eyebrow">// commands</p>
+            <h2 class="section-title">The command reference</h2>
+            <p class="section-sub">Everything currently slash-able. The list grows; check back.</p>
 
-        <div class="commands-grid">
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/ship</span>
-                    <span class="command-tag tag-fun">fun</span>
-                </div>
-                <p>Compatibility between two users, computed from real data, with an AI write-up.</p>
-                <code>/ship @user1 @user2</code>
-            </article>
+            <div class="commands-grid">
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/ship</span>
+                        <span class="command-tag tag-fun">fun</span>
+                    </div>
+                    <p>Compatibility between two users, computed from real data, with an AI write-up.</p>
+                    <code>/ship @user1 @user2</code>
+                </article>
 
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/graph</span>
-                    <span class="command-tag tag-utility">utility</span>
-                </div>
-                <p>A user's message activity over time, plotted.</p>
-                <code>/graph @user days</code>
-            </article>
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/graph</span>
+                        <span class="command-tag tag-utility">utility</span>
+                    </div>
+                    <p>A user's message activity over time, plotted.</p>
+                    <code>/graph @user days</code>
+                </article>
 
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/eightball</span>
-                    <span class="command-tag tag-fun">fun</span>
-                </div>
-                <p>Yes/no questions answered with the confidence only an 8-ball has.</p>
-                <code>/eightball question</code>
-            </article>
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/eightball</span>
+                        <span class="command-tag tag-fun">fun</span>
+                    </div>
+                    <p>Yes/no questions answered with the confidence only an 8-ball has.</p>
+                    <code>/eightball question</code>
+                </article>
 
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/diceroll</span>
-                    <span class="command-tag tag-fun">fun</span>
-                </div>
-                <p>One six-sided die. No loot boxes.</p>
-                <code>/diceroll</code>
-            </article>
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/diceroll</span>
+                        <span class="command-tag tag-fun">fun</span>
+                    </div>
+                    <p>One six-sided die. No loot boxes.</p>
+                    <code>/diceroll</code>
+                </article>
 
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/tone</span>
-                    <span class="command-tag tag-fun">fun</span>
-                </div>
-                <p>Analyzes the emotional tone of any text. Useful before you hit send.</p>
-                <code>/tone text</code>
-            </article>
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/tone</span>
+                        <span class="command-tag tag-fun">fun</span>
+                    </div>
+                    <p>Analyzes the emotional tone of any text. Useful before you hit send.</p>
+                    <code>/tone text</code>
+                </article>
 
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/suggest</span>
-                    <span class="command-tag tag-feedback">feedback</span>
-                </div>
-                <p>Feature requests and bug reports, straight from Discord to the dev.</p>
-                <code>/suggest your_suggestion</code>
-            </article>
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/suggest</span>
+                        <span class="command-tag tag-feedback">feedback</span>
+                    </div>
+                    <p>Feature requests and bug reports, straight from Discord to the dev.</p>
+                    <code>/suggest your_suggestion</code>
+                </article>
 
-            <article class="command-card reveal">
-                <div class="command-header">
-                    <span class="command-name">/setmessagecount</span>
-                    <span class="command-tag tag-admin">admin</span>
-                </div>
-                <p>Correct a user's tracked message count so /graph stays honest.</p>
-                <code>/setmessagecount count</code>
-            </article>
+                <article class="command-card reveal">
+                    <div class="command-header">
+                        <span class="command-name">/setmessagecount</span>
+                        <span class="command-tag tag-admin">admin</span>
+                    </div>
+                    <p>Correct a user's tracked message count so /graph stays honest.</p>
+                    <code>/setmessagecount count</code>
+                </article>
 
-            <!-- TODO: add new command cards here as they ship.
+                <!-- TODO: add new command cards here as they ship.
                  Available tag classes: tag-fun, tag-utility, tag-admin, tag-feedback, tag-game -->
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- ============================================================
+    <!-- ============================================================
      WHAT'S NEXT
 ============================================================ -->
-<section class="roadmap" id="roadmap">
-    <div class="container">
-        <p class="section-eyebrow">// what's next</p>
-        <h2 class="section-title">The dev log</h2>
-        <p class="section-sub">What's being worked on, in roughly honest order.</p>
+    <section class="roadmap" id="roadmap">
+        <div class="container">
+            <p class="section-eyebrow">// what's next</p>
+            <h2 class="section-title">The dev log</h2>
+            <p class="section-sub">What's being worked on, in roughly honest order.</p>
 
-        <div class="roadmap-grid">
-            <article class="roadmap-item reveal">
-                <span class="roadmap-status in-progress">in progress</span>
-                <h3>AI memory</h3>
-                <p>Conversation memory so replies stay contextual instead of goldfish-brained.</p>
-            </article>
+            <div class="roadmap-grid">
+                <article class="roadmap-item reveal">
+                    <span class="roadmap-status in-progress">in progress</span>
+                    <h3>AI memory</h3>
+                    <p>Conversation memory so replies stay contextual instead of goldfish-brained.</p>
+                </article>
 
-            <article class="roadmap-item reveal">
-                <span class="roadmap-status planned">planned</span>
-                <h3>Smarter /ship</h3>
-                <p>More factors: activity, join dates, status, roles, message counts. Fewer coin flips.</p>
-            </article>
+                <article class="roadmap-item reveal">
+                    <span class="roadmap-status planned">planned</span>
+                    <h3>Smarter /ship</h3>
+                    <p>More factors: activity, join dates, status, roles, message counts. Fewer coin flips.</p>
+                </article>
 
-            <article class="roadmap-item reveal">
-                <span class="roadmap-status planned">planned</span>
-                <h3>Leveling system</h3>
-                <p>XP, leaderboards, role rewards, boosters, a shop. Messages become currency.</p>
-            </article>
+                <article class="roadmap-item reveal">
+                    <span class="roadmap-status planned">planned</span>
+                    <h3>Leveling system</h3>
+                    <p>XP, leaderboards, role rewards, boosters, a shop. Messages become currency.</p>
+                </article>
 
-            <article class="roadmap-item reveal">
-                <span class="roadmap-status planned">planned</span>
-                <h3>Server moderation</h3>
-                <p>Report buttons, auto-moderation on report frequency, mod channel integration.</p>
-            </article>
+                <article class="roadmap-item reveal">
+                    <span class="roadmap-status planned">planned</span>
+                    <h3>Server moderation</h3>
+                    <p>Report buttons, auto-moderation on report frequency, mod channel integration.</p>
+                </article>
 
-            <article class="roadmap-item reveal">
-                <span class="roadmap-status planned">planned</span>
-                <h3>Deeper AI context</h3>
-                <p>Let the AI see the message being replied to, profile pictures, and more.</p>
-            </article>
+                <article class="roadmap-item reveal">
+                    <span class="roadmap-status planned">planned</span>
+                    <h3>Deeper AI context</h3>
+                    <p>Let the AI see the message being replied to, profile pictures, and more.</p>
+                </article>
 
-            <article class="roadmap-item reveal">
-                <span class="roadmap-status shipped">shipped</span>
-                <h3><!-- TODO: recently shipped item -->Something recent</h3>
-                <p><!-- TODO: fill in the latest thing you actually shipped -->Placeholder — swap this for whatever landed in the last release.</p>
-            </article>
+                <article class="roadmap-item reveal">
+                    <span class="roadmap-status shipped">shipped</span>
+                    <h3><!-- TODO: recently shipped item -->Something recent</h3>
+                    <p><!-- TODO: fill in the latest thing you actually shipped -->Placeholder — swap this for whatever
+                        landed in the last release.</p>
+                </article>
 
-            <!-- TODO: keep this section honest. Move items to "shipped" as they land.
+                <!-- TODO: keep this section honest. Move items to "shipped" as they land.
                  Status classes: planned, in-progress, shipped -->
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- ============================================================
+    <!-- ============================================================
      ABOUT / SOLO DEV
 ============================================================ -->
-<section class="about" id="about">
-    <div class="container about-content">
-        <div class="about-text">
-            <p class="section-eyebrow">// who makes this</p>
-            <h2 class="section-title">One person, one bot</h2>
-            <p>
-                Nirupama is <a href="https://discord.com/users/859371145076932619" class="inline-link">Mistromy's</a>
-                long-running playground &mdash; it started as a level bot storing data
-                in a JSON file and kept evolving. It's where new ideas get tested,
-                which means it changes often and improves constantly.
-            </p>
-            <p>
-                It's open source, so you can read exactly what it does. Found a bug
-                or want a feature? <span class="mono-inline">/suggest</span> works, and so do
-                <a href="https://github.com/Mistromy/Nirupama/issues" class="inline-link">GitHub issues</a>.
-            </p>
-            <p class="about-support">
-                Running the AI costs actual money. If the bot earns its keep in your
-                server, there's a <a href="https://ko-fi.com/mistromy" class="inline-link">Ko-fi</a>.
-                If not, that's fine too.
-            </p>
-            <!-- Optional: re-enable the Ko-fi widget instead of the text link:
+    <section class="about" id="about">
+        <div class="container about-content">
+            <div class="about-text">
+                <p class="section-eyebrow">// who makes this</p>
+                <h2 class="section-title">One person, one bot</h2>
+                <p>
+                    Nirupama is <a href="https://discord.com/users/859371145076932619"
+                        class="inline-link">Mistromy's</a>
+                    long-running playground &mdash; it started as a level bot storing data
+                    in a JSON file and kept evolving. It's where new ideas get tested,
+                    which means it changes often and improves constantly.
+                </p>
+                <p>
+                    It's open source, so you can read exactly what it does. Found a bug
+                    or want a feature? <span class="mono-inline">/suggest</span> works, and so do
+                    <a href="https://github.com/Mistromy/Nirupama/issues" class="inline-link">GitHub issues</a>.
+                </p>
+                <p class="about-support">
+                    Running the AI costs actual money. If the bot earns its keep in your
+                    server, there's a <a href="https://ko-fi.com/mistromy" class="inline-link">Ko-fi</a>.
+                    If not, that's fine too.
+                </p>
+                <!-- Optional: re-enable the Ko-fi widget instead of the text link:
             <iframe src="https://ko-fi.com/mist/?hidefeed=true&widget=true&embed=true"
                     style="border:none;width:100%;height:560px;border-radius:12px;"
                     title="Support on Ko-fi"></iframe> -->
-        </div>
+            </div>
 
-        <div class="about-links">
-            <a href="https://github.com/mistromy/Nirupama" class="link-card reveal">
-                <span class="link-card-title">GitHub</span>
-                <span class="link-card-sub">source, issues, 275+ commits</span>
-            </a>
-            <a href="https://discord.com/users/859371145076932619" class="link-card reveal">
-                <span class="link-card-title">@Mistromy</span>
-                <span class="link-card-sub">the entire team, on Discord</span>
-            </a>
-            <a href="https://ko-fi.com/mistromy" class="link-card reveal">
-                <span class="link-card-title">Ko-fi</span>
-                <span class="link-card-sub">covers the API bills</span>
-            </a>
-            <a href="https://nirupama.cronitorstatus.com" class="link-card reveal">
-                <span class="link-card-title">Status</span>
-                <span class="link-card-sub">is it down? check here first</span>
-            </a>
+            <div class="about-links">
+                <a href="https://github.com/mistromy/Nirupama" class="link-card reveal">
+                    <span class="link-card-title">GitHub</span>
+                    <span class="link-card-sub">source, issues, 275+ commits</span>
+                </a>
+                <a href="https://discord.com/users/859371145076932619" class="link-card reveal">
+                    <span class="link-card-title">@Mistromy</span>
+                    <span class="link-card-sub">the entire team, on Discord</span>
+                </a>
+                <a href="https://ko-fi.com/mistromy" class="link-card reveal">
+                    <span class="link-card-title">Ko-fi</span>
+                    <span class="link-card-sub">covers the API bills</span>
+                </a>
+                <a href="https://nirupama.cronitorstatus.com" class="link-card reveal">
+                    <span class="link-card-title">Status</span>
+                    <span class="link-card-sub">is it down? check here first</span>
+                </a>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- ============================================================
+    <!-- ============================================================
      INVITE CTA
 ============================================================ -->
-<section class="invite-section" id="invite">
-    <div class="container invite-card">
-        <h2>Join over <span data-cta-servers>2</span> servers<br>already enjoying Nirupama.</h2>
-        <p class="invite-sub">That number is live. It only goes up from here.</p>
-        <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot"
-           class="btn btn-invert btn-large">Add to Discord</a>
-        <p class="permissions-note">
-            The invite asks for admin permissions to keep setup simple.
-            Prefer a leaner invite? Message
-            <a href="https://discord.com/users/859371145076932619">@Mistromy</a>.
-        </p>
-    </div>
-</section>
+    <section class="invite-section" id="invite">
+        <div class="container invite-card">
+            <h2>Join over <span data-cta-servers>2</span> servers<br>already enjoying Nirupama.</h2>
+            <p class="invite-sub">That number is live. It only goes up from here.</p>
+            <a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot"
+                class="btn btn-invert btn-large">Add to Discord</a>
+            <p class="permissions-note">
+                The invite asks for admin permissions to keep setup simple.
+                Prefer a leaner invite? Message
+                <a href="https://discord.com/users/859371145076932619">@Mistromy</a>.
+            </p>
+        </div>
+    </section>
 
-<!-- ============================================================
+    <!-- ============================================================
      FOOTER
 ============================================================ -->
-<footer class="footer">
-    <div class="container">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>Nirupama</h3>
-                <p>A do-a-bit-of-everything Discord bot. One developer, many commits.</p>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Nirupama</h3>
+                    <p>A do-a-bit-of-everything Discord bot. One developer, many commits.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Bot</h4>
+                    <ul>
+                        <li><a
+                                href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot">Invite</a>
+                        </li>
+                        <li><a href="#commands">Commands</a></li>
+                        <li><a href="#roadmap">What's next</a></li>
+                        <li><a href="https://nirupama.cronitorstatus.com">Status</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Project</h4>
+                    <ul>
+                        <li><a href="https://github.com/mistromy/Nirupama">GitHub</a></li>
+                        <li><a href="https://ko-fi.com/mistromy">Ko-fi</a></li>
+                        <li><a href="https://nirupama.mista.tech/privacy.md">Privacy policy</a></li>
+                        <!-- TODO: write these two documents — the terms gate links to them -->
+                        <li><a href="https://nirupama.mista.tech/terms.md">Terms of service</a></li>
+                        <li><a href="https://nirupama.mista.tech/eula.md">EULA</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-section">
-                <h4>Bot</h4>
-                <ul>
-                    <li><a href="https://discord.com/oauth2/authorize?client_id=1209887142839586876&permissions=8&integration_type=0&scope=bot">Invite</a></li>
-                    <li><a href="#commands">Commands</a></li>
-                    <li><a href="#roadmap">What's next</a></li>
-                    <li><a href="https://nirupama.cronitorstatus.com">Status</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Project</h4>
-                <ul>
-                    <li><a href="https://github.com/mistromy/Nirupama">GitHub</a></li>
-                    <li><a href="https://ko-fi.com/mistromy">Ko-fi</a></li>
-                    <li><a href="https://nirupama.mista.tech/privacy.md">Privacy policy</a></li>
-                    <!-- TODO: write these two documents — the terms gate links to them -->
-                    <li><a href="https://nirupama.mista.tech/terms.md">Terms of service</a></li>
-                    <li><a href="https://nirupama.mista.tech/eula.md">EULA</a></li>
-                </ul>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Nirupama Shere &middot; made by <a
+                        href="https://discord.com/users/859371145076932619">Mistromy</a> &middot; <a
+                        href="https://github.com/mistromy">GitHub</a></p>
             </div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 Nirupama Shere &middot; made by <a href="https://discord.com/users/859371145076932619">Mistromy</a> &middot; <a href="https://github.com/mistromy">GitHub</a></p>
-        </div>
-    </div>
-</footer>
+    </footer>
 
-<!-- ============================================================
+    <!-- ============================================================
      TERMS GATE — intercepts every "Add to Discord" link.
      script.js remembers acceptance per browser (localStorage);
      bump TERMS_VERSION in script.js when the documents change
      to re-prompt everyone.
 ============================================================ -->
-<div class="modal-backdrop" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle" hidden>
-    <div class="modal">
-        <div class="modal-header">
-            <span class="pulse-dot" aria-hidden="true"></span>
-            <span class="modal-header-title">SYS_PROMPT // authorization required</span>
-            <button class="modal-close" id="termsClose" aria-label="Close dialog">✕</button>
-        </div>
-
-        <div class="modal-body">
-            <h3 id="termsTitle">Before the bot moves in</h3>
-            <p>
-                Adding Nirupama to a server means agreeing to the
-                <!-- TODO: terms.md and eula.md don't exist yet — write them.
-                     privacy.md is already live. -->
-                <a href="https://nirupama.mista.tech/terms.md" class="inline-link" target="_blank" rel="noopener">Terms of Service</a>,
-                <a href="https://nirupama.mista.tech/eula.md" class="inline-link" target="_blank" rel="noopener">EULA</a> and
-                <a href="https://nirupama.mista.tech/privacy.md" class="inline-link" target="_blank" rel="noopener">Privacy Policy</a>.
-                The part people actually need to know:
-            </p>
-
-            <div class="clause">
-                <p class="clause-label">// responsibility clause</p>
-                <p>
-                    Whoever adds Nirupama to a server &mdash; owner, admin, or the
-                    person holding the button &mdash; is responsible for ensuring
-                    that server's members can read the EULA. By participating in
-                    a server where Nirupama is present, users agree to it.
-                </p>
+    <div class="modal-backdrop" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle" hidden>
+        <div class="modal">
+            <div class="modal-header">
+                <span class="pulse-dot" aria-hidden="true"></span>
+                <span class="modal-header-title">SYS_PROMPT // authorization required</span>
+                <button class="modal-close" id="termsClose" aria-label="Close dialog">✕</button>
             </div>
 
-            <label class="modal-check" for="termsCheckbox">
-                <input type="checkbox" id="termsCheckbox">
-                <span>
-                    I've read and agree to the Terms of Service, EULA and Privacy
-                    Policy, and I accept the responsibility clause above.
-                </span>
-            </label>
-        </div>
+            <div class="modal-body">
+                <h3 id="termsTitle">Before the bot moves in</h3>
+                <p>
+                    Adding Nirupama to a server means agreeing to the
+                    <!-- TODO: terms.md and eula.md don't exist yet — write them.
+                     privacy.md is already live. -->
+                    <a href="https://nirupama.mista.tech/terms.md" class="inline-link" target="_blank"
+                        rel="noopener">Terms of Service</a>,
+                    <a href="https://nirupama.mista.tech/eula.md" class="inline-link" target="_blank"
+                        rel="noopener">EULA</a> and
+                    <a href="https://nirupama.mista.tech/privacy.md" class="inline-link" target="_blank"
+                        rel="noopener">Privacy Policy</a>.
+                    The part people actually need to know:
+                </p>
 
-        <div class="modal-actions">
-            <button class="btn btn-secondary" id="termsCancel" type="button">Not now</button>
-            <button class="btn btn-primary" id="termsAgree" type="button" disabled>Agree &amp; continue to Discord</button>
-        </div>
+                <div class="clause">
+                    <p class="clause-label">// responsibility clause</p>
+                    <p>
+                        Whoever adds Nirupama to a server &mdash; owner, admin, or the
+                        person holding the button &mdash; is responsible for ensuring
+                        that server's members can read the EULA. By participating in
+                        a server where Nirupama is present, users agree to it.
+                    </p>
+                </div>
 
-        <!-- <p class="modal-footnote">accepted once per browser // if the terms change, you'll be asked again</p> -->
-         <p class="modal-footnote">Last updated: 07-07-2026</p>
+                <label class="modal-check" for="termsCheckbox">
+                    <input type="checkbox" id="termsCheckbox">
+                    <span>
+                        I've read and agree to the Terms of Service, EULA and Privacy
+                        Policy, and I accept the responsibility clause above.
+                    </span>
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="termsCancel" type="button">Not now</button>
+                <button class="btn btn-primary" id="termsAgree" type="button" disabled>Agree &amp; continue to
+                    Discord</button>
+            </div>
+
+            <!-- <p class="modal-footnote">accepted once per browser // if the terms change, you'll be asked again</p> -->
+            <p class="modal-footnote">Last updated: 07-07-2026</p>
+        </div>
     </div>
-</div>
 
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>

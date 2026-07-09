@@ -7,6 +7,7 @@ const GIST_ID = 'cdb82a1247ae6095f5d43098eb074dba';
 const GIST_RAW_URL = `https://gist.githubusercontent.com/Mistromy/${GIST_ID}/raw/stats.json`;
 const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
 const COMMITS_URL = 'https://img.shields.io/github/commit-activity/t/Mistromy/NIrupama.json';
+const LAST_UPDATE_URL = 'https://img.shields.io/github/last-commit/Mistromy/Nirupama.json'
 
 // The bot pushes to the gist every 5 minutes. Allow a little grace for
 // clock drift + task delay before declaring it dead.
@@ -27,7 +28,7 @@ const STAT_KEYS = {
     messagesTracked: 'messages_tracked',
     shipsCalculated: 'ships_calculated',
     aiReplies: 'ai_replies',
-    diceRolled: 'dice_rolled'
+    lastUpdate: 'last_update'
 };
 
 // Resolved values live here; null = not loaded / not available
@@ -132,6 +133,15 @@ async function fetchCommitCount() {
     }
 }
 
+async function fetchLastUpdate() {
+    const response = await fetch(LAST_UPDATE_URL);
+    if (!response.ok) throw new Error('Failed to fetch last update info from Shields.io');
+    const data = await response.json();
+    if (data.value !== undefined) {
+        statsData.lastUpdate = data.value;
+    }
+}
+
 async function initialLoad() {
     try {
         await fetchGistStats();
@@ -145,6 +155,13 @@ async function initialLoad() {
         console.log(`✅ Total commits loaded: ${statsData.updates}`);
     } catch (error) {
         console.error('⚠️ Could not load commit stats.', error);
+    }
+
+    try {
+        await fetchLastUpdate();
+        console.log(`✅ Last update timestamp loaded: ${statsData.lastUpdate}`);
+    } catch (error) {
+        console.error('⚠️ Could not load last update info.', error);
     }
 
     evaluateStatus();
@@ -183,13 +200,18 @@ function formatStat(value, suffix) {
 }
 
 function setStatText(element, value) {
-    if (value === null || value === undefined || isNaN(value)) {
-        element.textContent = MASK;
+    if (value === null || value === undefined) {
+        element.textContent = MASK; //
         return;
     }
-    const cell = element.closest('.stat-soon');
-    if (cell) cell.classList.add('is-live');
-    element.textContent = formatStat(Number(value), element.dataset.suffix || '');
+    const cell = element.closest('.stat-soon'); //
+    if (cell) cell.classList.add('is-live'); //
+
+    if (typeof value === 'string') {
+        element.textContent = value + (element.dataset.suffix || ''); //
+    } else {
+        element.textContent = formatStat(Number(value), element.dataset.suffix || ''); //
+    }
 }
 
 function animateCounter(element, target, duration = 900, suffix = '') {
@@ -217,27 +239,66 @@ function startObservingStats() {
 
     const statsObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            statsObserver.disconnect();
-            statsRevealed = true;
+            if (!entry.isIntersecting) return; //
+            statsObserver.disconnect(); //
+            statsRevealed = true; //
 
             document.querySelectorAll('[data-stat]').forEach(element => {
-                const value = statsData[element.dataset.stat];
+                const value = statsData[element.dataset.stat]; //
 
-                if (value === null || value === undefined || isNaN(value)) {
-                    element.textContent = MASK; // no data -> honest placeholder
+                if (value === null || value === undefined) {
+                    element.textContent = MASK; //
                     return;
                 }
 
-                const cell = element.closest('.stat-soon');
-                if (cell) cell.classList.add('is-live');
+                const cell = element.closest('.stat-soon'); //
+                if (cell) cell.classList.add('is-live'); //
 
-                animateCounter(element, Number(value), 900, element.dataset.suffix || '');
+                // Choose the right animation sequence depending on the data type
+                if (typeof value === 'string') {
+                    animateText(element, value + (element.dataset.suffix || ''), 900);
+                } else {
+                    animateCounter(element, Number(value), 900, element.dataset.suffix || ''); //
+                }
             });
         });
     }, { threshold: 0.3 });
 
     statsObserver.observe(statsSection);
+}
+
+function animateText(element, target, duration = 900) {
+    // The pool of characters to scramble through
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789░▒▓█$#@%';
+    const startTime = performance.now();
+    const targetLength = target.length;
+
+    function frame(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+
+        // Determine how many characters are "locked into place" based on time
+        const lockCount = Math.floor(progress * targetLength);
+
+        let currentText = target.substring(0, lockCount);
+
+        // Fill the rest of the string with randomized glyphs
+        for (let i = lockCount; i < targetLength; i++) {
+            if (target[i] === ' ') {
+                currentText += ' '; // Preserve spaces if your strings have them
+            } else {
+                currentText += chars[Math.floor(Math.random() * chars.length)];
+            }
+        }
+
+        element.textContent = currentText;
+
+        if (progress < 1) {
+            requestAnimationFrame(frame);
+        } else {
+            element.textContent = target; // Ensure absolute accuracy at the end
+        }
+    }
+    requestAnimationFrame(frame);
 }
 
 // ===== KICK EVERYTHING OFF =====
