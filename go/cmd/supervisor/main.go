@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	bootstrap.ParseFlags()
 	bootstrap.Bootstrap()
 
 	cmd := bot.Start()
