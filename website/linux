@@ -1,14 +1,19 @@
 #!/bin/bash
-# Exit immediately if any command fails
 set -e
 
-echo "Installing Nirupama..."
+echo "Starting Nirupama installer..."
 
-# 1. Create the target directory and move inside it
+# 1. Create the directory
 mkdir -p ./Nirupama
+
+# If run with sudo, fix the directory ownership immediately so the normal user owns it
+if [ -n "$SUDO_USER" ]; then
+    chown -R "$SUDO_USER:" ./Nirupama
+fi
+
 cd ./Nirupama
 
-# 2. Detect System Architecture
+# 2. Detect Architecture
 ARCH=$(uname -m)
 case "$ARCH" in
     x86_64)        BINARY_ARCH="amd64" ;;
@@ -16,21 +21,18 @@ case "$ARCH" in
     *)             echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-echo "Architecture: $ARCH ($BINARY_ARCH)"
-
-# 3. Download the correct Linux binary from your GitHub releases
-# (Swap out 'mistromy/Nirupama' with your exact repo path)
+# 3. Download supervisor
 REPO="mistromy/Nirupama"
 URL="https://github.com/$REPO/releases/latest/download/supervisor-linux-$BINARY_ARCH"
-
-echo "Installing latest supervisor..."
 curl -L -o supervisor "$URL"
 
-# 4. Make the binary executable (No sudo required since we own the file/folder!)
+# Fix binary ownership and permissions
+if [ -n "$SUDO_USER" ]; then
+    chown "$SUDO_USER:" supervisor
+fi
 chmod +x supervisor
 
-echo "Launching Supervisor..."
+echo "Launching supervisor..."
 
-# 5. Execute the binary and pass down all incoming arguments (like -y)
-# Any environment variables (like MASTER_ENV_KEY) automatically propagate here
+# 4. Execute supervisor (passing down all flags like -y and --key)
 ./supervisor "$@"

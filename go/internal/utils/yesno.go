@@ -6,9 +6,17 @@ import (
 	"strings"
 )
 
+var AutoConfirm bool
+
 // AskYesNo prints a question and waits for the user to input y/n.
 // Returns true for yes, false for no.
 func AskYesNo(question string) bool {
+	// 1. If the auto-confirm flag is active, instantly skip the prompt and return true
+	if AutoConfirm {
+		CyanLog("[Auto-Confirm] Automatically accepting: %s", question)
+		return true
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
