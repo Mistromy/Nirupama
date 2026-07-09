@@ -4,6 +4,7 @@ import os
 import json
 import time
 import aiohttp
+from supabase import create_client
 
 from utils.logger import bot_log
 
@@ -16,10 +17,20 @@ class websitestats(commands.Cog):
         self.cronitor_key = os.getenv("CRONITOR_API_KEY")
         self.monitor_key = "nirupama-heartbeat"
         
+        self.supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+        
         self.update_website_stats.start()
 
     def cog_unload(self):
         self.update_website_stats.cancel()
+
+    async def get_total_tracked_messages(self):
+        try:
+            response = self.supabase.rpc("get_total_messages", {}).execute()
+            return response.data if response.data is not None else 0
+        except Exception as e:
+            bot_log(f"Failed to fetch total messages from Supabase: {e}", level="error")
+            return 0
 
     @tasks.loop(minutes=5)
     async def update_website_stats(self):
@@ -34,7 +45,6 @@ class websitestats(commands.Cog):
                         if resp.status == 200:
                             cronitor_data = await resp.json()
                             monitor_metrics = cronitor_data.get("monitors", {}).get(self.monitor_key, {})
-                            # Safely extract uptime percentage across environment types
                             for env_key, env_data in monitor_metrics.items():
                                 if isinstance(env_data, dict) and "uptime_percentage" in env_data:
                                     cronitor_uptime = env_data["uptime_percentage"]
@@ -48,23 +58,19 @@ class websitestats(commands.Cog):
             "guild_count": len(self.bot.guilds),
             "user_count": sum(guild.member_count for guild in self.bot.guilds),
             "uptime": cronitor_uptime,
-
-            # Heartbeat: the website compares this against the visitor's clock.
-            # If it's older than ~7 minutes, the site flips to "system offline…
-            # running diagnostic". No key needed on the site side — it reads
-            # this straight out of stats.json.
             "last_updated": int(time.time()),
 
+            # Dynamically pull the database aggregate sum total
+            "messages_tracked": await self.get_total_tracked_messages(),  
             # ------------------------------------------------------------------
             # FUTURE STATS — the website already has cards wired for these.
             # They render masked with a "soon" tag until a key appears here.
             # Uncomment and hook each one up to a real counter when ready, e.g.
             # a SELECT COUNT(*) from Supabase, or in-memory counters on the bot.
             # ------------------------------------------------------------------
-            # "messages_tracked": await self.get_total_tracked_messages(),  # e.g. SUM of message counts in the DB
-            # "ships_calculated": self.bot.ship_counter,                    # increment in the /ship command
-            # "ai_replies": self.bot.ai_reply_counter,                      # increment when the AI responds
-            # "dice_rolled": self.bot.dice_counter,                         # increment in /diceroll
+
+            # "ships_calculated": self.bot.ship_counter,                    
+            # "ai_replies": self.bot.ai_reply_counter,                                              
         }
 
         gist_payload = {
