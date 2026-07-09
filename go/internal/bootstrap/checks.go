@@ -1,10 +1,8 @@
 package bootstrap
 
 import (
-	"bufio"
-	"log"
+	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -13,55 +11,58 @@ type SystemSpecific struct {
 	Python string
 }
 
-func GetSystemSpecific() SystemSpecific {
-	var systemSpecificTools SystemSpecific
-	if runtime.GOOS == "windows" {
-		systemSpecificTools.Pip = "pip"
-		systemSpecificTools.Python = "python"
-	} else {
-		systemSpecificTools.Pip = "pip3"
-		systemSpecificTools.Python = "python3"
-	}
-	return systemSpecificTools
+type EnvInfo struct {
+	GitExists      bool
+	PipExists      bool
+	PythonExists   bool
+	CondaExists    bool
+	PythonVersion  string
+	PipVersion     string
+	PackageManager string
 }
 
-func CheckExternalDependencies() []string {
-	missing := []string{}
-	systemSpecificTools := GetSystemSpecific()
+var Info EnvInfo
 
-	cmd := exec.Command(systemSpecificTools.Python, "--version")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
-	err := cmd.Run()
-	if err != nil {
-		log.Println("Error checking Python version:", err)
-		missing = append(missing, "python")
-	}
+func isFirstStart() bool {
+	_, err := os.Stat("pybot/main.py")
+	return err != nil
+}
 
-	cmd = exec.Command(systemSpecificTools.Pip, "--version")
-	stdout, _ := cmd.StdoutPipe()
-	cmd.Stderr = log.Writer()
-	err = cmd.Start()
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		line := scanner.Text()
-		line = strings.ReplaceAll(line, "\r", "")
-		log.Println(line)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		log.Println("Error checking pip version:", err)
-		missing = append(missing, "pip")
+func checkEnvironment() {
+	pythonCmd := "python3"
+	pipCmd := "pip3"
+
+	_, err := exec.LookPath("git")
+	Info.GitExists = (err == nil)
+	_, err = exec.LookPath(pipCmd)
+	Info.PipExists = (err == nil)
+	_, err = exec.LookPath(pythonCmd)
+	Info.PythonExists = (err == nil)
+	_, err = exec.LookPath("conda")
+	Info.CondaExists = (err == nil)
+
+	_, err = exec.LookPath("apt")
+	if err == nil {
+		Info.PackageManager = "apt"
+	} else if _, err = exec.LookPath("yum"); err == nil {
+		Info.PackageManager = "yum"
 	}
 
-	cmd = exec.Command("git", "--version")
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
-	err = cmd.Run()
-	if err != nil {
-		log.Println("Error checking git version:", err)
-		missing = append(missing, "git")
+	if Info.PythonExists {
+		out, err := exec.Command(pythonCmd, "--version").CombinedOutput()
+		if err == nil {
+			Info.PythonVersion = strings.TrimSpace(string(out))
+		}
 	}
-	log.Println("")
-	return missing
+	if Info.PipExists {
+		out, err := exec.Command(pipCmd, "--version").CombinedOutput()
+		if err == nil {
+			parts := strings.Split(strings.TrimSpace(string(out)), " ")
+			if len(parts) >= 2 {
+				Info.PipVersion = parts[0] + " " + parts[1]
+			} else {
+				Info.PipVersion = strings.TrimSpace(string(out))
+			}
+		}
+	}
 }

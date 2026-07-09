@@ -1,0 +1,11 @@
+services:
+  discord-bot:
+    build: .
+    container_name: nirupama_bot_test
+    # Automatically injects your local .env file variables into the box
+    env_file:
+      - .env
+    # Maps your local directory inside the container so code changes update live
+    volumes:
+      - .:/app
+    restart: always
