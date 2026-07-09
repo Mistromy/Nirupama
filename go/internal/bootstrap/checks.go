@@ -23,12 +23,12 @@ type EnvInfo struct {
 
 var Info EnvInfo
 
-func IsFirstStart() bool {
+func isFirstStart() bool {
 	_, err := os.Stat("pybot/main.py")
 	return err != nil
 }
 
-func CheckEnvironment() {
+func checkEnvironment() {
 	pythonCmd := "python3"
 	pipCmd := "pip3"
 
