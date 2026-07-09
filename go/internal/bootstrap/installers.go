@@ -48,6 +48,7 @@ func installCondaFlow() error {
 	// Run: ./engine/conda/bin/conda create -y -p ./engine/bot_env python=3.10
 	condaBin := fmt.Sprintf("%s/bin/conda", CondaInstDir)
 	cmdEnv := exec.Command(condaBin, "create", "-y", "-p", BotEnvDir, "python=3.10")
+	cmdEnv.Env = append(os.Environ(), "CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes")
 	cmdEnv.Stdout = os.Stdout
 	cmdEnv.Stderr = os.Stderr
 	if err := cmdEnv.Run(); err != nil {
