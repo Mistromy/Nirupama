@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nirupama — the do-a-bit-of-everything Discord bot</title>
+    <title>Nirupama — Discord Bot</title>
 
     <!-- ===== SEO / SOCIAL ===== -->
     <meta name="description"
@@ -242,14 +242,14 @@
                         <span class="stat-label">last update</span>
                         <span class="stat-note">workin' hard? or hardly workin'?</span>
                     </div>
+                    <div class="stat-cell">
+                        <span class="stat-value" data-stat="messagesTracked">░░░</span>
+                        <span class="stat-label">messages tracked</span>
+                        <span class="stat-note">big numbers.</span>
+                    </div>
                     <!-- FUTURE STATS — already wired in script.js; they stay masked
                      until website.py starts writing these keys to the gist:
                      messages_tracked, ships_calculated, ai_replies, dice_rolled -->
-                    <div class="stat-cell stat-soon">
-                        <span class="stat-value" data-stat="messagesTracked">░░░</span>
-                        <span class="stat-label">messages tracked</span>
-                        <span class="soon-tag">soon</span>
-                    </div>
                     <div class="stat-cell stat-soon">
                         <span class="stat-value" data-stat="shipsCalculated">░░░</span>
                         <span class="stat-label">ships calculated</span>
@@ -393,9 +393,8 @@
 
                 <article class="roadmap-item reveal">
                     <span class="roadmap-status shipped">shipped</span>
-                    <h3><!-- TODO: recently shipped item -->Something recent</h3>
-                    <p><!-- TODO: fill in the latest thing you actually shipped -->Placeholder — swap this for whatever
-                        landed in the last release.</p>
+                    <h3>User Activity Graphs</h3>
+                    <p>Run /graph to see your acitivy over time.</p>
                 </article>
 
                 <!-- TODO: keep this section honest. Move items to "shipped" as they land.
@@ -426,32 +425,39 @@
                 </p>
                 <p class="about-support">
                     Running the AI costs actual money. If the bot earns its keep in your
-                    server, there's a <a href="https://ko-fi.com/mistromy" class="inline-link">Ko-fi</a>.
+                    server, there's a <a href="https://ko-fi.com/mist" class="inline-link">Ko-fi</a>.
                     If not, that's fine too.
-                </p>
-                <!-- Optional: re-enable the Ko-fi widget instead of the text link:
-            <iframe src="https://ko-fi.com/mist/?hidefeed=true&widget=true&embed=true"
-                    style="border:none;width:100%;height:560px;border-radius:12px;"
-                    title="Support on Ko-fi"></iframe> -->
+                    <!-- </p>
+                <iframe src="https://ko-fi.com/mist/?hidefeed=true&widget=true&embed=true"
+                    style="border:none;width:100%;height:560px;border-radius:12px;" title="Support on Ko-fi"></iframe> -->
             </div>
 
             <div class="about-links">
                 <a href="https://github.com/mistromy/Nirupama" class="link-card reveal">
                     <span class="link-card-title">GitHub</span>
-                    <span class="link-card-sub">source, issues, 275+ commits</span>
-                </a>
-                <a href="https://discord.com/users/859371145076932619" class="link-card reveal">
-                    <span class="link-card-title">@Mistromy</span>
-                    <span class="link-card-sub">the entire team, on Discord</span>
-                </a>
-                <a href="https://ko-fi.com/mistromy" class="link-card reveal">
-                    <span class="link-card-title">Ko-fi</span>
-                    <span class="link-card-sub">covers the API bills</span>
+                    <span class="link-card-sub">source, issues, <span data-github-commits>275+</span> commits</span>
                 </a>
                 <a href="https://nirupama.cronitorstatus.com" class="link-card reveal">
                     <span class="link-card-title">Status</span>
                     <span class="link-card-sub">is it down? check here first</span>
                 </a>
+                <a href="https://ko-fi.com/mist" class="link-card reveal">
+                    <span class="link-card-title">Ko-fi</span>
+                    <span class="link-card-sub">covers the API bills</span>
+                </a>
+                <a href="https://discord.com/users/859371145076932619" class="link-card reveal">
+                    <span class="link-card-title">@sudoMist</span>
+                    <span class="link-card-sub">DM the entire team, on Discord</span>
+                </a>
+                <a href="https://discord.gg/kGtPvNgXVu" class="link-card reveal">
+                    <span class="link-card-title">Mist Server</span>
+                    <span class="link-card-sub">Or join the discord server</span>
+                </a>
+                <a href="https://mistromy.github.io" class="link-card reveal">
+                    <span class="link-card-title">Website</span>
+                    <span class="link-card-sub">view my entire portfolio</span>
+                </a>
+
             </div>
         </div>
     </section>
@@ -498,7 +504,7 @@
                     <h4>Project</h4>
                     <ul>
                         <li><a href="https://github.com/mistromy/Nirupama">GitHub</a></li>
-                        <li><a href="https://ko-fi.com/mistromy">Ko-fi</a></li>
+                        <li><a href="https://ko-fi.com/mist">Ko-fi</a></li>
                         <li><a href="https://nirupama.mista.tech/privacy.md">Privacy policy</a></li>
                         <!-- TODO: write these two documents — the terms gate links to them -->
                         <li><a href="https://nirupama.mista.tech/terms.md">Terms of service</a></li>

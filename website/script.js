@@ -173,6 +173,13 @@ async function initialLoad() {
             el.textContent = statsData.serverCount.toLocaleString();
         });
     }
+
+    // >>> ADD THIS BLOCK TO UPDATE THE LINK CARD COMMITS DYNAMICALLY <<<
+    if (statsData.updates !== null) {
+        document.querySelectorAll('[data-github-commits]').forEach(el => {
+            el.textContent = `${statsData.updates.toLocaleString()}+`;
+        });
+    }
 }
 
 // Periodic refresh: catch the bot going down (or coming back) while
