@@ -15,7 +15,7 @@ async def calculate_ship_percentage(user1: Member, user2: Member, guild: Guild):
 
     # --- 1. The "Self-Love" Check ---
     if user1.id == user2.id:
-        ai_comment = query_ai(prompt = f"""
+        ai_comment = await query_ai(prompt = f"""
     Write a very short, funny, and edgy comment (max 18 words) for a compatibility test between {user1} and {user2}.
     
     The Score: 100%
