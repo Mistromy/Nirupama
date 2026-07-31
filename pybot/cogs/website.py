@@ -11,8 +11,11 @@ from utils.logger import bot_log
 class websitestats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.gist_id = "cdb82a1247ae6095f5d43098eb074dba"
-        self.gist_token = os.getenv("STATS_GIST_TOKEN")
+        self.ws_url = "ws://localhost:6767/nirupama/live"
+        self.session = None
+        self.ws = None
+        self.total_tracked_messages = 0
+        self.connection_manager.start()
 
         self.cronitor_key = os.getenv("CRONITOR_API_KEY")
         self.monitor_key = "nirupama-heartbeat"
@@ -23,7 +26,8 @@ class websitestats(commands.Cog):
 
     def cog_unload(self):
         self.update_website_stats.cancel()
-
+        self.connection_manager.cancel()
+    
     async def get_total_tracked_messages(self):
         try:
             response = self.supabase.rpc("get_total_messages", {}).execute()
@@ -31,10 +35,50 @@ class websitestats(commands.Cog):
         except Exception as e:
             bot_log(f"Failed to fetch total messages from Supabase: {e}", level="error")
             return 0
+    total_tracked_messages = get_total_tracked_messages
+
+    async def send_to_api(self, payload: dict):
+        if self.ws is None or self.ws.closed:
+            return
+
+        try:
+            await self.ws.send_json(payload)
+        except Exception as e:
+            bot_log(f"Failed to send data to WebSocket: {e}", level="error")
+            self.ws = None
+
+
+    @tasks.loop(seconds=5)
+    async def connection_manager(self):
+        if self.ws is not None and not self.ws.closed:
+            return  # Already connected
+        try:
+            if self.session is None or self.session.closed:
+                self.session = aiohttp.ClientSession()
+
+            self.ws = await self.session.ws_connect(self.ws_url)
+            bot_log("Connected to the live stats WebSocket.", level="info")
+        except Exception as e:
+            bot_log(f"Failed to connect to the live stats WebSocket: {e}", level="error")
+            self.ws = None
+
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot or not message.guild:
+            return
+        self.total_tracked_messages += 1
+
+        payload = {
+            "messages": self.total_tracked_messages,
+        }
+        await self.send_to_api(payload)
+
 
     @tasks.loop(minutes=5)
     async def update_website_stats(self):
         cronitor_uptime = 100.0  # Default fallback if the API fetch fails
+        self.total_tracked_messages = await self.get_total_tracked_messages()  # Fetch the total tracked messages from Supabase
 
         # Fetch rolling 30-day metrics from Cronitor Aggregates API
         if self.cronitor_key:
@@ -54,51 +98,13 @@ class websitestats(commands.Cog):
             except Exception as e:
                 bot_log(f"Network error trying to fetch Cronitor metrics: {e}", level="error")
 
-        stats = {
+        payload = {
+            "messages": self.total_tracked_messages,
             "guild_count": len(self.bot.guilds),
             "user_count": sum(guild.member_count for guild in self.bot.guilds),
             "uptime": cronitor_uptime,
-            "last_updated": int(time.time()),
-
-            # Dynamically pull the database aggregate sum total
-            "messages_tracked": await self.get_total_tracked_messages(),  
-            # ------------------------------------------------------------------
-            # FUTURE STATS — the website already has cards wired for these.
-            # They render masked with a "soon" tag until a key appears here.
-            # Uncomment and hook each one up to a real counter when ready, e.g.
-            # a SELECT COUNT(*) from Supabase, or in-memory counters on the bot.
-            # ------------------------------------------------------------------
-
-            # "ships_calculated": self.bot.ship_counter,                    
-            # "ai_replies": self.bot.ai_reply_counter,                                              
-        }
-
-        gist_payload = {
-            "description": "Live stats data for Nirupama website",
-            "files": {
-                "stats.json": {
-                    "content": json.dumps(stats, indent=2)
-                }
             }
-        }
-
-        headers = {
-            "Authorization": f"Bearer {self.gist_token}",
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json",
-            "User-Agent": "Nirupama-Bot-Stats-Task" 
-        }
-
-        url = f"https://api.github.com/gists/{self.gist_id}"
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.patch(url, headers=headers, json=gist_payload) as response:
-                    if response.status != 200:
-                        err_response = await response.text()
-                        bot_log(f"Failed to update Gist. Status: {response.status}. Error: {err_response}", level="error")
-        except Exception as e:
-            bot_log(f"Network error trying to update website stats Gist: {e}", level="error")
+        await self.send_to_api(payload)
 
     @update_website_stats.before_loop
     async def before_update_website_stats(self):
