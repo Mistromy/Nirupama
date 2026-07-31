@@ -16,6 +16,8 @@ class websitestats(commands.Cog):
         self.ws = None
         self.total_tracked_messages = 0
         self.connection_manager.start()
+        self.gist_id = "cdb82a1247ae6095f5d43098eb074dba"
+        self.gist_token = os.getenv("STATS_GIST_TOKEN")
 
         self.cronitor_key = os.getenv("CRONITOR_API_KEY")
         self.monitor_key = "nirupama-heartbeat"
@@ -73,6 +75,7 @@ class websitestats(commands.Cog):
             "messages": self.total_tracked_messages,
         }
         await self.send_to_api(payload)
+        
 
 
     @tasks.loop(minutes=5)
@@ -99,12 +102,39 @@ class websitestats(commands.Cog):
                 bot_log(f"Network error trying to fetch Cronitor metrics: {e}", level="error")
 
         payload = {
-            "messages": self.total_tracked_messages,
+            "messages_tracked": self.total_tracked_messages,
             "guild_count": len(self.bot.guilds),
             "user_count": sum(guild.member_count for guild in self.bot.guilds),
             "uptime": cronitor_uptime,
             }
         await self.send_to_api(payload)
+        payload.append({"last_updated": int(time.time())})
+        gist_payload = {
+            "description": "Live stats data for Nirupama website",
+            "files": {
+                "stats.json": {
+                    "content": json.dumps(payload, indent=2)
+                }
+            }
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.gist_token}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "User-Agent": "Nirupama-Bot-Stats-Task" 
+        }
+
+        url = f"https://api.github.com/gists/{self.gist_id}"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.patch(url, headers=headers, json=gist_payload) as response:
+                    if response.status != 200:
+                        err_response = await response.text()
+                        bot_log(f"Failed to update Gist. Status: {response.status}. Error: {err_response}", level="error")
+        except Exception as e:
+            bot_log(f"Network error trying to update website stats Gist: {e}", level="error")
 
     @update_website_stats.before_loop
     async def before_update_website_stats(self):
