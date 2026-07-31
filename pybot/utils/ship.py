@@ -15,7 +15,15 @@ async def calculate_ship_percentage(user1: Member, user2: Member, guild: Guild):
 
     # --- 1. The "Self-Love" Check ---
     if user1.id == user2.id:
-        return 100, ["Narcissism is the purest love."]
+        ai_comment = query_ai(prompt = f"""
+    Write a very short, funny, and edgy comment (max 18 words) for a compatibility test between {user1} and {user2}.
+    
+    The Score: 100%
+    The Factors: Narcissism is the purest love.
+    
+    If the score is low, be savage. If high, be hype. Mention the factors only if they are very relevant and funny.
+    """)
+        return 100, ["Narcissism is the purest love."], ai_comment
 
     # --- 2. The "Bot" Check ---
     if user1.bot or user2.bot:
