@@ -24,7 +24,7 @@ class MyNewCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         # This is like 'Event BeginPlay' for this specific component.
-        bot_log("MyNewCog is ready!", level="info")
+        return
 
     # 4. COMMANDS (Custom Events)
     # This creates a Slash Command that users can trigger.
