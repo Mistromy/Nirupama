@@ -25,12 +25,18 @@
     --faint: #5f5870;
 
     /* accents (from the posters) */
-    --signal: #3fd8c2;      /* the traffic-light arrow: live, go, CTA */
-    --flare: #c73b6e;       /* magenta: eyebrows, emphasis */
-    --crimson: #8e1f44;     /* deep poster red: blocks, gradients */
-    --violet: #6c5aa8;      /* purple blocks: feedback */
-    --alarm: #e0405a;       /* offline, admin */
-    --amber: #d9a648;       /* planned, warnings */
+    --signal: #3fd8c2;
+    /* the traffic-light arrow: live, go, CTA */
+    --flare: #c73b6e;
+    /* magenta: eyebrows, emphasis */
+    --crimson: #8e1f44;
+    /* deep poster red: blocks, gradients */
+    --violet: #6c5aa8;
+    /* purple blocks: feedback */
+    --alarm: #e0405a;
+    /* offline, admin */
+    --amber: #d9a648;
+    /* planned, warnings */
 
     /* rgba helpers for glow/split effects */
     --signal-a: rgba(63, 216, 194, 0.55);
@@ -78,9 +84,11 @@ section {
 /* ============================================================
    SHARED TYPE
 ============================================================ */
-h1, h2 {
+h1,
+h2 {
     font-family: var(--font-display);
-    font-weight: 400; /* Anton only ships one weight; it's plenty */
+    font-weight: 400;
+    /* Anton only ships one weight; it's plenty */
     text-transform: uppercase;
     line-height: 1.05;
     letter-spacing: 0.015em;
@@ -173,16 +181,40 @@ h3 {
     animation: blink 1.4s steps(2, start) infinite;
 }
 
-[data-bot-status="online"] [data-status-text] { color: var(--signal); }
-[data-bot-status="offline"] [data-status-text] { color: var(--alarm); }
+[data-bot-status="connecting"] .pulse-dot,
+[data-bot-status="connecting"] .status-dot {
+    background: var(--faint);
+    animation: blink 0.8s steps(2, start) infinite;
+}
+
+[data-bot-status="online"] [data-status-text] {
+    color: var(--signal);
+}
+
+[data-bot-status="offline"] [data-status-text] {
+    color: var(--alarm);
+}
+
+[data-bot-status="connecting"] [data-status-text] {
+    color: var(--dim);
+}
 
 @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 var(--signal-a); }
-    50%      { box-shadow: 0 0 0 7px rgba(63, 216, 194, 0); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 var(--signal-a);
+    }
+
+    50% {
+        box-shadow: 0 0 0 7px rgba(63, 216, 194, 0);
+    }
 }
 
 @keyframes blink {
-    to { opacity: 0.35; }
+    to {
+        opacity: 0.35;
+    }
 }
 
 .status-pill {
@@ -226,7 +258,8 @@ h3 {
 
 .btn-primary:hover {
     transform: translate(-2px, -2px);
-    box-shadow: 4px 4px 0 var(--flare); /* chromatic offset, poster-style */
+    box-shadow: 4px 4px 0 var(--flare);
+    /* chromatic offset, poster-style */
 }
 
 .btn-secondary {
@@ -346,9 +379,17 @@ h3 {
     transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
-.nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav-toggle.open span:nth-child(2) { opacity: 0; }
-.nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.nav-toggle.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.nav-toggle.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-toggle.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
 
 /* ============================================================
    HERO
@@ -368,11 +409,9 @@ h3 {
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(234, 230, 220, 0.022) 0 1px,
-        transparent 1px 4px
-    );
+    background: repeating-linear-gradient(0deg,
+            rgba(234, 230, 220, 0.022) 0 1px,
+            transparent 1px 4px);
     pointer-events: none;
 }
 
@@ -389,8 +428,16 @@ h3 {
     pointer-events: none;
 }
 
-.binary-left  { left: 18px; }
-.binary-right { right: 18px; top: auto; bottom: 90px; text-align: right; }
+.binary-left {
+    left: 18px;
+}
+
+.binary-right {
+    right: 18px;
+    top: auto;
+    bottom: 90px;
+    text-align: right;
+}
 
 .hero-content {
     display: grid;
@@ -419,18 +466,24 @@ h3 {
 }
 
 @keyframes aberrate {
-    0%, 91%, 100% {
+
+    0%,
+    91%,
+    100% {
         text-shadow: -3px 0 var(--signal-a), 3px 0 var(--flare-a);
         transform: none;
     }
+
     92% {
         text-shadow: 5px 0 var(--signal-a), -5px 0 var(--flare-a);
         transform: translateX(-2px);
     }
+
     94% {
         text-shadow: -6px 0 var(--signal-a), 6px 0 var(--flare-a);
         transform: translateX(2px) skewX(-2deg);
     }
+
     96% {
         text-shadow: 2px 0 var(--signal-a), -2px 0 var(--flare-a);
         transform: none;
@@ -544,8 +597,13 @@ h3 {
 }
 
 @keyframes ticker {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
 }
 
 .ticker:hover .ticker-track {
@@ -573,7 +631,9 @@ h3 {
 }
 
 /* alternate media side on even rows */
-.feature-row:nth-of-type(even) .feature-media { order: -1; }
+.feature-row:nth-of-type(even) .feature-media {
+    order: -1;
+}
 
 .feature-cmd {
     font-family: var(--font-mono);
@@ -605,10 +665,8 @@ h3 {
     border: 1px dashed var(--line);
     /* pixel-block checker, like the glitch squares on the posters */
     background:
-        conic-gradient(
-            rgba(234, 230, 220, 0.03) 25%, transparent 0 50%,
-            rgba(234, 230, 220, 0.03) 0 75%, transparent 0
-        ) 0 0 / 26px 26px,
+        conic-gradient(rgba(234, 230, 220, 0.03) 25%, transparent 0 50%,
+            rgba(234, 230, 220, 0.03) 0 75%, transparent 0) 0 0 / 26px 26px,
         var(--panel);
     display: flex;
     flex-direction: column;
@@ -704,8 +762,13 @@ h3 {
     letter-spacing: 0.1em;
 }
 
-[data-bot-status="online"] .stats-board-title { color: var(--signal); }
-[data-bot-status="offline"] .stats-board-title { color: var(--alarm); }
+[data-bot-status="online"] .stats-board-title {
+    color: var(--signal);
+}
+
+[data-bot-status="offline"] .stats-board-title {
+    color: var(--alarm);
+}
 
 .stats-board-link {
     margin-left: auto;
@@ -732,8 +795,13 @@ h3 {
     gap: 0.3rem;
 }
 
-.stat-cell:nth-child(4n) { border-right: none; }
-.stat-cell:nth-child(-n+4) { border-top: none; }
+.stat-cell:nth-child(4n) {
+    border-right: none;
+}
+
+.stat-cell:nth-child(-n+4) {
+    border-top: none;
+}
 
 .stat-value {
     font-family: var(--font-mono);
@@ -783,7 +851,119 @@ h3 {
     color: var(--paper);
     text-shadow: -2px 0 rgba(63, 216, 194, 0.28), 2px 0 rgba(199, 59, 110, 0.28);
 }
-.stat-soon.is-live .soon-tag { display: none; }
+
+.stat-soon.is-live .soon-tag {
+    display: none;
+}
+
+/* brief pulse when a live websocket push actually changes a value */
+@keyframes stat-flash {
+    0% {
+        color: var(--signal);
+        text-shadow: 0 0 14px var(--signal-a);
+    }
+
+    100% {
+        color: var(--paper);
+        text-shadow: -2px 0 rgba(63, 216, 194, 0.28), 2px 0 rgba(199, 59, 110, 0.28);
+    }
+}
+
+.stat-flash {
+    animation: stat-flash 700ms ease-out;
+}
+
+/* only the last character actually "ticks" on a live update — the rest
+   of the number just sits there, it never re-counts from zero */
+@keyframes digit-tick {
+    0% {
+        transform: translateY(-40%);
+        opacity: 0;
+    }
+
+    60% {
+        transform: translateY(8%);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.digit-tick {
+    display: inline-block;
+    animation: digit-tick 450ms ease-out;
+}
+
+/* only while the box is easing between one line and two — clips the incoming
+   line so it wipes into view instead of spilling over the label below */
+.stat-value.is-resizing {
+    overflow: hidden;
+}
+
+/* ============================================================
+   LINK READOUT — how the page is getting its numbers, which is a
+   different question from whether the bot is up. body[data-link-state]
+   is live | delayed | stale | down | opening.
+
+   "delayed" covers both the API poll and the gist: no message-by-message
+   push, so the numbers refresh on the bot's five-minute cadence instead.
+   The bot is still online and everything but messages-tracked is
+   effectively unchanged over five minutes, so it stays quiet and grey —
+   only "down", the bot itself, is allowed to go red.
+============================================================ */
+/* The transport itself is the quieter of the two: it's the caveat, not the
+   headline. It only speaks up when the news is bad. */
+.link-readout {
+    color: var(--faint);
+    transition: color 0.3s ease;
+}
+
+[data-link-state="down"] .link-readout {
+    color: var(--alarm);
+}
+
+/* Freshness carries the colour instead — how long since the last message is
+   the thing worth looking at, and it's the half that proves the feed is live
+   by visibly ticking. */
+.freshness {
+    color: var(--dim);
+    transition: color 0.3s ease;
+}
+
+[data-link-state="live"] .freshness {
+    color: var(--signal);
+}
+
+[data-bot-status="offline"] .freshness {
+    color: var(--alarm);
+}
+
+/* reserve the live cyan for an actual live feed; delayed reads as normal */
+[data-link-state="delayed"] .stats-board-title,
+[data-link-state="stale"] .stats-board-title {
+    color: var(--dim);
+}
+
+/* the footer shows exactly one freshness line: the per-message epoch when
+   the live feed is up, the heartbeat in every other case */
+[data-footer-live],
+[data-footer-fallback] {
+    display: none;
+}
+
+[data-link-state="live"] [data-footer-live] {
+    display: inline;
+}
+
+[data-link-state="opening"] [data-footer-fallback],
+[data-link-state="delayed"] [data-footer-fallback],
+[data-link-state="stale"] [data-footer-fallback],
+[data-link-state="down"] [data-footer-fallback] {
+    display: inline;
+}
 
 /* board footer — heartbeat readout */
 .stats-board-footer {
@@ -799,7 +979,6 @@ h3 {
     letter-spacing: 0.05em;
 }
 
-[data-bot-status="offline"] .stats-board-footer [data-heartbeat] { color: var(--alarm); }
 
 /* ============================================================
    COMMANDS
@@ -853,11 +1032,30 @@ h3 {
     border: 1px solid;
 }
 
-.tag-fun      { color: var(--flare);  border-color: rgba(199, 59, 110, 0.45); }
-.tag-utility  { color: var(--signal); border-color: rgba(63, 216, 194, 0.45); }
-.tag-admin    { color: var(--alarm);  border-color: rgba(224, 64, 90, 0.45); }
-.tag-feedback { color: var(--violet); border-color: rgba(108, 90, 168, 0.55); }
-.tag-game     { color: var(--amber);  border-color: rgba(217, 166, 72, 0.45); }
+.tag-fun {
+    color: var(--flare);
+    border-color: rgba(199, 59, 110, 0.45);
+}
+
+.tag-utility {
+    color: var(--signal);
+    border-color: rgba(63, 216, 194, 0.45);
+}
+
+.tag-admin {
+    color: var(--alarm);
+    border-color: rgba(224, 64, 90, 0.45);
+}
+
+.tag-feedback {
+    color: var(--violet);
+    border-color: rgba(108, 90, 168, 0.55);
+}
+
+.tag-game {
+    color: var(--amber);
+    border-color: rgba(217, 166, 72, 0.45);
+}
 
 .command-card p {
     color: var(--dim);
@@ -910,9 +1108,20 @@ h3 {
     border: 1px solid;
 }
 
-.roadmap-status.planned     { color: var(--amber);  border-color: rgba(217, 166, 72, 0.35); }
-.roadmap-status.in-progress { color: var(--signal); border-color: rgba(63, 216, 194, 0.35); }
-.roadmap-status.shipped     { color: var(--dim);    border-color: var(--line); }
+.roadmap-status.planned {
+    color: var(--amber);
+    border-color: rgba(217, 166, 72, 0.35);
+}
+
+.roadmap-status.in-progress {
+    color: var(--signal);
+    border-color: rgba(63, 216, 194, 0.35);
+}
+
+.roadmap-status.shipped {
+    color: var(--dim);
+    border-color: var(--line);
+}
 
 .roadmap-item h3 {
     font-size: 1.25rem;
@@ -1007,11 +1216,9 @@ h3 {
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(10, 9, 14, 0.08) 0 2px,
-        transparent 2px 5px
-    );
+    background: repeating-linear-gradient(0deg,
+            rgba(10, 9, 14, 0.08) 0 2px,
+            transparent 2px 5px);
     pointer-events: none;
 }
 
@@ -1230,7 +1437,7 @@ h3 {
     margin-bottom: 0.8rem;
 }
 
-.modal-body > p {
+.modal-body>p {
     color: var(--dim);
     font-size: 0.98rem;
 }
@@ -1322,7 +1529,8 @@ body.modal-open {
     }
 
     .status-pill {
-        display: none; /* status still visible in hero + board on mobile */
+        display: none;
+        /* status still visible in hero + board on mobile */
     }
 
     .hero {
@@ -1354,16 +1562,29 @@ body.modal-open {
         gap: 2rem;
     }
 
-    .feature-row:nth-of-type(even) .feature-media { order: 0; }
+    .feature-row:nth-of-type(even) .feature-media {
+        order: 0;
+    }
 
     .stats-grid {
         grid-template-columns: 1fr 1fr;
     }
 
-    .stat-cell:nth-child(4n) { border-right: 1px solid var(--line-soft); }
-    .stat-cell:nth-child(2n) { border-right: none; }
-    .stat-cell:nth-child(-n+4) { border-top: 1px solid var(--line-soft); }
-    .stat-cell:nth-child(-n+2) { border-top: none; }
+    .stat-cell:nth-child(4n) {
+        border-right: 1px solid var(--line-soft);
+    }
+
+    .stat-cell:nth-child(2n) {
+        border-right: none;
+    }
+
+    .stat-cell:nth-child(-n+4) {
+        border-top: 1px solid var(--line-soft);
+    }
+
+    .stat-cell:nth-child(-n+2) {
+        border-top: none;
+    }
 
     .about-content {
         grid-template-columns: 1fr;

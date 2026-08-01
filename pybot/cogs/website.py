@@ -11,7 +11,7 @@ from utils.logger import bot_log
 class websitestats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ws_url = "ws://localhost:6767/nirupama/live"
+        self.ws_url = "ws://micro:6769/nirupama/live"
         self.session = None
         self.ws = None
         self.total_tracked_messages = 0
@@ -70,9 +70,10 @@ class websitestats(commands.Cog):
         if message.author.bot or not message.guild:
             return
         self.total_tracked_messages += 1
-
+        epoch_ms = int(message.created_at.timestamp() * 1000)
         payload = {
-            "messages": self.total_tracked_messages,
+            "messages_tracked": self.total_tracked_messages,
+            "epoch_ms": epoch_ms,
         }
         await self.send_to_api(payload)
         
@@ -106,9 +107,10 @@ class websitestats(commands.Cog):
             "guild_count": len(self.bot.guilds),
             "user_count": sum(guild.member_count for guild in self.bot.guilds),
             "uptime": cronitor_uptime,
+            "heartbeat_epoch_ms": int(time.time() * 1000),
             }
         await self.send_to_api(payload)
-        payload.append({"last_updated": int(time.time())})
+        payload["last_updated"] = int(time.time())
         gist_payload = {
             "description": "Live stats data for Nirupama website",
             "files": {
