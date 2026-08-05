@@ -670,7 +670,7 @@ async function backgroundRefresh() {
 // COUNTERS
 // ============================================================
 function formatStat(value, suffix, isInt) {
-    const text = isInt ? Math.floor(value).toLocaleString() : value.toFixed(1);
+    const text = isInt ? Math.floor(value).toLocaleString() : value.toFixed(2);
     return text + suffix;
 }
 

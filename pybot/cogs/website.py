@@ -18,9 +18,6 @@ class websitestats(commands.Cog):
         self.connection_manager.start()
         self.gist_id = "cdb82a1247ae6095f5d43098eb074dba"
         self.gist_token = os.getenv("STATS_GIST_TOKEN")
-
-        self.cronitor_key = os.getenv("CRONITOR_API_KEY")
-        self.monitor_key = "nirupama-heartbeat"
         
         self.supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
         
@@ -81,32 +78,12 @@ class websitestats(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def update_website_stats(self):
-        cronitor_uptime = 100.0  # Default fallback if the API fetch fails
         self.total_tracked_messages = await self.get_total_tracked_messages()  # Fetch the total tracked messages from Supabase
-
-        # Fetch rolling 90-day metrics from Cronitor Aggregates API
-        if self.cronitor_key:
-            cronitor_url = f"https://cronitor.io/api/aggregates?monitor={self.monitor_key}&time=90d"
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(cronitor_url, auth=aiohttp.BasicAuth(self.cronitor_key)) as resp:
-                        if resp.status == 200:
-                            cronitor_data = await resp.json()
-                            monitor_metrics = cronitor_data.get("monitors", {}).get(self.monitor_key, {})
-                            for env_key, env_data in monitor_metrics.items():
-                                if isinstance(env_data, dict) and "uptime_percentage" in env_data:
-                                    cronitor_uptime = env_data["uptime_percentage"]
-                                    break
-                        else:
-                            bot_log(f"Failed to fetch Cronitor stats. Status: {resp.status}", level="error")
-            except Exception as e:
-                bot_log(f"Network error trying to fetch Cronitor metrics: {e}", level="error")
 
         payload = {
             "messages_tracked": self.total_tracked_messages,
             "guild_count": len(self.bot.guilds),
             "user_count": sum(guild.member_count for guild in self.bot.guilds),
-            "uptime": cronitor_uptime,
             "heartbeat_epoch_ms": int(time.time() * 1000),
             }
         await self.send_to_api(payload)
