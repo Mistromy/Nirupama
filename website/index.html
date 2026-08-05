@@ -211,16 +211,16 @@
     <section class="stats" id="stats">
         <div class="container">
             <p class="section-eyebrow">// the numbers</p>
-            <h2 class="section-title">Live, unrounded, occasionally humbling</h2>
+            <h2 class="section-title">Live, unrounded, undeniably real</h2>
             <p class="section-sub">
-                The bot phones home every five minutes. If it stops, this page is
-                the first to know. If a number looks small, that's because it is.
+                The bot is tethered to this page, and the instant a message goes through, it appears right here.
+                If the bot goes quiet, this page will know.
             </p>
 
             <div class="stats-board reveal">
                 <div class="stats-board-header">
                     <span class="pulse-dot" aria-hidden="true"></span>
-                    <span class="stats-board-title" data-board-status>establishing link…</span>
+                    <span class="stats-board-title" data-board-status>opening the link…</span>
                     <a href="https://nirupama.cronitorstatus.com" class="stats-board-link">status page ↗</a>
                 </div>
 
@@ -272,10 +272,14 @@
 
                 </div>
 
-                <!-- board footer — heartbeat readout -->
+                <!-- board footer — freshness on the left, how we're getting the
+                 numbers on the right. CSS shows exactly one freshness line. -->
                 <div class="stats-board-footer">
-                    <span>SYS_EPOCH // <span data-epoch>——————</span></span>
-                    <span>last heartbeat: <span data-heartbeat>———</span></span>
+                    <span class="link-readout" data-link-readout>link // opening…</span>
+                    <span class="freshness" data-footer-live>last message // <span
+                            data-last-message-inline>waiting…</span></span>
+                    <span class="freshness" data-footer-fallback>last heartbeat // <span
+                            data-heartbeat>———</span></span>
                 </div>
             </div>
         </div>
