@@ -84,9 +84,9 @@ class websitestats(commands.Cog):
         cronitor_uptime = 100.0  # Default fallback if the API fetch fails
         self.total_tracked_messages = await self.get_total_tracked_messages()  # Fetch the total tracked messages from Supabase
 
-        # Fetch rolling 30-day metrics from Cronitor Aggregates API
+        # Fetch rolling 90-day metrics from Cronitor Aggregates API
         if self.cronitor_key:
-            cronitor_url = f"https://cronitor.io/api/aggregates?monitor={self.monitor_key}&time=30d"
+            cronitor_url = f"https://cronitor.io/api/aggregates?monitor={self.monitor_key}&time=90d"
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(cronitor_url, auth=aiohttp.BasicAuth(self.cronitor_key)) as resp:

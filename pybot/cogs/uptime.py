@@ -18,7 +18,7 @@ class uptimecronitor(commands.Cog):
     def cog_unload(self):
         self.send_uptime_ping.cancel()
 
-    @tasks.loop(minutes=60)
+    @tasks.loop(minutes=5)
     async def send_uptime_ping(self):
         self.loopmonitor.ping(state="run")
         try:
