@@ -4,7 +4,7 @@ import sys
 from dotenv import load_dotenv
 from utils.logger import log, bot_log, setup_discord_logging
 
-load_dotenv()
+load_dotenv(override=True)  # .env wins over stale shell vars
 
 # --- CONFIGURATION ---
 LOG_CHANNEL_ID = 1414205010555699210

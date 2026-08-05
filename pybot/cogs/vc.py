@@ -10,8 +10,6 @@ class vc(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        bot_log("MyNewCog is ready!", level="info")
-
         # 1. THE GHOST FIX: Force disconnect any lingering voice states on startup
         for vc in self.bot.voice_clients:
             bot_log(f"Clearing ghost connection in {vc.guild.name}...", level="warning")
