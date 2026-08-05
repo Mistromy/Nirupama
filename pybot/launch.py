@@ -5,7 +5,7 @@ import time
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)  # .env wins over stale shell vars
 
 # --- SETTINGS ---
 RESTART_ON_CRASH = False  # Set to True if you want auto-restart on crashes
