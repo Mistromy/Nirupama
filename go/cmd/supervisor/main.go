@@ -1,14 +1,18 @@
 package main
 
 import (
-	"github.com/mistromy/Nirupama/internal/bootstrap"
-	"github.com/mistromy/Nirupama/internal/bot"
+	"os"
+	"os/exec"
+
+	"charm.land/log/v2"
 )
 
 func main() {
-	bootstrap.ParseFlags()
-	bootstrap.Bootstrap()
-
-	cmd := bot.Start()
-	cmd.Start()
+	log.Info("Starting Nirupama...")
+	cmd := exec.Command("python3", "pybot/main.py")
+	cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
