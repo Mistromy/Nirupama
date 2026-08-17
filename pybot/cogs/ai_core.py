@@ -49,9 +49,9 @@ class AICoreCog(commands.Cog):
             
             # Choose model based on whether there are images
             if has_images:
-                model = "meta-llama/llama-4-scout-17b-16e-instruct"
+                model = "qwen/qwen3.6-27b"
             else:
-                model = "llama-3.3-70b-versatile"
+                model = "openai/gpt-oss-120b"
             
             try:
                 response = self.client.chat.completions.create(
