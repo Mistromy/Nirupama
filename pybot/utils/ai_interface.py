@@ -15,7 +15,7 @@ async def query_ai(prompt: str):
     print(prompt)
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(None, lambda: client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-120b",
         messages=[{"role": "system", "content": prompt}]))
     if response:
         return response.choices[0].message.content
