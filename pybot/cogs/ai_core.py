@@ -4,7 +4,7 @@ import os
 import time
 import asyncio
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 from openai import OpenAI
 import re
 
@@ -21,10 +21,10 @@ class AICoreCog(commands.Cog):
         self.shared_history = deque(maxlen=10)
         self.history_lock = asyncio.Lock()
 
-    def _format_history_entry(self, username, content, timestamp):
+    def _format_history_entry(self, username, id, content, timestamp):
         clean_content = re.sub(r"\s+", " ", (content or "").strip())
         time_text = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        return f"[{time_text}] {username}: {clean_content}"
+        return f"[{time_text}] {username}({id}): {clean_content}"
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -32,7 +32,7 @@ class AICoreCog(commands.Cog):
             return
         if self.bot.user in message.mentions:
             prompt = message.clean_content
-            user_entry = self._format_history_entry(message.author.display_name, prompt, message.created_at)
+            user_entry = self._format_history_entry(message.author.display_name, message.author.id, prompt, message.created_at)
 
             async with self.history_lock:
                 self.shared_history.append(user_entry)
@@ -64,8 +64,7 @@ class AICoreCog(commands.Cog):
                     temperature=1.6,
                 )
                 ai_reply = response.choices[0].message.content
-
-                ai_entry = self._format_history_entry(self.bot.user.display_name, ai_reply, datetime.utcnow())
+                ai_entry = self._format_history_entry(self.bot.user.display_name, self.bot.user.id, ai_reply, datetime.now(timezone.utc))
                 async with self.history_lock:
                     self.shared_history.append(ai_entry)
 
