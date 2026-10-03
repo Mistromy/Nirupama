@@ -1,0 +1,20 @@
+[Unit]
+Description=Nirupama bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/nirupama
+ExecStart=%h/nirupama/.venv/bin/python3 %h/nirupama/pybot/main.py
+Environment=PYTHONUNBUFFERED=1
+Environment=FORCE_COLOR=1
+Environment=TERM=xterm-256color
+StandardOutput=append:%h/nirupama/bot.log
+StandardError=append:%h/nirupama/bot.log
+# exit 0 = Shutdown button -> stay down; exit 2 = Reboot button / crash -> restart
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
