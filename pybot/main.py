@@ -14,17 +14,24 @@ intents = discord.Intents.all()
 bot = discord.Bot(intents=intents)
 
 bot.exit_code = 0
+bot.first_ready_done = False
 
 
 @bot.event
 async def on_ready():
-    serverlisttext = "".join([guild.name for guild in bot.guilds])
     await bot.change_presence(
         status=discord.Status.idle,
         activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"{len(bot.guilds)} servers"
         ),
     )
+
+    # on_ready fires again after every gateway reconnect (RESUME); only do
+    # one-time setup on the first call, otherwise we stack log handlers.
+    if bot.first_ready_done:
+        bot_log("Gateway reconnected", level="info")
+        return
+    bot.first_ready_done = True
 
     # Start the Discord Logging Worker
     setup_discord_logging(bot, LOG_CHANNEL_ID)

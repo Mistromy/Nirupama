@@ -1,20 +1,27 @@
 import PIL
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
+import os
 import base64
+import tempfile
 import textwrap
 from utils.logger import bot_log
 
 # Configuration
-BG_PATH = r"assets/bg.png" # Make sure this path is correct relative to your bot execution
-FONT_PATH = r"assets/poppins.bold.ttf" # REPLACE THIS with path to Poppins-Bold.ttf for better looks
-OUTPUT_FILE = "ship_result.png"
+# Resolve against the repo root (pybot/utils -> pybot -> repo) so it works
+# regardless of the working directory the bot is launched from (e.g. systemd).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ASSETS_DIR = os.path.join(_REPO_ROOT, "assets")
+BG_PATH = os.path.join(ASSETS_DIR, "bg.png")
+FONT_PATH = os.path.join(ASSETS_DIR, "poppins.bold.ttf")
+OUTPUT_FILE = os.path.join(tempfile.gettempdir(), "nirupama_ship_result.png")
 
 def load_font(size):
     try:
         return ImageFont.truetype(FONT_PATH, size)
-    except OSError:
+    except OSError as e:
         # Fallback if custom font not found
+        bot_log(f"Ship font not found at {FONT_PATH} ({e}), using default font", level="warning")
         return ImageFont.load_default()
 
 def circular_crop(image, size=(130, 130)):
@@ -48,7 +55,8 @@ def generateimage(avatar1_b64, avatar2_b64, name1, name2, percent, comment):
         try:
             base = Image.open(BG_PATH).convert("RGBA")
             base = base.resize((900, 350))
-        except Exception:
+        except Exception as e:
+            bot_log(f"Ship background not found at {BG_PATH} ({e}), using black", level="warning")
             base = Image.new("RGBA", (900, 350), (0, 0, 0, 255))
 
         # Create a transparent overlay for drawing semi-transparent boxes

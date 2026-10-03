@@ -7,9 +7,15 @@ from utils.logger import bot_log
 class vc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self._ghost_cleanup_done = False
 
     @commands.Cog.listener()
     async def on_ready(self):
+        # on_ready also fires on every gateway reconnect; don't kick the bot
+        # out of voice channels it is legitimately in.
+        if self._ghost_cleanup_done:
+            return
+        self._ghost_cleanup_done = True
         # 1. THE GHOST FIX: Force disconnect any lingering voice states on startup
         for vc in self.bot.voice_clients:
             bot_log(f"Clearing ghost connection in {vc.guild.name}...", level="warning")
