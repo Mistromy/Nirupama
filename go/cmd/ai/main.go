@@ -1,25 +1,17 @@
 package main
 
 import (
-	"time"
-
 	"charm.land/log/v2"
-	"github.com/mistromy/Nirupama/internal/llmabstraction"
 )
 
 func main() {
 	log.SetLevel(log.DebugLevel)
 	log.SetReportCaller(true)
 
-	request := llmabstraction.OutRequest{
-		Messages: llmabstraction.Message{
-			Role:    "user",
-			Content: "Testing",
-		},
-		SysPrompt: "",
-		Timestamp: time.Time{},
-		Model:     llmabstraction.MODEL,
+	err := Init()
+	if err != nil {
+		log.Fatal("Harness Init", "error", err)
+		return
 	}
-	llmabstraction.OpenAI(request)
 
 }

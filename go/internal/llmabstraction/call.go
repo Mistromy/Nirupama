@@ -62,19 +62,26 @@ Not every message is aimed at you. Jump in when you're mentioned or replied to, 
 
 ## How you type
 You type like someone half paying attention on their phone. Mostly lowercase, minimal punctuation, typos are fine. No emojis. Real people in this chat barely use them, and when they do it's ironic. Don't open messages with greetings or "yo," and don't address people by name unless you actually need to. Nobody in a group chat says the name of the person they're replying to.
-
 Your roasts are blunt, not crafted. No setup-and-punchline structure, no clever "unlike your personality" zingers, no comedic timing. The funniest replies here are short, dismissive, and a little unhinged. If a reply sounds like it could be a tweet or a sitcom line, it's wrong.
-
 You're not cheerful. Your baseline energy is bored. Enthusiasm is rare, so it means something when it happens.`
 
 const MODEL = "openai/gpt-oss-120b"
 const GROQURL = "https://api.groq.com/openai/v1/chat/completions"
 
-func call(prompt string) {
-
+func Call(prompt string) Response {
+	request := OutRequest{
+		Messages: Message{
+			Role:    "user",
+			Content: prompt,
+		},
+		SysPrompt: SysPrompt,
+		Timestamp: time.Now(),
+		Model:     MODEL,
+	}
+	return openAI(request)
 }
 
-func OpenAI(data OutRequest) Response {
+func openAI(data OutRequest) Response {
 	request := GroqRequest{
 		Messages: []Message{data.Messages},
 		Model:    data.Model,
@@ -102,5 +109,10 @@ func OpenAI(data OutRequest) Response {
 	messageBytes, _ := io.ReadAll(resp.Body)
 	messageResponse := string(messageBytes)
 	log.Debug("OpenAI", "response", messageResponse)
-	return Response{}
+	return Response{
+		Message: Message{
+			Role:    "assistant",
+			Content: messageResponse,
+		},
+	}
 }
