@@ -1,17 +1,17 @@
-import discord
-from discord.ext import commands
-import os
-import time
 import asyncio
-from collections import deque
-from datetime import datetime, timezone
-from openai import OpenAI
+import os
 import re
+from collections import deque
+from datetime import UTC, datetime
+
+from data.ai_data import PERSONALITIES
+from discord.ext import commands
+from openai import OpenAI
+from utils.discord_helpers import send_smart_message
 
 # Import your existing utilities
 from utils.logger import bot_log
-from utils.discord_helpers import send_smart_message
-from data.ai_data import PERSONALITIES
+
 
 class AICoreCog(commands.Cog):
     def __init__(self, bot):
@@ -39,20 +39,20 @@ class AICoreCog(commands.Cog):
                 history_text = "\n".join(self.shared_history)
 
             user_content = [{"type": "text", "text": f"Shared conversation history (last 10 messages):\n{history_text}"}]
-            
+
             # Check for images and add them to content
             has_images = False
             for attachment in message.attachments:
                 if attachment.content_type and attachment.content_type.startswith("image/"):
                     user_content.append({"type": "image_url", "image_url": {"url": attachment.url}})
                     has_images = True
-            
+
             # Choose model based on whether there are images
             if has_images:
-                model = "qwen/qwen3.6-27b"
+                model = "qwen/qwen3.8-27b"
             else:
-                model = "openai/gpt-oss-120b"
-            
+                model = "qwen/qwen3.8-27b"
+
             try:
                 response = self.client.chat.completions.create(
                     model=model,
@@ -61,10 +61,10 @@ class AICoreCog(commands.Cog):
                         {"role": "user", "content": user_content}
                     ],
                     max_tokens=500,
-                    temperature=1.6,
+                    temperature=1.2,
                 )
                 ai_reply = response.choices[0].message.content
-                ai_entry = self._format_history_entry(self.bot.user.display_name, self.bot.user.id, ai_reply, datetime.now(timezone.utc))
+                ai_entry = self._format_history_entry(self.bot.user.display_name, self.bot.user.id, ai_reply, datetime.now(UTC))
                 async with self.history_lock:
                     self.shared_history.append(ai_entry)
 
